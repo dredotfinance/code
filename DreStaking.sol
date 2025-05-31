@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Multicall.sol";
+import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./DreAccessControlled.sol";
 import "./interfaces/IDreStaking.sol";
@@ -16,17 +16,23 @@ interface IPermissionedERC20 {
     function burn(address from, uint256 amount) external;
 }
 
-contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, ReentrancyGuardUpgradeable, Multicall {
+contract DreStaking is
+    IDreStaking,
+    DreAccessControlled,
+    ERC721Upgradeable,
+    ReentrancyGuardUpgradeable,
+    MulticallUpgradeable
+{
     using SafeERC20 for IERC20;
 
     // Constants
-    uint256 public immutable HARBERGER_TAX_RATE = 500; // 5%
-    uint256 public immutable TEAM_TREASURY_SHARE = 100; // 1% (1% from harberger + 1% from resell)
-    uint256 public immutable TREASURY_SHARE = 400; // 4% from harberger
-    uint256 public immutable BASIS_POINTS = 10000;
-    uint256 public immutable WITHDRAW_COOLDOWN_PERIOD = 3 days;
-    uint256 public immutable REWARD_COOLDOWN_PERIOD = 3 days;
-    uint256 public immutable DURATION = 8 hours;
+    uint256 public constant HARBERGER_TAX_RATE = 500; // 5%
+    uint256 public constant TEAM_TREASURY_SHARE = 100; // 1% (1% from harberger + 1% from resell)
+    uint256 public constant TREASURY_SHARE = 400; // 4% from harberger
+    uint256 public constant BASIS_POINTS = 10000;
+    uint256 public constant WITHDRAW_COOLDOWN_PERIOD = 3 days;
+    uint256 public constant REWARD_COOLDOWN_PERIOD = 3 days;
+    uint256 public constant DURATION = 8 hours;
 
     // State variables
     IERC20 public dreToken;
@@ -34,7 +40,8 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
 
     // Mapping from token ID to Position
     mapping(uint256 => Position) public positions;
-    uint256 public lastId = 1;
+
+    uint256 public lastId;
 
     // Reward tracking
     uint256 public periodFinish;
@@ -195,8 +202,8 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
      * @param tokenId The position ID
      */
     function buyPosition(uint256 tokenId) external override nonReentrant {
-        require(ownerOf(tokenId) != address(0), "Position does not exist");
         address seller = ownerOf(tokenId);
+        require(seller != address(0), "Position does not exist");
         require(seller != msg.sender, "Cannot buy your own position");
 
         Position storage position = positions[tokenId];
@@ -342,13 +349,10 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
 
     /**
      * @notice Override the beforeTokenTransfer function to prevent transfers
-     * @param from The address the token is being transferred from
-     * @param to The address the token is being transferred to
-     * @param tokenId The ID of the token being transferred
      */
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
         require(msg.sender == address(this), "Only this contract can transfer");
-        super._beforeTokenTransfer(from, to, tokenId);
+        return super._update(to, tokenId, auth);
     }
 
     /**

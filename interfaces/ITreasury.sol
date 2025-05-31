@@ -31,8 +31,7 @@ interface ITreasury {
     event Deposit(address indexed token, uint256 amount, uint256 value);
     event Withdrawal(address indexed token, uint256 amount, uint256 value);
     event Managed(address indexed token, uint256 amount);
-    event ReservesUpdated(uint256 indexed totalReserves);
+    event ReservesAudited(uint256 indexed totalReserves);
     event Minted(address indexed caller, address indexed recipient, uint256 amount);
     event TokenEnabled(address addr, bool result);
-    event TokenDisabled(address addr, bool result);
- }
+}

@@ -16,7 +16,9 @@ contract sDRE is ERC20Permit, DreAccessControlled {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(IDreAuthority _authority) ERC20("Staked DRE", "sDRE", 18) ERC20Permit("Staked DRE") {}
+    constructor(address _authority) ERC20("Staked DRE", "sDRE") ERC20Permit("Staked DRE") {
+        __DreAccessControlled_init(_authority);
+    }
 
     /* ========== INITIALIZATION ========== */
 

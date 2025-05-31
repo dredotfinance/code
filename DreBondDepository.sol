@@ -59,18 +59,13 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
     mapping(uint256 => BondPosition) public positions;
     uint256 public lastId = 1;
 
-    function initialize(
-        IDreAuthority _authority,
-        IERC20 _dre,
-        IDreStaking _staking,
-        ITreasury _treasury
-    ) public initializer {
+    function initialize(address _authority, address _dre, address _staking, address _treasury) public initializer {
         __ERC721_init("DRE Bond Position", "DRE-BOND");
         __ReentrancyGuard_init();
         __DreAccessControlled_init(_authority);
-        staking = _staking;
-        treasury = _treasury;
-        dre = _dre;
+        staking = IDreStaking(_staking);
+        treasury = ITreasury(_treasury);
+        dre = IERC20(_dre);
         lastId = 1;
     }
 

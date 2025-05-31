@@ -8,86 +8,99 @@ import "./interfaces/ITreasury.sol";
 import "./interfaces/IDreStaking.sol";
 import "./DreAccessControlled.sol";
 
-contract RebaseController is DreAccessControlled, ReentrancyGuard, Pausable {
-    IDRE public DRE;
+/**
+ * @title BondController
+ * @dev Minimal reference implementation of DRE's bonding-curve logic.
+ *      ─ Calculates backing ratio β = PCV / supply
+ *      ─ Determines epochic rebase rate r_t using piece-wise curve
+ *      ─ Mints DRE supply for stakers each epoch once called by a keeper
+ *      ─ Exposes view helpers for front-end gauges
+ *
+ *  NOTE:  This is a skeleton for demonstration. Production code must integrate:
+ *          ▸ PCV accounting across multiple assets via an oracle aggregator
+ *          ▸ access-control (onlyPolicy) on state-changing functions
+ *          ▸ event emission for transparency & off-chain indexers
+ *          ▸ per-asset risk-weighting, circuit-breakers, and RBS / inverse-bond hooks
+ */
+
+contract RebaseController is DreAccessControlled {
+    IDRE public dre; // DRE token (decimals = 18)
     ITreasury public treasury;
-    IDreStaking public staking;
+    IDreStaking public staking; // staking contract or escrow
 
-    uint256 public epochLength;
-    uint256 public nextEpochTime;
+    // --- Epoch params --------------------------------------------------------
+    uint256 public immutable EPOCH = 8 hours;
     uint256 public lastEpochTime;
-    uint256 public epochRate;
-    uint256 public constant RATE_PRECISION = 1e6;
 
-    event EpochExecuted(uint256 epochTime, uint256 epochRate);
-    event EpochRateUpdated(uint256 newRate);
-    event EpochLengthUpdated(uint256 newLength);
+    // piece-wise k slopes (all in APR %, 2 decimals eg 5000 = 5000%)
+    uint16 public immutable K1 = 500; // rises 0->500 % over β 1-1.5
+    uint16 public immutable K2 = 4000; // rises 1000->5000 % over β 1.5-2.5 (slope 2k% per 0.5)
 
-    constructor(address _dre, address _treasury, address _staking, uint256 _epochLength, address _authority) DreAccessControlled(_authority) {
-        require(_dre != address(0), "Zero address: DRE");
-        require(_treasury != address(0), "Zero address: Treasury");
-        require(_staking != address(0), "Zero address: Staking");
-        require(_epochLength > 0, "Invalid epoch length");
+    uint16 public immutable FLOOR_APR = 1000; // 1000 % APR (≈0.092% per 8h)
+    uint16 public immutable CEIL_APR = 5000; // 5000 % APR (≈0.46% per 8h)
 
-        DRE = IDRE(_dre);
+    // --- Events --------------------------------------------------------------
+    event Rebased(uint256 backingRatio, uint256 epochRate, uint256 tokensMinted);
+
+    function initialize(address _dre, address _treasury, address _staking, address _authority) public initializer {
+        dre = IDRE(_dre);
         treasury = ITreasury(_treasury);
         staking = IDreStaking(_staking);
-        epochLength = _epochLength;
-        nextEpochTime = block.timestamp.add(_epochLength);
         lastEpochTime = block.timestamp;
-
         __DreAccessControlled_init(_authority);
     }
 
-    function executeEpoch() external nonReentrant whenNotPaused {
-        require(block.timestamp >= nextEpochTime, "RebaseController: epoch not ready");
-        require(epochRate > 0, "RebaseController: invalid epoch rate");
+    // --- Public keeper call --------------------------------------------------
+    function executeEpoch() external {
+        require(block.timestamp >= lastEpochTime + EPOCH, "epoch not ready");
 
-        uint256 currentTime = block.timestamp;
-        uint256 timeElapsed = currentTime.sub(lastEpochTime);
-        uint256 rewardAmount = DRE.totalSupply().mul(epochRate).mul(timeElapsed).div(RATE_PRECISION).div(365 days);
+        (uint256 apr, uint256 epochRate, uint256 backingRatio) = projectedEpochRate();
 
-        if (rewardAmount > 0) {
-            DRE.mint(address(staking), rewardAmount);
-            staking.distributeRewards(rewardAmount);
+        uint256 mintAmount = (dre.totalSupply() * epochRate) / 1e18;
+        require(mintAmount <= treasury.excessReserves(), "Insufficient reserves");
+        if (mintAmount > 0 && apr > 0) {
+            dre.mint(address(this), mintAmount);
+            staking.notifyRewardAmount(mintAmount);
         }
 
-        lastEpochTime = currentTime;
-        nextEpochTime = currentTime.add(epochLength);
-
-        emit EpochExecuted(currentTime, epochRate);
+        lastEpochTime = block.timestamp;
+        emit Rebased(backingRatio, epochRate, mintAmount);
     }
 
-    function setEpochRate(uint256 _newRate) external onlyGovernor {
-        require(_newRate <= RATE_PRECISION, "RebaseController: rate too high");
-        epochRate = _newRate;
-        emit EpochRateUpdated(_newRate);
+    // --- View helpers --------------------------------------------------------
+    function currentBackingRatio() external view returns (uint256) {
+        uint256 pcvUsd = treasury.totalReserves();
+        uint256 supply = dre.totalSupply();
+        return (supply == 0) ? 0 : (pcvUsd * 1e18) / supply; // 1e18 == β=1
     }
 
-    function setEpochLength(uint256 _newLength) external onlyGovernor {
-        require(_newLength > 0, "RebaseController: invalid length");
-        epochLength = _newLength;
-        emit EpochLengthUpdated(_newLength);
+    function projectedEpochRate() public view returns (uint256 apr, uint256 epochRate, uint256 backingRatio) {
+        uint256 pcvUsd = treasury.totalReserves();
+        uint256 supply = dre.totalSupply();
+        return projectedEpochRateRaw(pcvUsd, supply);
     }
 
-    function pause() external onlyGuardian {
-        _pause();
-    }
+    function projectedEpochRateRaw(
+        uint256 pcvUsd,
+        uint256 supply
+    ) public pure returns (uint256 apr, uint256 epochRate, uint256 backingRatio) {
+        if (supply == 0) return (0, 0, 0);
 
-    function unpause() external onlyGuardian {
-        _unpause();
-    }
+        backingRatio = (pcvUsd * 1e18) / supply;
+        uint256 beta1e2 = backingRatio / 1e16;
 
-    function projectedEpochRate() public view returns (uint256) {
-        uint256 backingRatio = treasury.excessReserves().mul(RATE_PRECISION).div(DRE.totalSupply());
-        if (backingRatio >= RATE_PRECISION) {
-            return RATE_PRECISION;
-        } else if (backingRatio >= RATE_PRECISION.mul(90).div(100)) {
-            return RATE_PRECISION.mul(95).div(100);
-        } else if (backingRatio >= RATE_PRECISION.mul(80).div(100)) {
-            return RATE_PRECISION.mul(90).div(100);
+        if (beta1e2 < 100) {
+            apr = 0;
+        } else if (beta1e2 < 150) {
+            apr = (beta1e2 - 100) * K1;
+        } else if (beta1e2 < 250) {
+            apr = FLOOR_APR + ((beta1e2 - 150) * K2) / 100;
+            if (apr > CEIL_APR) apr = CEIL_APR;
         } else {
-            return RATE_PRECISION.mul(85).div(100);
+            apr = CEIL_APR;
         }
+
+        uint256 epochsPerYear = 365 days / EPOCH;
+        epochRate = (apr * 1e18) / (100 * epochsPerYear);
     }
 }
