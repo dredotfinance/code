@@ -2,11 +2,11 @@
 pragma solidity >=0.7.5;
 
 interface IGovernable {
-    function governor() external view returns (address);
+  function governor() external view returns (address);
 
-    function renounceGovernor() external;
+  function renounceGovernor() external;
 
-    function pushGovernor(address newGovernor_) external;
+  function pushGovernor(address newGovernor_) external;
 
-    function pullGovernor() external;
+  function pullGovernor() external;
 }

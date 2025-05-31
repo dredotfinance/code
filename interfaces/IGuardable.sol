@@ -2,11 +2,11 @@
 pragma solidity >=0.7.5;
 
 interface IGuardable {
-    function guardian() external view returns (address);
+  function guardian() external view returns (address);
 
-    function renounceGuardian() external;
+  function renounceGuardian() external;
 
-    function pushGuardian(address newGuardian_) external;
+  function pushGuardian(address newGuardian_) external;
 
-    function pullGuardian() external;
+  function pullGuardian() external;
 }
