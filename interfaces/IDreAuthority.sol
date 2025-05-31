@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity >=0.7.5;
+pragma solidity ^0.8.0;
 
 import "./ITreasury.sol";
 
 interface IDreAuthority {
-  /* ========== EVENTS ========== */
+    /* ========== EVENTS ========== */
 
-  event TreasuryUpdated(address indexed newTreasury, address indexed oldTreasury);
-  event OperationsTreasuryUpdated(address indexed newOperationsTreasury, address indexed oldOperationsTreasury);
+    event TreasuryUpdated(address indexed newTreasury, address indexed oldTreasury);
+    event OperationsTreasuryUpdated(address indexed newOperationsTreasury, address indexed oldOperationsTreasury);
 
-  /* ========== VIEW ========== */
+    /* ========== VIEW ========== */
 
-  function isGovernor(address account) external view returns (bool);
+    function isGovernor(address account) external view returns (bool);
 
-  function isGuardian(address account) external view returns (bool);
+    function isGuardian(address account) external view returns (bool);
 
-  function isPolicy(address account) external view returns (bool);
+    function isPolicy(address account) external view returns (bool);
 
-  function isVault(address account) external view returns (bool);
+    function isVault(address account) external view returns (bool);
 
-  function isTreasury(address account) external view returns (bool);
+    function isTreasury(address account) external view returns (bool);
 
-  function isReserveManager(address account) external view returns (bool);
+    function isReserveManager(address account) external view returns (bool);
 
-  function isRewardManager(address account) external view returns (bool);
+    function isRewardManager(address account) external view returns (bool);
 
-  function isReserveDepositor(address account) external view returns (bool);
+    function isReserveDepositor(address account) external view returns (bool);
 
-  function operationsTreasury() external view returns (address);
+    function operationsTreasury() external view returns (address);
 
-  function treasury() external view returns (ITreasury);
+    function treasury() external view returns (ITreasury);
 }

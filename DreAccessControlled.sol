@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity >=0.7.5;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-import "../interfaces/IDreAuthority.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "./interfaces/IDreAuthority.sol";
 
 abstract contract DreAccessControlled is Initializable {
     event AuthorityUpdated(IDreAuthority indexed authority);
@@ -11,8 +11,8 @@ abstract contract DreAccessControlled is Initializable {
 
     IDreAuthority public authority;
 
-    function __DreAccessControlled_init(IDreAuthority _authority) internal {
-        _setAuthority(_authority);
+    function __DreAccessControlled_init(address _authority) internal {
+        _setAuthority(IDreAuthority(_authority));
     }
 
     modifier onlyGovernor() {
