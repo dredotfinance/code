@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
-    IDRE public DRE;
+    IDRE public dre;
 
     address[] public tokens;
     mapping(address => bool) public enabledTokens;
@@ -30,8 +30,8 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
     string internal insufficientReserves = "Treasury: insufficient reserves";
 
     function initialize(address _dre, address _authority) public initializer {
-        require(_dre != address(0), "Zero address: DRE");
-        DRE = IDRE(_dre);
+        require(_dre != address(0), "Zero address: dre");
+        dre = IDRE(_dre);
         __Pausable_init();
         __DreAccessControlled_init(_authority);
     }
@@ -39,11 +39,11 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @notice allow approved address to deposit an asset for DRE
+     * @notice allow approved address to deposit an asset for dre
      * @param _amount uint256 amount of token to deposit
      * @param _token address of token to deposit
      * @param _profit uint256 amount of profit to mint
-     * @return send_ uint256 amount of DRE minted
+     * @return send_ uint256 amount of dre minted
      */
     function deposit(
         uint256 _amount,
@@ -56,29 +56,29 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
 
         uint256 value = tokenValueE18(_token, _amount);
 
-        // mint DRE needed and store amount of rewards for distribution
+        // mint dre needed and store amount of rewards for distribution
         send_ = value - _profit;
-        DRE.mint(msg.sender, send_);
+        dre.mint(msg.sender, send_);
 
         totalReserves = totalReserves + value;
 
         // invariant check
-        require(totalReserves >= DRE.totalSupply(), "Reserves too low");
+        require(totalReserves >= dre.totalSupply(), "Reserves too low");
 
         emit Deposit(_token, _amount, value);
     }
 
     /**
-     * @notice allow approved address to burn DRE for reserves
-     * @param _amount amount of DRE to burn
+     * @notice allow approved address to burn dre for reserves
+     * @param _amount amount of dre to burn
      * @param _token address of the token to burn
      */
     function withdraw(uint256 _amount, address _token) external override nonReentrant whenNotPaused onlyReserveManager {
         require(enabledTokens[_token], notAccepted); // Only reserves can be used for redemptions
 
         uint256 value = tokenValueE18(_token, _amount);
-        DRE.transferFrom(msg.sender, address(this), value);
-        DRE.burn(value);
+        dre.transferFrom(msg.sender, address(this), value);
+        dre.burn(value);
 
         totalReserves = totalReserves - value;
         IERC20(_token).safeTransfer(msg.sender, _amount);
@@ -102,13 +102,13 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
     }
 
     /**
-     * @notice mint new DRE using excess reserves
+     * @notice mint new dre using excess reserves
      * @param _recipient address of the recipient
-     * @param _amount amount of DRE to mint
+     * @param _amount amount of dre to mint
      */
     function mint(address _recipient, uint256 _amount) external override nonReentrant whenNotPaused onlyRewardManager {
         require(_amount <= excessReserves(), insufficientReserves);
-        DRE.mint(_recipient, _amount);
+        dre.mint(_recipient, _amount);
         emit Minted(msg.sender, _recipient, _amount);
     }
 
@@ -157,7 +157,7 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
     /* ========== VIEW FUNCTIONS ========== */
 
     function backingRatioE18() public view returns (uint256) {
-        return (totalReserves * 1e18) / DRE.totalSupply();
+        return (totalReserves * 1e18) / dre.totalSupply();
     }
 
     /**
@@ -165,16 +165,16 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @return uint
      */
     function excessReserves() public view override returns (uint256) {
-        uint256 totalSupply = DRE.totalSupply();
+        uint256 totalSupply = dre.totalSupply();
         if (totalSupply > totalReserves) return 0;
         return totalReserves - totalSupply;
     }
 
     /**
-     * @notice returns DRE valuation of asset
+     * @notice returns dre valuation of asset
      * @param _token address of the token
      * @param _amount amount of the token
-     * @return value_ value of the token in DRE
+     * @return value_ value of the token in dre
      */
     function tokenValueE18(address _token, uint256 _amount) public view override returns (uint256 value_) {
         AggregatorV3Interface oracle = oracles[_token];
@@ -194,7 +194,7 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @return uint256
      */
     function baseSupply() external view override returns (uint256) {
-        return DRE.totalSupply();
+        return dre.totalSupply();
     }
 
     /**
