@@ -2,24 +2,6 @@
 pragma solidity >=0.7.5;
 
 interface ITreasury {
-    enum STATUS {
-        RESERVEDEPOSITOR,
-        RESERVESPENDER,
-        RESERVETOKEN,
-        RESERVEMANAGER,
-        REWARDMANAGER,
-        STAKING
-    }
-
-    struct Queue {
-        STATUS managing;
-        address toPermit;
-        address calculator;
-        uint256 timelockEnd;
-        bool nullify;
-        bool executed;
-    }
-
     function deposit(
         uint256 _amount,
         address _token,
@@ -43,6 +25,8 @@ interface ITreasury {
     function excessReserves() external view returns (uint256);
 
     function totalReserves() external view returns (uint256);
+
+    function calculateReserves() external view returns (uint256);
 
     function baseSupply() external view returns (uint256);
 

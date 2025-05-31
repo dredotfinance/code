@@ -70,6 +70,9 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
 
         totalReserves = totalReserves.add(value);
 
+        // invariant check
+        require(totalReserves >= DRE.totalSupply(), "Reserves too low");
+
         emit Deposit(_token, _amount, value);
     }
 
@@ -210,7 +213,7 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @notice calculates the total reserves of the treasury
      * @return uint256 total reserves
      */
-    function calculateReserves() external view override returns (uint256) {
+    function calculateReserves() public view override returns (uint256) {
         uint256 reserves;
         for (uint256 i = 0; i < tokens.length; i++) {
             if (enabledTokens[tokens[i]]) {
