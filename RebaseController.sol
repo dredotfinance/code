@@ -48,6 +48,8 @@ contract RebaseController is DreAccessControlled {
         staking = IDreStaking(_staking);
         lastEpochTime = block.timestamp;
         __DreAccessControlled_init(_authority);
+
+        dre.approve(address(staking), type(uint256).max);
     }
 
     // --- Public keeper call --------------------------------------------------

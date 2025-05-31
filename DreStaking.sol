@@ -351,7 +351,7 @@ contract DreStaking is
      * @notice Override the beforeTokenTransfer function to prevent transfers
      */
     function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
-        require(msg.sender == address(this), "Only this contract can transfer");
+        require(auth == address(0), "Only mints/burns");
         return super._update(to, tokenId, auth);
     }
 
