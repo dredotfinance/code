@@ -3,9 +3,7 @@ pragma solidity ^0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "../types/FrontEndRewarder.sol";
-
-import "../interfaces/IgOHM.sol";
-import "../interfaces/IStaking.sol";
+import "../interfaces/IDreStaking.sol";
 import "../interfaces/ITreasury.sol";
 import "../interfaces/INoteKeeper.sol";
 
@@ -13,22 +11,19 @@ abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
     mapping(address => Note[]) public notes; // user deposit data
     mapping(address => mapping(uint256 => address)) private noteTransfers; // change note ownership
 
-    IgOHM internal gOHM;
-    IStaking internal staking;
+    IDreStaking internal staking;
     ITreasury internal treasury;
 
     function _initialize_NoteKeeper(
         IDreAuthority _authority,
-        IERC20 _ohm,
-        IgOHM _gohm,
-        IStaking _staking,
+        IERC20 _dre,
+        IDreStaking _staking,
         ITreasury _treasury
     ) internal   {
-        _setAuthority(_authority);
-        ohm = _ohm;
-        gOHM = _gohm;
+        dre = _dre;
         staking = _staking;
         treasury = _treasury;
+        _initialize_FrontEndRewarder(_authority, _dre);
     }
 
     // if treasury address changes on authority, update it
@@ -43,7 +38,9 @@ abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
     /* ========== ADD ========== */
 
     /**
-     * @notice             adds a new Note for a user, stores the front end & DAO rewards, and mints & stakes payout & rewards
+     * @notice             adds a new Note for a user, stores the front end &
+     * DAO rewards, and mints & stakes payout & rewards
+     * @dev                the payout is in OHM, not gOHM
      * @param _user        the user that owns the Note
      * @param _payout      the amount of OHM due to the user
      * @param _expiry      the timestamp when the Note is redeemable
@@ -60,7 +57,7 @@ abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
         // the new note is pushed to the user's array
         notes[_user].push(
             Note({
-                payout: gOHM.balanceTo(_payout),
+                payout: _payout,
                 created: uint48(block.timestamp),
                 matured: _expiry,
                 redeemed: 0,
@@ -69,13 +66,13 @@ abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
         );
 
         // front end operators can earn rewards by referring users
-        uint256 rewards = _giveRewards(_payout, _referral);
+        // uint256 rewards = _giveRewards(_payout, _referral);
 
         // mint and stake payout
-        treasury.mint(address(this), _payout + rewards);
+        // treasury.mint(address(this), _payout + rewards);
 
         // note that only the payout gets staked (front end rewards are in OHM)
-        staking.stake(address(this), _payout, false, true);
+        // staking.createPosition(address(this), _payout, 0, block.timestamp + 1);
     }
 
     /* ========== REDEEM ========== */
@@ -84,10 +81,9 @@ abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
      * @notice             redeem notes for user
      * @param _user        the user to redeem for
      * @param _indexes     the note indexes to redeem
-     * @param _sendgOHM    send payout as gOHM or sOHM
      * @return payout_     sum of payout sent, in gOHM
      */
-    function redeem(address _user, uint256[] memory _indexes, bool _sendgOHM)
+    function redeem(address _user, uint256[] memory _indexes)
         public
         override
         returns (uint256 payout_)
@@ -103,22 +99,17 @@ abstract contract NoteKeeper is INoteKeeper, FrontEndRewarder {
             }
         }
 
-        if (_sendgOHM) {
-            gOHM.transfer(_user, payout_); // send payout as gOHM
-        } else {
-            staking.unwrap(_user, payout_); // unwrap and send payout as sOHM
-        }
+        dre.transfer(_user, payout_); // send payout
     }
 
     /**
      * @notice             redeem all redeemable markets for user
      * @dev                if possible, query indexesFor() off-chain and input in redeem() to save gas
      * @param _user        user to redeem all notes for
-     * @param _sendgOHM    send payout as gOHM or sOHM
      * @return             sum of payout sent, in gOHM
      */
-    function redeemAll(address _user, bool _sendgOHM) external override returns (uint256) {
-        return redeem(_user, indexesFor(_user), _sendgOHM);
+    function redeemAll(address _user) external override returns (uint256) {
+        return redeem(_user, indexesFor(_user));
     }
 
     /* ========== TRANSFER ========== */

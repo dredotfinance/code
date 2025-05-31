@@ -12,6 +12,7 @@ interface IDreStaking {
         uint256 cooldownEnd; // When cooldown period ends
         bool isInCooldown; // Whether position is in cooldown (for withdrawals)
         uint256 rewardLockTime; // If >0, rewards stop accruing after this time
+        uint256 minLockDuration; // Minimum lock duration
     }
 
     // Events
@@ -41,7 +42,8 @@ interface IDreStaking {
     function createPosition(
         address to,
         uint256 amount,
-        uint256 declaredValue
+        uint256 declaredValue,
+        uint256 lockTime
     ) external returns (uint256 tokenId);
 
     function startUnstaking(uint256 tokenId) external;

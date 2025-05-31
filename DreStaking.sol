@@ -13,7 +13,6 @@ import "./interfaces/IDreStaking.sol";
 // Permissioned ERC20 for tracking events
 interface IPermissionedERC20 {
     function mint(address to, uint256 amount) external;
-
     function burn(address from, uint256 amount) external;
 }
 
@@ -43,11 +42,7 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
     uint256 public rewardPerTokenStored;
     uint256 public override totalStaked;
 
-    function initialize(
-        address _dreToken,
-        address _trackingToken,
-        IDreAuthority _authority
-    ) public initializer {
+    function initialize(address _dreToken, address _trackingToken, IDreAuthority _authority) public initializer {
         __ERC721_init("DRE Staking Position", "DRE-POS");
         __ReentrancyGuard_init();
 
@@ -100,13 +95,15 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
      * @param to The address to mint the position to
      * @param amount The amount of DRE to stake
      * @param declaredValue The declared value of the position
+     * @param minLockDuration The minimum time tokens must be locked (0 for no minimum)
      * @return tokenId The token ID of the new position
      */
-    function createPosition(
-        address to,
-        uint256 amount,
-        uint256 declaredValue
-    ) external override nonReentrant returns (uint256 tokenId) {
+    function createPosition(address to, uint256 amount, uint256 declaredValue, uint256 minLockDuration)
+        external
+        override
+        nonReentrant
+        returns (uint256 tokenId)
+    {
         require(amount > 0, "Amount must be greater than 0");
         require(declaredValue > 0, "Declared value must be greater than 0");
 
@@ -128,7 +125,8 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
             rewards: 0,
             cooldownEnd: 0,
             isInCooldown: false,
-            rewardLockTime: 0
+            rewardLockTime: 0,
+            minLockDuration: minLockDuration
         });
 
         totalStaked += amount;
@@ -149,6 +147,10 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
         require(!positions[tokenId].isInCooldown, "Already in cooldown");
 
         Position storage position = positions[tokenId];
+
+        // Check if minimum lock duration has passed
+        require(block.timestamp >= position.minLockDuration, "Minimum lock duration not met");
+
         _updateReward(tokenId);
 
         position.isInCooldown = true;
@@ -271,11 +273,11 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
      * @param additionalAmount The amount to add to the stake
      * @param addtionalDeclaredValue The additional declared value
      */
-    function increaseAmount(
-        uint256 tokenId,
-        uint256 additionalAmount,
-        uint256 addtionalDeclaredValue
-    ) external override nonReentrant {
+    function increaseAmount(uint256 tokenId, uint256 additionalAmount, uint256 addtionalDeclaredValue)
+        external
+        override
+        nonReentrant
+    {
         require(_exists(tokenId), "Position does not exist");
         require(additionalAmount > 0, "Amount must be greater than 0");
         require(!positions[tokenId].isInCooldown, "Position is in cooldown");
@@ -343,11 +345,7 @@ contract DreStaking is IDreStaking, DreAccessControlled, ERC721Upgradeable, Reen
      * @param to The address the token is being transferred to
      * @param tokenId The ID of the token being transferred
      */
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal override {
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override {
         require(msg.sender == address(this), "Only this contract can transfer");
         super._beforeTokenTransfer(from, to, tokenId);
     }

@@ -21,7 +21,7 @@ import "./interfaces/ITreasury.sol";
 import "./interfaces/IDreStaking.sol";
 import "./types/DreAccessControlled.sol";
 
-contract BondController is DreAccessControlled {
+contract RebaseController is DreAccessControlled {
     IDRE public dre; // DRE token (decimals = 18)
     ITreasury public treasury;
     IDreStaking public staking; // staking contract or escrow

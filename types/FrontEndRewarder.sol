@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.7.5;
 
- import "../types/DreAccessControlled.sol";
+import "../types/DreAccessControlled.sol";
 import "../interfaces/IERC20.sol";
 
 abstract contract FrontEndRewarder is DreAccessControlled {
@@ -12,13 +12,11 @@ abstract contract FrontEndRewarder is DreAccessControlled {
     mapping(address => uint256) public rewards; // front end operator rewards
     mapping(address => bool) public whitelisted; // whitelisted status for operators
 
-    IERC20 internal ohm; // reward token
+    IERC20 internal dre; // reward token
 
-     constructor() {}
-
-    function __initialize_FrontEndRewarder(IDreAuthority _authority, IERC20 _ohm) internal   {
+    function _initialize_FrontEndRewarder(IDreAuthority _authority, IERC20 _dre) internal {
         _setAuthority(_authority);
-        ohm = _ohm;
+        dre = _dre;
     }
 
     /* ========= EXTERNAL FUNCTIONS ========== */
@@ -26,9 +24,8 @@ abstract contract FrontEndRewarder is DreAccessControlled {
     // pay reward to front end operator
     function getReward() external {
         uint256 reward = rewards[msg.sender];
-
         rewards[msg.sender] = 0;
-        ohm.transfer(msg.sender, reward);
+        dre.transfer(msg.sender, reward);
     }
 
     /* ========= INTERNAL ========== */

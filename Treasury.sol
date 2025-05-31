@@ -134,8 +134,7 @@ contract Treasury is DreAccessControlled, ITreasury {
      *  @notice disable permission from address
      *  @param _toDisable address
      */
-    function disable(address _toDisable) external {
-        require(authority.isGovernor(msg.sender) || authority.isGuardian(msg.sender), "Only governor or guardian");
+    function disable(address _toDisable) external onlyGuardianOrGovernor {
         enabledTokens[_toDisable] = false;
         emit Permissioned(_toDisable, false);
     }

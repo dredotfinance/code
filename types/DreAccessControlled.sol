@@ -20,6 +20,11 @@ abstract contract DreAccessControlled is Initializable {
         _;
     }
 
+    modifier onlyGuardianOrGovernor() {
+        require(authority.isGuardian(msg.sender) || authority.isGovernor(msg.sender), UNAUTHORIZED);
+        _;
+    }
+
     modifier onlyReserveManager() {
         require(authority.isReserveManager(msg.sender), UNAUTHORIZED);
         _;
