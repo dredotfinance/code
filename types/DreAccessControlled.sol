@@ -11,7 +11,7 @@ abstract contract DreAccessControlled is Initializable {
 
     IDreAuthority public authority;
 
-    function _initialize_DreAccessControlled(IDreAuthority _authority) internal {
+    function __DreAccessControlled_init(IDreAuthority _authority) internal {
         _setAuthority(_authority);
     }
 

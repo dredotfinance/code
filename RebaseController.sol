@@ -48,7 +48,7 @@ contract RebaseController is DreAccessControlled {
         treasury = _treasury;
         staking = _staking;
         lastEpochTime = block.timestamp;
-        _initialize_DreAccessControlled(_authority);
+        __DreAccessControlled_init(_authority);
     }
 
     // --- Public keeper call --------------------------------------------------

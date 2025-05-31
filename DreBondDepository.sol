@@ -4,14 +4,14 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "./types/NoteKeeper.sol";
+import "./types/DreAccessControlled.sol";
 import "./libraries/SafeERC20.sol";
 import "./interfaces/IERC20Metadata.sol";
 import "./interfaces/IDreStaking.sol";
 
 /// @title DRE Bond Depository
 /// @author DRE Protocol
-contract DreBondDepository is NoteKeeper, ERC721Upgradeable, ReentrancyGuardUpgradeable {
+contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
     /* ======== EVENTS ======== */
@@ -54,17 +54,21 @@ contract DreBondDepository is NoteKeeper, ERC721Upgradeable, ReentrancyGuardUpgr
 
     // Storage
     Bond[] public bonds;
+    IDreStaking public staking;
+    IERC20 public dre;
+    ITreasury public treasury;
     mapping(uint256 => BondPosition) public positions;
 
-    function initialize(
-        IDreAuthority _authority,
-        IERC20 _dre,
-        IDreStaking _staking,
-        ITreasury _treasury
-    ) public initializer {
+    function initialize(IDreAuthority _authority, IERC20 _dre, IDreStaking _staking, ITreasury _treasury)
+        public
+        initializer
+    {
         __ERC721_init("DRE Bond Position", "DRE-BOND");
         __ReentrancyGuard_init();
-        _initialize_NoteKeeper(_authority, _dre, _staking, _treasury);
+        __DreAccessControlled_init(_authority);
+        staking = _staking;
+        treasury = _treasury;
+        dre = _dre;
     }
 
     /* ======== MUTATIVE FUNCTIONS ======== */
@@ -117,17 +121,14 @@ contract DreBondDepository is NoteKeeper, ERC721Upgradeable, ReentrancyGuardUpgr
      * @param _amount amount of quote token to spend
      * @param _maxPrice maximum price willing to pay
      * @param _user recipient of the bond
-     * @param _referral referral address
      * @return payout_ amount of DRE tokens
      * @return tokenId_ ID of the bond position NFT
      */
-    function deposit(
-        uint256 _id,
-        uint256 _amount,
-        uint256 _maxPrice,
-        address _user,
-        address _referral
-    ) external nonReentrant returns (uint256 payout_, uint256 tokenId_) {
+    function deposit(uint256 _id, uint256 _amount, uint256 _maxPrice, address _user)
+        external
+        nonReentrant
+        returns (uint256 payout_, uint256 tokenId_)
+    {
         Bond storage bond = bonds[_id];
         require(block.timestamp < bond.endTime, "Bond ended");
         require(bond.capacity > 0, "Bond full");
@@ -232,8 +233,7 @@ contract DreBondDepository is NoteKeeper, ERC721Upgradeable, ReentrancyGuardUpgr
         uint256 timeElapsed = block.timestamp - bond.startTime;
         uint256 duration = bond.endTime - bond.startTime;
 
-        return bond.initialPrice -
-            ((bond.initialPrice - bond.finalPrice) * timeElapsed) / duration;
+        return bond.initialPrice - ((bond.initialPrice - bond.finalPrice) * timeElapsed) / duration;
     }
 
     /**
