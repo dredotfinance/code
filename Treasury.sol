@@ -1,0 +1,200 @@
+// SPDX-License-Identifier: AGPL-3.0
+pragma solidity ^0.7.5;
+
+import "./libraries/SafeMath.sol";
+import "./libraries/SafeERC20.sol";
+import "./interfaces/IOwnable.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/IERC20Metadata.sol";
+import "./interfaces/IDRE.sol";
+import "./interfaces/ITreasury.sol";
+import "./interfaces/IAggregatorV3.sol";
+import "./interfaces/IBondingCalculator.sol";
+import "./types/DreAccessControlled.sol";
+
+contract Treasury is DreAccessControlled, ITreasury {
+    using SafeMath for uint256;
+    using SafeERC20 for IERC20;
+
+    IDRE public DRE;
+
+    address[] public tokens;
+    mapping(address => bool) public enabledTokens;
+    mapping(address => AggregatorV3Interface) public oracles;
+
+    uint256 public override totalReserves;
+    uint256 public blocksNeededForQueue;
+
+    string internal notAccepted = "Treasury: not accepted";
+    string internal notApproved = "Treasury: not approved";
+    string internal invalidToken = "Treasury: invalid token";
+    string internal insufficientReserves = "Treasury: insufficient reserves";
+
+    function initialize(address _ohm, uint256 _timelock, IDreAuthority _authority) public initializer {
+        require(_ohm != address(0), "Zero address: DRE");
+        DRE = IDRE(_ohm);
+        blocksNeededForQueue = _timelock;
+        _setAuthority(_authority);
+    }
+
+    /* ========== MUTATIVE FUNCTIONS ========== */
+
+    /**
+     * @notice allow approved address to deposit an asset for DRE
+     * @param _amount uint256 amount of token to deposit
+     * @param _token address of token to deposit
+     * @param _profit uint256 amount of profit to mint
+     * @return send_ uint256 amount of DRE minted
+     */
+    function deposit(uint256 _amount, address _token, uint256 _profit)
+        external
+        override
+        onlyReserveDepositor
+        returns (uint256 send_)
+    {
+        require(enabledTokens[_token], invalidToken);
+
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
+
+        uint256 value = tokenValueE18(_token, _amount);
+
+        // mint DRE needed and store amount of rewards for distribution
+        send_ = value.sub(_profit);
+        DRE.mint(msg.sender, send_);
+
+        totalReserves = totalReserves.add(value);
+
+        emit Deposit(_token, _amount, value);
+    }
+
+    /**
+     * @notice allow approved address to burn DRE for reserves
+     * @param _amount amount of DRE to burn
+     * @param _token address of the token to burn
+     */
+    function withdraw(uint256 _amount, address _token) external override onlyReserveManager {
+        require(enabledTokens[_token], notAccepted); // Only reserves can be used for redemptions
+
+        uint256 value = tokenValueE18(_token, _amount);
+        DRE.burnFrom(msg.sender, value);
+
+        totalReserves = totalReserves.sub(value);
+        IERC20(_token).safeTransfer(msg.sender, _amount);
+
+        emit Withdrawal(_token, _amount, value);
+    }
+
+    /**
+     * @notice allow approved address to withdraw assets
+     * @param _token address of the token to withdraw
+     * @param _amount amount of the token to withdraw
+     */
+    function manage(address _token, uint256 _amount) external override onlyReserveManager {
+        if (enabledTokens[_token]) {
+            uint256 value = tokenValueE18(_token, _amount);
+            require(value <= excessReserves(), insufficientReserves);
+            totalReserves = totalReserves.sub(value);
+        }
+        IERC20(_token).safeTransfer(msg.sender, _amount);
+        emit Managed(_token, _amount);
+    }
+
+    /**
+     * @notice mint new DRE using excess reserves
+     * @param _recipient address of the recipient
+     * @param _amount amount of DRE to mint
+     */
+    function mint(address _recipient, uint256 _amount) external override onlyRewardManager {
+        require(_amount <= excessReserves(), insufficientReserves);
+        DRE.mint(_recipient, _amount);
+        emit Minted(msg.sender, _recipient, _amount);
+    }
+
+    /**
+     * @notice takes inventory of all tracked assets
+     * @notice always consolidate to recognized reserves before audit
+     */
+    function auditReserves() external onlyGovernor {
+        _updateReserves();
+    }
+
+    /**
+     * @notice enable permission from queue or set staking contract
+     * @param _address address to enable
+     * @param _calculator address of the calculator
+     */
+    function enable(address _address, address _calculator) external onlyGovernor {
+        oracles[_address] = AggregatorV3Interface(_calculator);
+        if (!enabledTokens[_address]) tokens.push(_address);
+        enabledTokens[_address] = true;
+        emit Permissioned(_address,  true);
+    }
+
+    /**
+     *  @notice disable permission from address
+     *  @param _toDisable address
+     */
+    function disable(address _toDisable) external {
+        require(authority.isGovernor(msg.sender) || authority.isGuardian(msg.sender), "Only governor or guardian");
+        enabledTokens[_toDisable] = false;
+        emit Permissioned(_toDisable, false);
+    }
+
+    /**
+     * @notice check if registry contains address
+     * @return (bool, uint256)
+     */
+    function indexInRegistry(address _address) public view returns (bool, uint256) {
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (_address == tokens[i]) {
+                return (true, i);
+            }
+        }
+        return (false, 0);
+    }
+
+    /* ========== VIEW FUNCTIONS ========== */
+
+    function backingRatioE18() public view returns (uint256) {
+        return totalReserves.mul(1e18).div(DRE.totalSupply());
+    }
+
+    /**
+     * @notice returns excess reserves not backing tokens
+     * @return uint
+     */
+    function excessReserves() public view override returns (uint256) {
+        return totalReserves.sub(DRE.totalSupply());
+    }
+
+    /**
+     * @notice returns DRE valuation of asset
+     * @param _token address of the token
+     * @param _amount amount of the token
+     * @return value_ value of the token in DRE
+     */
+    function tokenValueE18(address _token, uint256 _amount) public view override returns (uint256 value_) {
+        int256 priceE18 = oracles[_token].latestAnswer(); // 18 decimals price from a chainlink oracle
+        value_ = (uint256(priceE18) * _amount) / 1e18;
+    }
+
+    /**
+     * @notice returns supply metric that cannot be manipulated by debt
+     * @dev use this any time you need to query supply
+     * @return uint256
+     */
+    function baseSupply() external view override returns (uint256) {
+        return DRE.totalSupply();
+    }
+
+    function _updateReserves() internal {
+        uint256 reserves;
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (enabledTokens[tokens[i]]) {
+                reserves = reserves.add(tokenValueE18(tokens[i], IERC20(tokens[i]).balanceOf(address(this))));
+            }
+        }
+        totalReserves = reserves;
+        emit ReservesAudited(reserves);
+    }
+}
