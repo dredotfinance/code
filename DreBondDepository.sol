@@ -120,11 +120,12 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @param _id ID of the bond
      * @param _amount amount of quote token to spend
      * @param _maxPrice maximum price willing to pay
+     * @param _minPayout minimum payout required
      * @param _user recipient of the bond
      * @return payout_ amount of DRE tokens
      * @return tokenId_ ID of the bond position NFT
      */
-    function deposit(uint256 _id, uint256 _amount, uint256 _maxPrice, address _user)
+    function deposit(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, address _user)
         external
         nonReentrant
         returns (uint256 payout_, uint256 tokenId_)
@@ -140,6 +141,8 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
         // Calculate payout
         payout_ = (_amount * 1e18) / currentPrice_;
         require(payout_ <= bond.maxPayout, "Amount too large");
+        require(payout_ >= _minPayout, "Slippage too high");
+
 
         // Update bond state
         bond.capacity -= _amount;
