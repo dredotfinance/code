@@ -50,7 +50,7 @@ contract DreStaking is
     uint256 public rewardPerTokenStored;
     uint256 public override totalStaked;
 
-    function initialize(address _dreToken, address _trackingToken, IDreAuthority _authority) public initializer {
+    function initialize(address _dreToken, address _trackingToken, address _authority) public initializer {
         __ERC721_init("DRE Staking Position", "DRE-POS");
         __ReentrancyGuard_init();
 
@@ -59,7 +59,7 @@ contract DreStaking is
 
         dreToken = IERC20(_dreToken);
         trackingToken = IPermissionedERC20(_trackingToken);
-        _setAuthority(_authority);
+        __DreAccessControlled_init(_authority);
     }
 
     function lastTimeRewardApplicable() public view override returns (uint256) {

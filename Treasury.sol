@@ -23,18 +23,15 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
     mapping(address => AggregatorV3Interface) public oracles;
 
     uint256 public override totalReserves;
-    uint256 public blocksNeededForQueue;
-
     uint256 public constant ORACLE_STALE_PERIOD = 1 hours;
 
     string internal notAccepted = "Treasury: not accepted";
     string internal invalidToken = "Treasury: invalid token";
     string internal insufficientReserves = "Treasury: insufficient reserves";
 
-    function initialize(address _dre, uint256 _timelock, address _authority) public initializer {
+    function initialize(address _dre, address _authority) public initializer {
         require(_dre != address(0), "Zero address: DRE");
         DRE = IDRE(_dre);
-        blocksNeededForQueue = _timelock;
         __Pausable_init();
         __DreAccessControlled_init(_authority);
     }
@@ -119,7 +116,7 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @notice takes inventory of all tracked assets
      * @notice always consolidate to recognized reserves before audit
      */
-    function auditReserves() external onlyGovernor {
+    function syncReserves() external onlyGovernor {
         _updateReserves();
     }
 
@@ -168,7 +165,9 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @return uint
      */
     function excessReserves() public view override returns (uint256) {
-        return totalReserves - DRE.totalSupply();
+        uint256 totalSupply = DRE.totalSupply();
+        if (totalSupply > totalReserves) return 0;
+        return totalReserves - totalSupply;
     }
 
     /**

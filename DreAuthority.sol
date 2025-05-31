@@ -69,6 +69,10 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
         _grantRole(RESERVE_MANAGER_ROLE, _newReserveManager);
     }
 
+    function addReserveDepositor(address _newReserveDepositor) external onlyGovernor {
+        _grantRole(RESERVE_DEPOSITOR_ROLE, _newReserveDepositor);
+    }
+
     function addVault(address _newVault) external onlyGovernor {
         _grantRole(VAULT_ROLE, _newVault);
     }
