@@ -51,6 +51,8 @@ contract DreStaking is
     uint256 public override totalStaked;
 
     function initialize(address _dreToken, address _trackingToken, address _authority) public initializer {
+        lastId = 1;
+
         __ERC721_init("DRE Staking Position", "DRE-POS");
         __ReentrancyGuard_init();
 
@@ -82,9 +84,7 @@ contract DreStaking is
         require(totalStaked > 0, "No stakers");
 
         // Update rewards
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
-
+        _updateReward(0);
         dreToken.safeTransferFrom(msg.sender, address(this), reward);
 
         // Calculate new reward rate
@@ -106,12 +106,12 @@ contract DreStaking is
      * @param minLockDuration The minimum time tokens must be locked (0 for no minimum)
      * @return tokenId The token ID of the new position
      */
-    function createPosition(
-        address to,
-        uint256 amount,
-        uint256 declaredValue,
-        uint256 minLockDuration
-    ) external override nonReentrant returns (uint256 tokenId) {
+    function createPosition(address to, uint256 amount, uint256 declaredValue, uint256 minLockDuration)
+        external
+        override
+        nonReentrant
+        returns (uint256 tokenId)
+    {
         require(amount > 0, "Amount must be greater than 0");
         require(declaredValue > 0, "Declared value must be greater than 0");
 
@@ -281,11 +281,11 @@ contract DreStaking is
      * @param additionalAmount The amount to add to the stake
      * @param addtionalDeclaredValue The additional declared value
      */
-    function increaseAmount(
-        uint256 tokenId,
-        uint256 additionalAmount,
-        uint256 addtionalDeclaredValue
-    ) external override nonReentrant {
+    function increaseAmount(uint256 tokenId, uint256 additionalAmount, uint256 addtionalDeclaredValue)
+        external
+        override
+        nonReentrant
+    {
         require(ownerOf(tokenId) != address(0), "Position does not exist");
         require(additionalAmount > 0, "Amount must be greater than 0");
         require(!positions[tokenId].isInCooldown, "Position is in cooldown");
@@ -300,7 +300,6 @@ contract DreStaking is
 
         // Calculate harberger tax on the additional amount
         _distributeTax(addtionalDeclaredValue);
-
         _updateReward(tokenId);
 
         // Update position
@@ -372,19 +371,20 @@ contract DreStaking is
      * @param tokenId The position ID
      */
     function _updateReward(uint256 tokenId) internal {
-        Position storage position = positions[tokenId];
         uint256 effectiveTime = block.timestamp;
-        if (position.rewardLockTime > 0 && position.rewardLockTime < effectiveTime) {
-            effectiveTime = position.rewardLockTime;
-        }
-
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
 
-        if (position.amount > 0) {
-            position.rewards = (position.amount * (rewardPerTokenStored - position.rewardPerTokenPaid)) / 1e18;
-            position.rewardPerTokenPaid = rewardPerTokenStored;
+        if (tokenId > 0) {
+            Position storage position = positions[tokenId];
+            if (position.rewardLockTime > 0 && position.rewardLockTime < effectiveTime) {
+                effectiveTime = position.rewardLockTime;
+            }
+            if (position.amount > 0) {
+                position.rewards = (position.amount * (rewardPerTokenStored - position.rewardPerTokenPaid)) / 1e18;
+                position.rewardPerTokenPaid = rewardPerTokenStored;
+            }
+            position.lastRewardUpdate = effectiveTime;
         }
-        position.lastRewardUpdate = effectiveTime;
     }
 }
