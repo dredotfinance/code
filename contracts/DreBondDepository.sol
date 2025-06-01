@@ -83,6 +83,7 @@ contract DreBondDepository is
 
         _bonds.push(
             Bond({
+                enabled: true,
                 capacity: _capacity,
                 quoteToken: _quoteToken,
                 totalDebt: 0,
@@ -117,6 +118,7 @@ contract DreBondDepository is
     {
         Bond storage bond = _bonds[_id];
         require(block.timestamp < bond.endTime, "Bond ended");
+        require(bond.enabled, "Bond not enabled");
         require(bond.capacity > 0, "Bond full");
 
         // Calculate current price based on time elapsed
@@ -239,6 +241,11 @@ contract DreBondDepository is
 
         uint256 vestedAmount = (position.amount * timeElapsed) / VESTING_PERIOD;
         return vestedAmount - position.claimedAmount;
+    }
+
+    function disable(uint256 _id) external onlyPolicy {
+        _bonds[_id].enabled = false;
+        emit DisableBond(_id);
     }
 
     /**

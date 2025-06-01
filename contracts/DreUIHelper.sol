@@ -199,7 +199,6 @@ contract DreUIHelper {
     /// @return amount The amount of rewards claimed
     function claimAllRewards(address user) external returns (uint256 amount) {
         uint256 balance = staking.balanceOf(user);
-
         for (uint256 i = 0; i < balance; i++) {
             amount += staking.claimRewards(staking.tokenOfOwnerByIndex(user, i));
         }

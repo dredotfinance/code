@@ -24,26 +24,24 @@ contract UnstalePriceOracle is AggregatorV3Interface, Ownable {
         return 1;
     }
 
-    function getRoundData(
-        uint80 _roundId
-    )
+    function getRoundData(uint80 _roundId_)
         external
         view
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80 _roundId, int256 _answer, uint256 _startedAt, uint256 _updatedAt, uint80 _answeredInRound)
     {
-        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = oracle.getRoundData(_roundId);
-        return (roundId, answer * decimalsToAdd, startedAt, updatedAt, answeredInRound);
+        (_roundId, _answer, _startedAt, _updatedAt, _answeredInRound) = oracle.getRoundData(_roundId_);
+        return (_roundId, _answer * decimalsToAdd, _startedAt, _updatedAt, _answeredInRound);
     }
 
     function latestRoundData()
         external
         view
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80 _roundId, int256 _answer, uint256 _startedAt, uint256 _updatedAt, uint80 _answeredInRound)
     {
-        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = oracle.latestRoundData();
-        return (roundId, answer * decimalsToAdd, startedAt, block.timestamp, answeredInRound);
+        (_roundId, _answer, _startedAt, _updatedAt, _answeredInRound) = oracle.latestRoundData();
+        return (_roundId, _answer * decimalsToAdd, _startedAt, block.timestamp, _answeredInRound);
     }
 
     function latestAnswer() external view override returns (int256) {

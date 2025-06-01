@@ -14,9 +14,11 @@ interface IDreBondDepository is IERC721Enumerable {
     event BondCreated(uint256 indexed id, uint256 amount, uint256 price);
     event Claimed(uint256 indexed id, uint256 amount);
     event Staked(uint256 indexed id, uint256 amount);
+    event DisableBond(uint256 indexed id);
 
     /* ======== STRUCTS ======== */
     struct Bond {
+        bool enabled;
         uint256 capacity; // capacity remaining
         IERC20 quoteToken; // token to accept as payment
         uint256 totalDebt; // total debt from bond

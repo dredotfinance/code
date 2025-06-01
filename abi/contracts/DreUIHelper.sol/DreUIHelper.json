@@ -186,6 +186,11 @@
       {
         "components": [
           {
+            "internalType": "bool",
+            "name": "enabled",
+            "type": "bool"
+          },
+          {
             "internalType": "uint256",
             "name": "capacity",
             "type": "uint256"
