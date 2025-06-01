@@ -96,7 +96,7 @@ contract DreUIHelper {
         )
     {
         // Get protocol-wide stats
-        tvl = staking.totalStaked();
+        tvl = treasury.totalReserves();
         totalSupply = dreToken.totalSupply();
         totalStaked = staking.totalStaked();
         totalRewards = staking.rewardPerToken();
