@@ -260,6 +260,11 @@
         "internalType": "address",
         "name": "user",
         "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "bondTokens",
+        "type": "address[]"
       }
     ],
     "name": "getProtocolInfo",
@@ -288,11 +293,6 @@
         "internalType": "uint256",
         "name": "currentAPR",
         "type": "uint256"
-      },
-      {
-        "internalType": "address[]",
-        "name": "bondTokens",
-        "type": "address[]"
       },
       {
         "components": [

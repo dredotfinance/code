@@ -94,7 +94,7 @@ contract DreUIHelper {
 
     /// @notice Get all protocol information for a user
     /// @param user The address of the user
-    function getProtocolInfo(address user)
+    function getProtocolInfo(address user, address[] memory bondTokens)
         external
         view
         returns (
@@ -103,7 +103,6 @@ contract DreUIHelper {
             uint256 totalStaked,
             uint256 totalRewards,
             uint256 currentAPR,
-            address[] memory bondTokens,
             TokenInfo[] memory tokenInfos,
             StakingPositionInfo[] memory stakingPositions,
             BondPositionInfo[] memory bondPositions

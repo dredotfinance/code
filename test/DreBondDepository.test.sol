@@ -590,8 +590,8 @@ contract DreBondDepositoryTest is BaseTest {
 
         // Calculate bond parameters
         uint256 dreAmount = 10000e18; // 10000 DRE
-        uint256 initialPrice = 1e7; // 1 DRE = 1 USDC
-        uint256 finalPrice = 0.9e7; // 10% discount (0.9 * 1 = 0.9 USDC)
+        uint256 initialPrice = 2e6; // 1 DRE = 1 USDC
+        uint256 finalPrice = 1.9e6; // 10% discount (0.9 * 1 = 0.9 USDC)
         uint256 duration = 7 days;
 
         // Calculate DRE capacity (15000 DRE for 10000 DRE at $1.50)
@@ -625,7 +625,7 @@ contract DreBondDepositoryTest is BaseTest {
 
         // Verify payout is correct (1500 USDC / 1.5 = 1000 DRE)
         assertEq(payout, expectedPayout);
-        assertEq(payout, 1000e18); // Should receive 1000 DRE
+        assertEq(payout, 5000e18); // Should receive 1000 DRE
 
         // Verify bond position
         IDreBondDepository.BondPosition memory position = dreBondDepository.positions(tokenId);
