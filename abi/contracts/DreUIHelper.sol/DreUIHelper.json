@@ -20,6 +20,11 @@
         "internalType": "address",
         "name": "_dreToken",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_stakingToken",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -349,6 +354,19 @@
     "outputs": [
       {
         "internalType": "contract IDreStaking",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "stakingToken",
+    "outputs": [
+      {
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }

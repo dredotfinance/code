@@ -59,6 +59,7 @@ contract DreUIHelper {
     IDreBondDepository public immutable bondDepository;
     ITreasury public immutable treasury;
     IERC20 public immutable dreToken;
+    IERC20 public immutable stakingToken;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
@@ -67,27 +68,33 @@ contract DreUIHelper {
         address _staking,
         address _bondDepository,
         address _treasury,
-        address _dreToken
+        address _dreToken,
+        address _stakingToken
     ) {
         staking = IDreStaking(_staking);
         bondDepository = IDreBondDepository(_bondDepository);
         treasury = ITreasury(_treasury);
         dreToken = IERC20(_dreToken);
+        stakingToken = IERC20(_stakingToken);
     }
 
     /// @notice Get all protocol information for a user
     /// @param user The address of the user
-    function getProtocolInfo(address user) external view returns (
-        uint256 tvl,
-        uint256 totalSupply,
-        uint256 totalStaked,
-        uint256 totalRewards,
-        uint256 currentAPR,
-        address[] memory bondTokens,
-        TokenInfo[] memory tokenInfos,
-        StakingPositionInfo[] memory stakingPositions,
-        BondPositionInfo[] memory bondPositions
-    ) {
+    function getProtocolInfo(address user)
+        external
+        view
+        returns (
+            uint256 tvl,
+            uint256 totalSupply,
+            uint256 totalStaked,
+            uint256 totalRewards,
+            uint256 currentAPR,
+            address[] memory bondTokens,
+            TokenInfo[] memory tokenInfos,
+            StakingPositionInfo[] memory stakingPositions,
+            BondPositionInfo[] memory bondPositions
+        )
+    {
         // Get protocol-wide stats
         tvl = staking.totalStaked();
         totalSupply = dreToken.totalSupply();
@@ -96,7 +103,7 @@ contract DreUIHelper {
         currentAPR = calculateAPR();
 
         // Get token balances and allowances
-        tokenInfos = new TokenInfo[](bondTokens.length + 1); // +1 for DRE token
+        tokenInfos = new TokenInfo[](bondTokens.length + 2); // +1 for DRE token, +1 for staking token
 
         // Add DRE token info
         tokenInfos[0] = TokenInfo({
@@ -108,10 +115,21 @@ contract DreUIHelper {
             decimals: 18
         });
 
+        // Add staking token info
+
+        tokenInfos[1] = TokenInfo({
+            token: address(stakingToken),
+            name: "Staked DRE",
+            symbol: "sDRE",
+            balance: stakingToken.balanceOf(user),
+            allowance: stakingToken.allowance(user, address(staking)),
+            decimals: 18
+        });
+
         // Add bond token info
         for (uint256 i = 0; i < bondTokens.length; i++) {
             IERC20Metadata token = IERC20Metadata(bondTokens[i]);
-            tokenInfos[i + 1] = TokenInfo({
+            tokenInfos[i + 2] = TokenInfo({
                 balance: token.balanceOf(user),
                 allowance: token.allowance(user, address(bondDepository)),
                 decimals: token.decimals(),
@@ -148,15 +166,8 @@ contract DreUIHelper {
 
         for (uint256 i = 0; i < bondBalance; i++) {
             uint256 tokenId = bondDepository.tokenOfOwnerByIndex(user, i);
-            (
-                uint256 bondId,
-                uint256 amount,
-                uint256 payout,
-                uint256 startTime,
-                uint256 lastClaimTime,
-                uint256 claimedAmount,
-                bool isStaked
-            ) = bondDepository.positions(tokenId);
+            (uint256 bondId, uint256 amount, uint256 payout, uint256 startTime,, uint256 claimedAmount, bool isStaked) =
+                bondDepository.positions(tokenId);
 
             bondPositions[i] = BondPositionInfo({
                 id: tokenId,
@@ -197,7 +208,11 @@ contract DreUIHelper {
         return (annualRewards * 10000) / totalStaked_;
     }
 
-    function getAllStakingPositions(uint256 startingIndex, uint256 endingIndex) external view returns (StakingPositionInfo[] memory) {
+    function getAllStakingPositions(uint256 startingIndex, uint256 endingIndex)
+        external
+        view
+        returns (StakingPositionInfo[] memory)
+    {
         StakingPositionInfo[] memory positions = new StakingPositionInfo[](endingIndex - startingIndex);
 
         for (uint256 i = startingIndex; i < endingIndex; i++) {
