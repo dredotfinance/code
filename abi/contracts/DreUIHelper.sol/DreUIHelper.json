@@ -176,6 +176,82 @@
   {
     "inputs": [
       {
+        "internalType": "uint256[]",
+        "name": "bondIds",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "getBondVariables",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "capacity",
+            "type": "uint256"
+          },
+          {
+            "internalType": "contract IERC20",
+            "name": "quoteToken",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalDebt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxPayout",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "sold",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "purchased",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "startTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "endTime",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "initialPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "finalPrice",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IDreBondDepository.Bond[]",
+        "name": "bonds",
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "currentPrices",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "user",
         "type": "address"
@@ -316,7 +392,7 @@
           },
           {
             "internalType": "uint256",
-            "name": "payout",
+            "name": "quoteAmount",
             "type": "uint256"
           },
           {
@@ -326,17 +402,17 @@
           },
           {
             "internalType": "uint256",
-            "name": "endTime",
+            "name": "lastClaimTime",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
-            "name": "claimed",
+            "name": "claimedAmount",
             "type": "uint256"
           },
           {
             "internalType": "bool",
-            "name": "isVested",
+            "name": "isStaked",
             "type": "bool"
           }
         ],

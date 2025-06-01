@@ -19,7 +19,6 @@ interface IDreBondDepository is IERC721Enumerable {
     struct Bond {
         uint256 capacity; // capacity remaining
         IERC20 quoteToken; // token to accept as payment
-        bool capacityInQuote; // capacity limit is in payment token (true) or in DRE (false)
         uint256 totalDebt; // total debt from bond
         uint256 maxPayout; // max tokens in/out
         uint256 sold; // DRE tokens out
@@ -51,13 +50,9 @@ interface IDreBondDepository is IERC721Enumerable {
         uint256 _duration
     ) external returns (uint256 id_);
 
-    function deposit(
-        uint256 _id,
-        uint256 _amount,
-        uint256 _maxPrice,
-        uint256 _minPayout,
-        address _user
-    ) external returns (uint256 payout_, uint256 tokenId_);
+    function deposit(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, address _user)
+        external
+        returns (uint256 payout_, uint256 tokenId_);
 
     function claim(uint256 _tokenId) external;
 
@@ -73,39 +68,9 @@ interface IDreBondDepository is IERC721Enumerable {
 
     function bondLength() external view returns (uint256);
 
-    function bonds(
-        uint256
-    )
-        external
-        view
-        returns (
-            uint256 capacity,
-            IERC20 quoteToken,
-            bool capacityInQuote,
-            uint256 totalDebt,
-            uint256 maxPayout,
-            uint256 sold,
-            uint256 purchased,
-            uint256 startTime,
-            uint256 endTime,
-            uint256 initialPrice,
-            uint256 finalPrice
-        );
+    function bonds(uint256) external view returns (Bond memory bond);
 
-    function positions(
-        uint256
-    )
-        external
-        view
-        returns (
-            uint256 bondId,
-            uint256 amount,
-            uint256 quoteAmount,
-            uint256 startTime,
-            uint256 lastClaimTime,
-            uint256 claimedAmount,
-            bool isStaked
-        );
+    function positions(uint256) external view returns (BondPosition memory position);
 
     function VESTING_PERIOD() external view returns (uint256);
     function STAKING_LOCK_PERIOD() external view returns (uint256);

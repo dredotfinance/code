@@ -29,14 +29,14 @@ contract DreStakingTest is BaseTest {
         dre.approve(address(staking), STAKE_AMOUNT);
 
         // Create position
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Verify position details
-        (uint256 amount, uint256 declaredValue, , , uint256 cooldownEnd, ) = staking.positions(tokenId);
+        IDreStaking.Position memory position = staking.positions(tokenId);
 
-        assertEq(amount, STAKE_AMOUNT - 50e18);
-        assertEq(declaredValue, DECLARED_VALUE);
-        assertEq(cooldownEnd, 0);
+        assertEq(position.amount, STAKE_AMOUNT - 50e18);
+        assertEq(position.declaredValue, DECLARED_VALUE);
+        assertEq(position.cooldownEnd, 0);
         assertEq(staking.totalStaked(), STAKE_AMOUNT - 50e18);
         assertEq(sDre.balanceOf(owner), STAKE_AMOUNT - 50e18);
 
@@ -49,15 +49,15 @@ contract DreStakingTest is BaseTest {
         // Create position first
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Start unstaking
         staking.startUnstaking(tokenId);
 
         // Verify cooldown state
-        (, , , , uint256 cooldownEnd, ) = staking.positions(tokenId);
-        assertTrue(cooldownEnd > 0);
-        assertEq(cooldownEnd, block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD());
+        IDreStaking.Position memory position = staking.positions(tokenId);
+        assertTrue(position.cooldownEnd > 0);
+        assertEq(position.cooldownEnd, block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD());
 
         vm.stopPrank();
     }
@@ -93,7 +93,7 @@ contract DreStakingTest is BaseTest {
         // Create position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Add rewards
         dre.mint(owner, REWARD_AMOUNT);
@@ -116,7 +116,7 @@ contract DreStakingTest is BaseTest {
         // Create position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // taxes would've been paid
         assertEq(dre.balanceOf(operationsTreasury), 10e18);
@@ -150,10 +150,11 @@ contract DreStakingTest is BaseTest {
         // Create initial position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
-        (uint256 amount, uint256 declaredValue, , , , ) = staking.positions(tokenId);
-        assertEq(amount, STAKE_AMOUNT - 50e18);
-        assertEq(declaredValue, DECLARED_VALUE);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        IDreStaking.Position memory initialPosition = staking.positions(tokenId);
+        assertEq(initialPosition.amount, STAKE_AMOUNT - 50e18);
+        assertEq(initialPosition.declaredValue, DECLARED_VALUE);
         assertEq(staking.totalStaked(), STAKE_AMOUNT - 50e18);
 
         // Increase amount
@@ -164,9 +165,9 @@ contract DreStakingTest is BaseTest {
         staking.increaseAmount(tokenId, additionalAmount, additionalDeclaredValue);
 
         // Verify position updated
-        (amount, declaredValue, , , , ) = staking.positions(tokenId);
-        assertEq(amount, STAKE_AMOUNT + additionalAmount - 50e18 - 2.5e18);
-        assertEq(declaredValue, DECLARED_VALUE + additionalDeclaredValue);
+        IDreStaking.Position memory finalPosition = staking.positions(tokenId);
+        assertEq(finalPosition.amount, STAKE_AMOUNT + additionalAmount - 50e18 - 2.5e18);
+        assertEq(finalPosition.declaredValue, DECLARED_VALUE + additionalDeclaredValue);
         assertEq(staking.totalStaked(), STAKE_AMOUNT + additionalAmount - 50e18 - 2.5e18);
 
         vm.stopPrank();
@@ -178,7 +179,7 @@ contract DreStakingTest is BaseTest {
         // Create position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Start unstaking
         staking.startUnstaking(tokenId);
@@ -187,8 +188,8 @@ contract DreStakingTest is BaseTest {
         staking.cancelUnstaking(tokenId);
 
         // Verify cooldown cancelled
-        (, , , , uint256 cooldownEnd, ) = staking.positions(tokenId);
-        assertEq(cooldownEnd, 0);
+        IDreStaking.Position memory position = staking.positions(tokenId);
+        assertEq(position.cooldownEnd, 0);
 
         vm.stopPrank();
     }
@@ -213,7 +214,7 @@ contract DreStakingTest is BaseTest {
         // Create position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         vm.stopPrank();
 
@@ -229,7 +230,7 @@ contract DreStakingTest is BaseTest {
         // Create position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Start unstaking
         staking.startUnstaking(tokenId);
@@ -246,7 +247,7 @@ contract DreStakingTest is BaseTest {
         // Create position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Add rewards
         dre.mint(address(this), REWARD_AMOUNT);
@@ -265,7 +266,7 @@ contract DreStakingTest is BaseTest {
         // Create position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Try to buy own position
         dre.mint(owner, DECLARED_VALUE);
@@ -281,14 +282,14 @@ contract DreStakingTest is BaseTest {
         // Create two positions
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId1, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId1,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         dre.mint(user1, STAKE_AMOUNT);
 
         vm.stopPrank();
         vm.startPrank(user1);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId2, ) = staking.createPosition(user1, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId2,) = staking.createPosition(user1, STAKE_AMOUNT, DECLARED_VALUE, 0);
         vm.stopPrank();
 
         // Add rewards
@@ -343,7 +344,7 @@ contract DreStakingTest is BaseTest {
         // Create initial position
         dre.mint(owner, STAKE_AMOUNT);
         dre.approve(address(staking), STAKE_AMOUNT);
-        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Add rewards before selling
         dre.mint(owner, REWARD_AMOUNT);
@@ -407,14 +408,14 @@ contract DreStakingTest is BaseTest {
         // Create two positions with different amounts
         dre.mint(owner, stakeAmount1);
         dre.approve(address(staking), stakeAmount1);
-        (uint256 tokenId1, ) = staking.createPosition(owner, stakeAmount1, stakeAmount1, 0);
+        (uint256 tokenId1,) = staking.createPosition(owner, stakeAmount1, stakeAmount1, 0);
 
         dre.mint(user1, stakeAmount2);
         vm.stopPrank();
 
         vm.startPrank(user1);
         dre.approve(address(staking), stakeAmount2);
-        (uint256 tokenId2, ) = staking.createPosition(user1, stakeAmount2, stakeAmount2, 0);
+        (uint256 tokenId2,) = staking.createPosition(user1, stakeAmount2, stakeAmount2, 0);
         vm.stopPrank();
 
         // Add rewards
@@ -474,45 +475,52 @@ contract DreStakingTest is BaseTest {
         // Create initial position
         dre.mint(owner, stakeAmount + additionalAmount);
         dre.approve(address(staking), stakeAmount + additionalAmount);
-        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
 
         // Get initial position details
-        (uint256 initialAmount, uint256 initialValue, , , , ) = staking.positions(tokenId);
+        IDreStaking.Position memory initialPosition = staking.positions(tokenId);
 
         // Increase position
         staking.increaseAmount(tokenId, additionalAmount, additionalValue);
 
         // Get updated position details
-        (uint256 finalAmount, uint256 finalValue, , , , ) = staking.positions(tokenId);
+        IDreStaking.Position memory finalPosition = staking.positions(tokenId);
 
         // Verify position was updated correctly
         uint256 totalTax = staking.HARBERGER_TAX_RATE() + staking.TEAM_TREASURY_SHARE();
         assertApproxEqAbs(
-            finalAmount,
-            initialAmount + additionalAmount - ((additionalValue * totalTax) / staking.BASIS_POINTS()),
+            finalPosition.amount,
+            initialPosition.amount + additionalAmount - ((additionalValue * totalTax) / staking.BASIS_POINTS()),
             100,
             "Amount not updated correctly"
         );
-        assertApproxEqAbs(finalValue, initialValue + additionalValue, 100, "Declared value not updated correctly");
+        assertApproxEqAbs(
+            finalPosition.declaredValue,
+            initialPosition.declaredValue + additionalValue,
+            100,
+            "Declared value not updated correctly"
+        );
 
         // Start unstaking
         staking.startUnstaking(tokenId);
 
         // Verify cooldown started
-        (, , , , uint256 cooldownEnd, ) = staking.positions(tokenId);
-        assertTrue(cooldownEnd > 0, "Cooldown not started");
+        IDreStaking.Position memory position = staking.positions(tokenId);
+        assertTrue(position.cooldownEnd > 0, "Cooldown not started");
 
         // Cancel unstaking
         staking.cancelUnstaking(tokenId);
 
         // Verify cooldown cancelled
-        (, , , , cooldownEnd, ) = staking.positions(tokenId);
-        assertEq(cooldownEnd, 0, "Cooldown not cancelled");
+        IDreStaking.Position memory cooldownPosition = staking.positions(tokenId);
+        assertEq(cooldownPosition.cooldownEnd, 0, "Cooldown not cancelled");
 
         vm.stopPrank();
     }
 
-    function testFuzz_RewardAccumulation(uint256 stakeAmount, uint256 rewardAmount, uint256 timeBetweenRewards) public {
+    function testFuzz_RewardAccumulation(uint256 stakeAmount, uint256 rewardAmount, uint256 timeBetweenRewards)
+        public
+    {
         // Bound the inputs to reasonable ranges
         stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
         rewardAmount = bound(rewardAmount, 1e18, 1000000e18);
@@ -523,7 +531,7 @@ contract DreStakingTest is BaseTest {
         // Create position
         dre.mint(owner, stakeAmount);
         dre.approve(address(staking), stakeAmount);
-        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, stakeAmount, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, stakeAmount, 0);
 
         // Add first reward
         dre.mint(owner, rewardAmount);
@@ -567,7 +575,7 @@ contract DreStakingTest is BaseTest {
         // Create initial position
         dre.mint(owner, stakeAmount);
         dre.approve(address(staking), stakeAmount);
-        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
 
         // Add rewards before selling
         dre.mint(owner, rewardAmount);
@@ -601,13 +609,10 @@ contract DreStakingTest is BaseTest {
         );
 
         // Verify seller received payment minus fees
-        uint256 expectedSellerAmount = declaredValue -
-            ((declaredValue * staking.TEAM_TREASURY_SHARE()) / staking.BASIS_POINTS());
+        uint256 expectedSellerAmount =
+            declaredValue - ((declaredValue * staking.TEAM_TREASURY_SHARE()) / staking.BASIS_POINTS());
         assertApproxEqRel(
-            dre.balanceOf(owner),
-            expectedSellerAmount,
-            0.0001e18,
-            "Seller did not receive correct amount"
+            dre.balanceOf(owner), expectedSellerAmount, 0.0001e18, "Seller did not receive correct amount"
         );
 
         // Fast forward past reward cooldown
@@ -640,7 +645,7 @@ contract DreStakingTest is BaseTest {
         // Create initial position
         dre.mint(owner, stakeAmount);
         dre.approve(address(staking), stakeAmount);
-        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
 
         // Add first reward
         dre.mint(owner, rewardAmount1);
@@ -682,11 +687,9 @@ contract DreStakingTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFuzz_BuyPositionWithUnstaking(
-        uint256 stakeAmount,
-        uint256 declaredValue,
-        uint256 rewardAmount
-    ) public {
+    function testFuzz_BuyPositionWithUnstaking(uint256 stakeAmount, uint256 declaredValue, uint256 rewardAmount)
+        public
+    {
         // Bound the inputs to reasonable ranges
         stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
         declaredValue = bound(declaredValue, stakeAmount, stakeAmount * 2);
@@ -697,7 +700,7 @@ contract DreStakingTest is BaseTest {
         // Create initial position
         dre.mint(owner, stakeAmount);
         dre.approve(address(staking), stakeAmount);
-        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+        (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
 
         // Add rewards
         dre.mint(owner, rewardAmount);
@@ -717,8 +720,8 @@ contract DreStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Verify unstaking was cancelled
-        (, , , , uint256 cooldownEnd, ) = staking.positions(tokenId);
-        assertEq(cooldownEnd, 0, "Unstaking not cancelled after position transfer");
+        IDreStaking.Position memory position = staking.positions(tokenId);
+        assertEq(position.cooldownEnd, 0, "Unstaking not cancelled after position transfer");
 
         // Fast forward past reward cooldown
         vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);

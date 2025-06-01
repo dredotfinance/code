@@ -12,7 +12,12 @@ import "./interfaces/ITreasury.sol";
 
 /// @title DRE Bond Depository
 /// @author DRE Protocol
-contract DreBondDepository is DreAccessControlled, ERC721EnumerableUpgradeable, ReentrancyGuardUpgradeable, IDreBondDepository {
+contract DreBondDepository is
+    DreAccessControlled,
+    ERC721EnumerableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    IDreBondDepository
+{
     using SafeERC20 for IERC20;
 
     // Constants
@@ -29,76 +34,19 @@ contract DreBondDepository is DreAccessControlled, ERC721EnumerableUpgradeable, 
     mapping(uint256 => BondPosition) private _positions;
     uint256 public override lastId = 1;
 
-    function bonds(
-        uint256 index
-    )
-        external
-        view
-        override
-        returns (
-            uint256 capacity,
-            IERC20 quoteToken,
-            bool capacityInQuote,
-            uint256 totalDebt,
-            uint256 maxPayout,
-            uint256 sold,
-            uint256 purchased,
-            uint256 startTime,
-            uint256 endTime,
-            uint256 initialPrice,
-            uint256 finalPrice
-        )
-    {
-        Bond memory bond = _bonds[index];
-        return (
-            bond.capacity,
-            bond.quoteToken,
-            bond.capacityInQuote,
-            bond.totalDebt,
-            bond.maxPayout,
-            bond.sold,
-            bond.purchased,
-            bond.startTime,
-            bond.endTime,
-            bond.initialPrice,
-            bond.finalPrice
-        );
+    function bonds(uint256 index) external view override returns (Bond memory bond) {
+        bond = _bonds[index];
     }
 
-    function positions(
-        uint256 tokenId
-    )
-        external
-        view
-        override
-        returns (
-            uint256 bondId,
-            uint256 amount,
-            uint256 quoteAmount,
-            uint256 startTime,
-            uint256 lastClaimTime,
-            uint256 claimedAmount,
-            bool isStaked
-        )
-    {
-        BondPosition memory position = _positions[tokenId];
-        return (
-            position.bondId,
-            position.amount,
-            position.quoteAmount,
-            position.startTime,
-            position.lastClaimTime,
-            position.claimedAmount,
-            position.isStaked
-        );
+    function positions(uint256 tokenId) external view override returns (BondPosition memory position) {
+        position = _positions[tokenId];
     }
 
-    function initialize(
-        address _dre,
-        address _staking,
-        address _treasury,
-        address _authority
-    ) public override initializer {
+    function initialize(address _dre, address _staking, address _treasury, address _authority)
+        public
+        override
+        initializer
+    {
         __ERC721_init("DRE Bond Position", "DRE-BOND");
         __ReentrancyGuard_init();
         __DreAccessControlled_init(_authority);
@@ -137,7 +85,6 @@ contract DreBondDepository is DreAccessControlled, ERC721EnumerableUpgradeable, 
             Bond({
                 capacity: _capacity,
                 quoteToken: _quoteToken,
-                capacityInQuote: true,
                 totalDebt: 0,
                 maxPayout: _capacity,
                 sold: 0,
@@ -162,13 +109,12 @@ contract DreBondDepository is DreAccessControlled, ERC721EnumerableUpgradeable, 
      * @return payout_ amount of DRE tokens
      * @return tokenId_ ID of the bond position NFT
      */
-    function deposit(
-        uint256 _id,
-        uint256 _amount,
-        uint256 _maxPrice,
-        uint256 _minPayout,
-        address _user
-    ) external override nonReentrant returns (uint256 payout_, uint256 tokenId_) {
+    function deposit(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, address _user)
+        external
+        override
+        nonReentrant
+        returns (uint256 payout_, uint256 tokenId_)
+    {
         Bond storage bond = _bonds[_id];
         require(block.timestamp < bond.endTime, "Bond ended");
         require(bond.capacity > 0, "Bond full");
@@ -183,7 +129,7 @@ contract DreBondDepository is DreAccessControlled, ERC721EnumerableUpgradeable, 
         require(payout_ >= _minPayout, "Slippage too high");
 
         // Update bond state
-        bond.capacity -= _amount;
+        bond.capacity -= payout_;
         bond.purchased += _amount;
         bond.sold += payout_;
         bond.totalDebt += payout_;
