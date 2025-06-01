@@ -29,19 +29,26 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
     mapping(uint256 => BondPosition) private _positions;
     uint256 public override lastId = 1;
 
-    function bonds(uint256 index) external view override returns (
-        uint256 capacity,
-        IERC20 quoteToken,
-        bool capacityInQuote,
-        uint256 totalDebt,
-        uint256 maxPayout,
-        uint256 sold,
-        uint256 purchased,
-        uint256 startTime,
-        uint256 endTime,
-        uint256 initialPrice,
-        uint256 finalPrice
-    ) {
+    function bonds(
+        uint256 index
+    )
+        external
+        view
+        override
+        returns (
+            uint256 capacity,
+            IERC20 quoteToken,
+            bool capacityInQuote,
+            uint256 totalDebt,
+            uint256 maxPayout,
+            uint256 sold,
+            uint256 purchased,
+            uint256 startTime,
+            uint256 endTime,
+            uint256 initialPrice,
+            uint256 finalPrice
+        )
+    {
         Bond memory bond = _bonds[index];
         return (
             bond.capacity,
@@ -58,15 +65,22 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
         );
     }
 
-    function positions(uint256 tokenId) external view override returns (
-        uint256 bondId,
-        uint256 amount,
-        uint256 quoteAmount,
-        uint256 startTime,
-        uint256 lastClaimTime,
-        uint256 claimedAmount,
-        bool isStaked
-    ) {
+    function positions(
+        uint256 tokenId
+    )
+        external
+        view
+        override
+        returns (
+            uint256 bondId,
+            uint256 amount,
+            uint256 quoteAmount,
+            uint256 startTime,
+            uint256 lastClaimTime,
+            uint256 claimedAmount,
+            bool isStaked
+        )
+    {
         BondPosition memory position = _positions[tokenId];
         return (
             position.bondId,

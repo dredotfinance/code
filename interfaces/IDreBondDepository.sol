@@ -40,12 +40,7 @@ interface IDreBondDepository {
     }
 
     /* ======== FUNCTIONS ======== */
-    function initialize(
-        address _dre,
-        address _staking,
-        address _treasury,
-        address _authority
-    ) external;
+    function initialize(address _dre, address _staking, address _treasury, address _authority) external;
 
     function create(
         IERC20 _quoteToken,
@@ -77,29 +72,39 @@ interface IDreBondDepository {
 
     function bondLength() external view returns (uint256);
 
-    function bonds(uint256) external view returns (
-        uint256 capacity,
-        IERC20 quoteToken,
-        bool capacityInQuote,
-        uint256 totalDebt,
-        uint256 maxPayout,
-        uint256 sold,
-        uint256 purchased,
-        uint256 startTime,
-        uint256 endTime,
-        uint256 initialPrice,
-        uint256 finalPrice
-    );
+    function bonds(
+        uint256
+    )
+        external
+        view
+        returns (
+            uint256 capacity,
+            IERC20 quoteToken,
+            bool capacityInQuote,
+            uint256 totalDebt,
+            uint256 maxPayout,
+            uint256 sold,
+            uint256 purchased,
+            uint256 startTime,
+            uint256 endTime,
+            uint256 initialPrice,
+            uint256 finalPrice
+        );
 
-    function positions(uint256) external view returns (
-        uint256 bondId,
-        uint256 amount,
-        uint256 quoteAmount,
-        uint256 startTime,
-        uint256 lastClaimTime,
-        uint256 claimedAmount,
-        bool isStaked
-    );
+    function positions(
+        uint256
+    )
+        external
+        view
+        returns (
+            uint256 bondId,
+            uint256 amount,
+            uint256 quoteAmount,
+            uint256 startTime,
+            uint256 lastClaimTime,
+            uint256 claimedAmount,
+            bool isStaked
+        );
 
     function VESTING_PERIOD() external view returns (uint256);
     function STAKING_LOCK_PERIOD() external view returns (uint256);
