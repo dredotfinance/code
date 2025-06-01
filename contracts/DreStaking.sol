@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -20,7 +20,7 @@ interface IPermissionedERC20 {
 contract DreStaking is
     IDreStaking,
     DreAccessControlled,
-    ERC721Upgradeable,
+    ERC721EnumerableUpgradeable,
     ReentrancyGuardUpgradeable,
     MulticallUpgradeable
 {
@@ -51,8 +51,8 @@ contract DreStaking is
     uint256 public rewardPerTokenStored;
     uint256 public override totalStaked;
 
-    function initialize(address _dreToken, address _trackingToken, address _authority) public initializer {
-        lastId = 1;
+    function initialize(address _dreToken, address _trackingToken, address _authority) public reinitializer(3) {
+        lastId = 2;
 
         __ERC721_init("DRE Staking Position", "DRE-POS");
         __ReentrancyGuard_init();
