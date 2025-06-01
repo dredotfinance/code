@@ -1,8 +1,12 @@
-// SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: AGPL-3.0-or-later
+pragma solidity ^0.8.15;
 
 interface ITreasury {
-    function deposit(uint256 _amount, address _token, uint256 _profit) external returns (uint256);
+    function deposit(
+        uint256 _amount,
+        address _token,
+        uint256 _profit
+    ) external returns (uint256 sent_);
 
     function withdraw(uint256 _amount, address _token) external;
 

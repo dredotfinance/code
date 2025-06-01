@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -7,59 +7,84 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./DreAccessControlled.sol";
 import "./interfaces/IDreStaking.sol";
+import "./interfaces/IDreBondDepository.sol";
+import "./interfaces/ITreasury.sol";
 
 /// @title DRE Bond Depository
 /// @author DRE Protocol
-contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, ReentrancyGuardUpgradeable {
+contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, ReentrancyGuardUpgradeable, IDreBondDepository {
     using SafeERC20 for IERC20;
 
-    /* ======== EVENTS ======== */
-    event CreateBond(uint256 indexed id, address indexed quoteToken, uint256 initialPrice, uint256 capacity);
-    event CloseBond(uint256 indexed id);
-    event BondCreated(uint256 indexed id, uint256 amount, uint256 price);
-    event Claimed(uint256 indexed id, uint256 amount);
-    event Staked(uint256 indexed id, uint256 amount);
-
-    /* ======== STATE VARIABLES ======== */
-    struct Bond {
-        uint256 capacity; // capacity remaining
-        IERC20 quoteToken; // token to accept as payment
-        bool capacityInQuote; // capacity limit is in payment token (true) or in DRE (false)
-        uint256 totalDebt; // total debt from bond
-        uint256 maxPayout; // max tokens in/out
-        uint256 sold; // DRE tokens out
-        uint256 purchased; // quote tokens in
-        uint256 startTime; // when the bond starts
-        uint256 endTime; // when the bond ends
-        uint256 initialPrice; // starting price in quote token
-        uint256 finalPrice; // ending price in quote token
-    }
-
-    struct BondPosition {
-        uint256 bondId;
-        uint256 amount; // amount of DRE tokens
-        uint256 quoteAmount; // amount of quote tokens paid
-        uint256 startTime; // when the bond was purchased
-        uint256 lastClaimTime; // last time tokens were claimed
-        uint256 claimedAmount; // amount of tokens already claimed
-        bool isStaked; // whether the position is staked
-    }
-
     // Constants
-    uint256 public immutable VESTING_PERIOD = 12 days;
-    uint256 public immutable STAKING_LOCK_PERIOD = 30 days;
-    uint256 public immutable BASIS_POINTS = 10000;
-    uint256 public immutable TEAM_SHARE = 500; // 5%
+    uint256 public immutable override VESTING_PERIOD = 12 days;
+    uint256 public immutable override STAKING_LOCK_PERIOD = 30 days;
+    uint256 public immutable override BASIS_POINTS = 10000;
+    uint256 public immutable override TEAM_SHARE = 500; // 5%
 
     // Storage
-    Bond[] public bonds;
-    IDreStaking public staking;
-    IERC20 public dre;
-    ITreasury public treasury;
-    mapping(uint256 => BondPosition) public positions;
-    uint256 public lastId = 1;
+    Bond[] private _bonds;
+    IDreStaking public override staking;
+    IERC20 public override dre;
+    ITreasury public override treasury;
+    mapping(uint256 => BondPosition) private _positions;
+    uint256 public override lastId = 1;
 
-    function initialize(address _authority, address _dre, address _staking, address _treasury) public initializer {
+    function bonds(uint256 index) external view override returns (
+        uint256 capacity,
+        IERC20 quoteToken,
+        bool capacityInQuote,
+        uint256 totalDebt,
+        uint256 maxPayout,
+        uint256 sold,
+        uint256 purchased,
+        uint256 startTime,
+        uint256 endTime,
+        uint256 initialPrice,
+        uint256 finalPrice
+    ) {
+        Bond memory bond = _bonds[index];
+        return (
+            bond.capacity,
+            bond.quoteToken,
+            bond.capacityInQuote,
+            bond.totalDebt,
+            bond.maxPayout,
+            bond.sold,
+            bond.purchased,
+            bond.startTime,
+            bond.endTime,
+            bond.initialPrice,
+            bond.finalPrice
+        );
+    }
+
+    function positions(uint256 tokenId) external view override returns (
+        uint256 bondId,
+        uint256 amount,
+        uint256 quoteAmount,
+        uint256 startTime,
+        uint256 lastClaimTime,
+        uint256 claimedAmount,
+        bool isStaked
+    ) {
+        BondPosition memory position = _positions[tokenId];
+        return (
+            position.bondId,
+            position.amount,
+            position.quoteAmount,
+            position.startTime,
+            position.lastClaimTime,
+            position.claimedAmount,
+            position.isStaked
+        );
+    }
+
+    function initialize(
+        address _dre,
+        address _staking,
+        address _treasury,
+        address _authority
+    ) public override initializer {
         __ERC721_init("DRE Bond Position", "DRE-BOND");
         __ReentrancyGuard_init();
         __DreAccessControlled_init(_authority);
@@ -86,15 +111,15 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
         uint256 _initialPrice,
         uint256 _finalPrice,
         uint256 _duration
-    ) external onlyPolicy returns (uint256 id_) {
+    ) external override onlyPolicy returns (uint256 id_) {
         require(_initialPrice > _finalPrice, "Invalid price range");
         require(_duration > 0, "Invalid duration");
 
-        id_ = bonds.length;
+        id_ = _bonds.length;
         uint256 startTime = block.timestamp;
         uint256 endTime = startTime + _duration;
 
-        bonds.push(
+        _bonds.push(
             Bond({
                 capacity: _capacity,
                 quoteToken: _quoteToken,
@@ -129,8 +154,8 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
         uint256 _maxPrice,
         uint256 _minPayout,
         address _user
-    ) external nonReentrant returns (uint256 payout_, uint256 tokenId_) {
-        Bond storage bond = bonds[_id];
+    ) external override nonReentrant returns (uint256 payout_, uint256 tokenId_) {
+        Bond storage bond = _bonds[_id];
         require(block.timestamp < bond.endTime, "Bond ended");
         require(bond.capacity > 0, "Bond full");
 
@@ -165,7 +190,7 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
         tokenId_ = lastId++;
         _safeMint(_user, tokenId_);
 
-        positions[tokenId_] = BondPosition({
+        _positions[tokenId_] = BondPosition({
             bondId: _id,
             amount: payout_,
             quoteAmount: _amount,
@@ -182,9 +207,9 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @notice claim vested tokens from a bond position
      * @param _tokenId ID of the bond position
      */
-    function claim(uint256 _tokenId) external nonReentrant {
+    function claim(uint256 _tokenId) external override nonReentrant {
         require(ownerOf(_tokenId) == msg.sender, "Not owner");
-        BondPosition storage position = positions[_tokenId];
+        BondPosition storage position = _positions[_tokenId];
         require(!position.isStaked, "Position is staked");
 
         uint256 claimable = _claimableAmount(_tokenId);
@@ -203,9 +228,9 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @param _tokenId ID of the bond position
      * @param _declaredValue declared value for harberger tax
      */
-    function stake(uint256 _tokenId, uint256 _declaredValue) external nonReentrant {
+    function stake(uint256 _tokenId, uint256 _declaredValue) external override nonReentrant {
         require(ownerOf(_tokenId) == msg.sender, "Not owner");
-        BondPosition storage position = positions[_tokenId];
+        BondPosition storage position = _positions[_tokenId];
         require(!position.isStaked, "Already staked");
 
         uint256 claimable = _claimableAmount(_tokenId);
@@ -229,7 +254,7 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @return current price in quote token
      */
     function _currentPrice(uint256 _id) internal view returns (uint256) {
-        Bond memory bond = bonds[_id];
+        Bond memory bond = _bonds[_id];
         if (block.timestamp >= bond.endTime) return bond.finalPrice;
 
         uint256 timeElapsed = block.timestamp - bond.startTime;
@@ -244,7 +269,7 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @return amount of tokens claimable
      */
     function _claimableAmount(uint256 _tokenId) internal view returns (uint256) {
-        BondPosition memory position = positions[_tokenId];
+        BondPosition memory position = _positions[_tokenId];
         if (position.claimedAmount >= position.amount) return 0;
 
         uint256 timeElapsed = block.timestamp - position.startTime;
@@ -261,8 +286,8 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @param _id ID of the bond
      * @return true if bond is active
      */
-    function isLive(uint256 _id) external view returns (bool) {
-        Bond memory bond = bonds[_id];
+    function isLive(uint256 _id) external view override returns (bool) {
+        Bond memory bond = _bonds[_id];
         return block.timestamp < bond.endTime && bond.capacity > 0;
     }
 
@@ -271,7 +296,7 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @param _id ID of the bond
      * @return current price in quote token
      */
-    function currentPrice(uint256 _id) external view returns (uint256) {
+    function currentPrice(uint256 _id) external view override returns (uint256) {
         return _currentPrice(_id);
     }
 
@@ -280,7 +305,7 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @param _tokenId ID of the bond position
      * @return amount of tokens claimable
      */
-    function claimableAmount(uint256 _tokenId) external view returns (uint256) {
+    function claimableAmount(uint256 _tokenId) external view override returns (uint256) {
         return _claimableAmount(_tokenId);
     }
 
@@ -289,15 +314,15 @@ contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, Reentrancy
      * @param _id ID of the bond
      * @return bond
      */
-    function getBond(uint256 _id) external view returns (Bond memory) {
-        return bonds[_id];
+    function getBond(uint256 _id) external view override returns (Bond memory) {
+        return _bonds[_id];
     }
 
     /**
      * @notice get the number of bonds
      * @return number of bonds
      */
-    function bondLength() external view returns (uint256) {
-        return bonds.length;
+    function bondLength() external view override returns (uint256) {
+        return _bonds.length;
     }
 }

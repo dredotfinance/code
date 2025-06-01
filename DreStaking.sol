@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./DreAccessControlled.sol";
 import "./interfaces/IDreStaking.sol";
 
@@ -26,13 +27,13 @@ contract DreStaking is
     using SafeERC20 for IERC20;
 
     // Constants
-    uint256 public constant HARBERGER_TAX_RATE = 500; // 5%
+    uint256 public constant HARBERGER_TAX_RATE = 400; // 4%
     uint256 public constant TEAM_TREASURY_SHARE = 100; // 1% (1% from harberger + 1% from resell)
     uint256 public constant TREASURY_SHARE = 400; // 4% from harberger
     uint256 public constant BASIS_POINTS = 10000;
     uint256 public constant WITHDRAW_COOLDOWN_PERIOD = 3 days;
     uint256 public constant REWARD_COOLDOWN_PERIOD = 3 days;
-    uint256 public constant DURATION = 8 hours;
+    uint256 public constant EPOCH_DURATION = 8 hours;
 
     // State variables
     IERC20 public dreToken;
@@ -69,10 +70,11 @@ contract DreStaking is
     }
 
     function rewardPerToken() public view override returns (uint256) {
-        if (totalStaked == 0) {
-            return rewardPerTokenStored;
-        }
-        return rewardPerTokenStored + ((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * 1e18) / totalStaked;
+        if (totalStaked == 0) return rewardPerTokenStored;
+        // Round down at each step to prevent over-distribution
+        uint256 timeElapsed = lastTimeRewardApplicable() - lastUpdateTime;
+        uint256 rewardPerTokenDelta = (timeElapsed * rewardRate * 1e18) / totalStaked;
+        return rewardPerTokenStored + rewardPerTokenDelta;
     }
 
     /**
@@ -87,13 +89,26 @@ contract DreStaking is
         _updateReward(0);
         dreToken.safeTransferFrom(msg.sender, address(this), reward);
 
-        // Calculate new reward rate
-        uint256 remaining = periodFinish > block.timestamp ? periodFinish - block.timestamp : 0;
-        uint256 leftover = remaining * rewardRate;
-        rewardRate = (reward + leftover) / DURATION;
+        if (block.timestamp >= periodFinish) {
+            // If no reward is currently being distributed, the new rate is just `reward / duration`
+            rewardRate = reward / EPOCH_DURATION;
+        } else {
+            // Otherwise, cancel the future reward and add the amount left to distribute to reward
+            uint256 remaining = periodFinish - block.timestamp;
+            uint256 leftover = remaining * rewardRate;
+            rewardRate = (reward + leftover) / EPOCH_DURATION;
+        }
+
+        // Ensures the provided reward amount is not more than the balance in the contract.
+        // This keeps the reward rate in the right range, preventing overflows due to
+        // very high values of `rewardRate` in the earned and `rewardsPerToken` functions;
+        // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
+        uint256 balance = dreToken.balanceOf(address(this));
+        require(rewardRate <= balance / EPOCH_DURATION, "Reward rate too high");
 
         // Update period finish
-        periodFinish = block.timestamp + DURATION;
+        lastUpdateTime = block.timestamp;
+        periodFinish = block.timestamp + EPOCH_DURATION;
 
         emit RewardAdded(reward);
     }
@@ -105,12 +120,13 @@ contract DreStaking is
      * @param declaredValue The declared value of the position
      * @param minLockDuration The minimum time tokens must be locked (0 for no minimum)
      * @return tokenId The token ID of the new position
+     * @return taxPaid The amount of tax paid
      */
     function createPosition(address to, uint256 amount, uint256 declaredValue, uint256 minLockDuration)
         external
         override
         nonReentrant
-        returns (uint256 tokenId)
+        returns (uint256 tokenId, uint256 taxPaid)
     {
         require(amount > 0, "Amount must be greater than 0");
         require(declaredValue > 0, "Declared value must be greater than 0");
@@ -119,7 +135,8 @@ contract DreStaking is
         dreToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // Calculate and collect harberger tax
-        _distributeTax(declaredValue);
+        taxPaid = _distributeTax(declaredValue);
+        amount -= taxPaid;
 
         // Create new position
         tokenId = lastId++;
@@ -128,13 +145,10 @@ contract DreStaking is
         positions[tokenId] = Position({
             amount: amount,
             declaredValue: declaredValue,
-            lastRewardUpdate: block.timestamp,
             rewardPerTokenPaid: rewardPerTokenStored,
             rewards: 0,
             cooldownEnd: 0,
-            isInCooldown: false,
-            rewardLockTime: 0,
-            minLockDuration: minLockDuration
+            rewardsUnlockAt: block.timestamp + Math.max(minLockDuration, WITHDRAW_COOLDOWN_PERIOD)
         });
 
         totalStaked += amount;
@@ -152,18 +166,11 @@ contract DreStaking is
      */
     function startUnstaking(uint256 tokenId) external override nonReentrant {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
-        require(!positions[tokenId].isInCooldown, "Already in cooldown");
+        require(positions[tokenId].cooldownEnd == 0, "Already in cooldown");
 
         Position storage position = positions[tokenId];
-
-        // Check if minimum lock duration has passed
-        require(block.timestamp >= position.minLockDuration, "Minimum lock duration not met");
-
         _updateReward(tokenId);
-
-        position.isInCooldown = true;
         position.cooldownEnd = block.timestamp + WITHDRAW_COOLDOWN_PERIOD;
-        position.rewardLockTime = block.timestamp; // Lock rewards at this time
 
         emit CooldownStarted(tokenId, msg.sender);
     }
@@ -176,7 +183,7 @@ contract DreStaking is
         require(ownerOf(tokenId) == msg.sender, "Not owner");
 
         Position storage position = positions[tokenId];
-        require(position.isInCooldown, "Not in cooldown");
+        require(position.cooldownEnd > 0, "Not in cooldown");
         require(block.timestamp >= position.cooldownEnd, "Cooldown not finished");
 
         _updateReward(tokenId);
@@ -240,8 +247,7 @@ contract DreStaking is
         require(ownerOf(tokenId) == msg.sender, "Not owner");
 
         Position storage position = positions[tokenId];
-        require(block.timestamp >= position.lastRewardUpdate + REWARD_COOLDOWN_PERIOD, "Rewards in cooldown");
-        require(!position.isInCooldown, "Position is in cooldown");
+        require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
 
         _updateReward(tokenId);
 
@@ -258,21 +264,14 @@ contract DreStaking is
      * @param tokenId The position ID
      * @return The claimable rewards
      */
-    function getClaimableRewards(uint256 tokenId) external view override returns (uint256) {
+    function earned(uint256 tokenId) public view override returns (uint256) {
         Position storage position = positions[tokenId];
         if (position.amount == 0) return 0;
 
-        uint256 effectiveTime = block.timestamp;
-        if (position.rewardLockTime > 0 && position.rewardLockTime < effectiveTime) {
-            effectiveTime = position.rewardLockTime;
-        }
-        uint256 currentRewardPerToken = rewardPerTokenStored;
-        if (totalStaked > 0) {
-            uint256 timeElapsed = effectiveTime - lastUpdateTime;
-            uint256 reward = timeElapsed * rewardRate;
-            currentRewardPerToken += ((reward * 1e18) / totalStaked);
-        }
-        return (position.amount * (currentRewardPerToken - position.rewardPerTokenPaid)) / 1e18 + position.rewards;
+        uint256 currentRewardPerToken = rewardPerToken();
+        // Round down at each step to prevent over-distribution
+        uint256 rewardDelta = (position.amount * (currentRewardPerToken - position.rewardPerTokenPaid)) / 1e18;
+        return rewardDelta + position.rewards;
     }
 
     /**
@@ -288,7 +287,7 @@ contract DreStaking is
     {
         require(ownerOf(tokenId) != address(0), "Position does not exist");
         require(additionalAmount > 0, "Amount must be greater than 0");
-        require(!positions[tokenId].isInCooldown, "Position is in cooldown");
+        require(positions[tokenId].cooldownEnd == 0, "Position is in cooldown");
 
         Position storage position = positions[tokenId];
         address owner = ownerOf(tokenId);
@@ -299,7 +298,8 @@ contract DreStaking is
         }
 
         // Calculate harberger tax on the additional amount
-        _distributeTax(addtionalDeclaredValue);
+        uint256 taxPaid = _distributeTax(addtionalDeclaredValue);
+        additionalAmount -= taxPaid;
         _updateReward(tokenId);
 
         // Update position
@@ -324,7 +324,7 @@ contract DreStaking is
         require(ownerOf(tokenId) == msg.sender, "Not owner");
 
         Position storage position = positions[tokenId];
-        require(position.isInCooldown, "Not in cooldown");
+        require(position.cooldownEnd > 0, "Not in cooldown");
 
         // Update rewards to resume accrual
         _cancelUnstaking(tokenId);
@@ -336,14 +336,15 @@ contract DreStaking is
      */
     function _cancelUnstaking(uint256 tokenId) internal {
         Position storage position = positions[tokenId];
-        position.isInCooldown = false;
-        position.cooldownEnd = 0;
-        position.rewardLockTime = 0;
 
-        // Update rewards to resume accrual
+        if (position.cooldownEnd > 0) {
+            _updateReward(tokenId);
+            position.cooldownEnd = 0;
+            position.rewardsUnlockAt = 0;
+            emit UnstakingCancelled(tokenId, msg.sender);
+        }
+
         _updateReward(tokenId);
-
-        emit UnstakingCancelled(tokenId, msg.sender);
     }
 
     /**
@@ -358,12 +359,14 @@ contract DreStaking is
      * @notice Distribute the tax to the operations treasury and protocol treasury
      * @param amount The amount of DRE to distribute
      */
-    function _distributeTax(uint256 amount) internal {
-        uint256 operationsShare = (amount * TEAM_TREASURY_SHARE) / BASIS_POINTS;
-        uint256 treasuryShare = amount - operationsShare;
+    function _distributeTax(uint256 amount) internal returns (uint256 taxPaid) {
+        uint256 taxPaidTreasury = (amount * HARBERGER_TAX_RATE) / BASIS_POINTS;
+        uint256 taxPaidOperations = (amount * TEAM_TREASURY_SHARE) / BASIS_POINTS;
 
-        dreToken.safeTransfer(address(authority.operationsTreasury()), operationsShare);
-        dreToken.safeTransfer(address(authority.treasury()), treasuryShare);
+        dreToken.safeTransfer(address(authority.operationsTreasury()), taxPaidOperations);
+        dreToken.safeTransfer(address(authority.treasury()), taxPaidTreasury);
+
+        taxPaid = taxPaidOperations + taxPaidTreasury;
     }
 
     /**
@@ -371,20 +374,13 @@ contract DreStaking is
      * @param tokenId The position ID
      */
     function _updateReward(uint256 tokenId) internal {
-        uint256 effectiveTime = block.timestamp;
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
 
         if (tokenId > 0) {
             Position storage position = positions[tokenId];
-            if (position.rewardLockTime > 0 && position.rewardLockTime < effectiveTime) {
-                effectiveTime = position.rewardLockTime;
-            }
-            if (position.amount > 0) {
-                position.rewards = (position.amount * (rewardPerTokenStored - position.rewardPerTokenPaid)) / 1e18;
-                position.rewardPerTokenPaid = rewardPerTokenStored;
-            }
-            position.lastRewardUpdate = effectiveTime;
+            position.rewards = earned(tokenId);
+            position.rewardPerTokenPaid = rewardPerTokenStored;
         }
     }
 }

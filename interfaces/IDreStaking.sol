@@ -1,18 +1,15 @@
-// SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: AGPL-3.0-or-later
+pragma solidity ^0.8.15;
 
 interface IDreStaking {
     // Structs
     struct Position {
         uint256 amount; // Amount of DRE staked
         uint256 declaredValue; // Self-declared value in DRE
-        uint256 lastRewardUpdate; // Last time rewards were updated
         uint256 rewardPerTokenPaid; // Reward per token paid
         uint256 rewards; // Accumulated rewards
-        uint256 cooldownEnd; // When cooldown period ends
-        bool isInCooldown; // Whether position is in cooldown (for withdrawals)
-        uint256 rewardLockTime; // If >0, rewards stop accruing after this time
-        uint256 minLockDuration; // Minimum lock duration
+        uint256 cooldownEnd; // When cooldown period ends; if 0, position is not in cooldown
+        uint256 rewardsUnlockAt; // If >0, rewards can't be claimed before this time
     }
 
     // Events
@@ -32,7 +29,7 @@ interface IDreStaking {
 
     function rewardPerToken() external view returns (uint256);
 
-    function getClaimableRewards(uint256 tokenId) external view returns (uint256);
+    function earned(uint256 tokenId) external view returns (uint256);
 
     function totalStaked() external view returns (uint256);
 
@@ -40,11 +37,11 @@ interface IDreStaking {
     function notifyRewardAmount(uint256 reward) external;
 
     function createPosition(
-        address to,
-        uint256 amount,
-        uint256 declaredValue,
-        uint256 lockTime
-    ) external returns (uint256 tokenId);
+        address _user,
+        uint256 _amount,
+        uint256 _declaredValue,
+        uint256 _lockEnd
+    ) external returns (uint256 tokenId, uint256 taxPaid);
 
     function startUnstaking(uint256 tokenId) external;
 

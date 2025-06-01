@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.15;
 
 import "./interfaces/IDreAuthority.sol";
 import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
