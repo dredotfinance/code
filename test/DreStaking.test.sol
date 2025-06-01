@@ -1,0 +1,733 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.15;
+
+import "./BaseTest.sol";
+
+contract DreStakingTest is BaseTest {
+    uint256 public constant STAKE_AMOUNT = 1000e18;
+    uint256 public constant DECLARED_VALUE = 1000e18;
+    uint256 public constant REWARD_AMOUNT = 100e18;
+
+    function setUp() public {
+        setUpBaseTest();
+
+        vm.startPrank(owner);
+        dreAuthority.addPolicy(owner);
+    }
+
+    function test_Initialize() public view {
+        assertEq(address(staking.dreToken()), address(dre));
+        assertEq(address(staking.trackingToken()), address(sDre));
+        assertEq(staking.totalStaked(), 0);
+    }
+
+    function test_CreatePosition() public {
+        vm.startPrank(owner);
+
+        // Mint DRE tokens to owner
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+
+        // Create position
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Verify position details
+        (uint256 amount, uint256 declaredValue, , , uint256 cooldownEnd, ) = staking.positions(tokenId);
+
+        assertEq(amount, STAKE_AMOUNT - 50e18);
+        assertEq(declaredValue, DECLARED_VALUE);
+        assertEq(cooldownEnd, 0);
+        assertEq(staking.totalStaked(), STAKE_AMOUNT - 50e18);
+        assertEq(sDre.balanceOf(owner), STAKE_AMOUNT - 50e18);
+
+        vm.stopPrank();
+    }
+
+    function test_StartUnstaking() public {
+        vm.startPrank(owner);
+
+        // Create position first
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Start unstaking
+        staking.startUnstaking(tokenId);
+
+        // Verify cooldown state
+        (, , , , uint256 cooldownEnd, ) = staking.positions(tokenId);
+        assertTrue(cooldownEnd > 0);
+        assertEq(cooldownEnd, block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD());
+
+        vm.stopPrank();
+    }
+
+    function test_CompleteUnstaking() public {
+        vm.startPrank(owner);
+
+        // Create position first
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, uint256 taxPaid) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Start and complete unstaking
+        staking.startUnstaking(tokenId);
+
+        // Fast forward past cooldown period
+        vm.warp(block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD() + 1);
+
+        uint256 balanceBefore = dre.balanceOf(owner);
+        staking.completeUnstaking(tokenId);
+
+        // Verify tokens returned and position burned
+        assertEq(dre.balanceOf(owner), balanceBefore + STAKE_AMOUNT - taxPaid);
+        assertEq(staking.totalStaked(), 0);
+        assertEq(sDre.balanceOf(owner), 0);
+
+        vm.stopPrank();
+    }
+
+    function test_ClaimRewards() public {
+        vm.startPrank(owner);
+
+        // Create position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Add rewards
+        dre.mint(owner, REWARD_AMOUNT);
+        dre.approve(address(staking), REWARD_AMOUNT);
+        staking.notifyRewardAmount(REWARD_AMOUNT);
+
+        // Fast forward past reward cooldown
+        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+
+        // Claim rewards
+        uint256 reward = staking.claimRewards(tokenId);
+        assertTrue(reward > 0);
+
+        vm.stopPrank();
+    }
+
+    function test_BuyPosition() public {
+        vm.startPrank(owner);
+
+        // Create position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // taxes would've been paid
+        assertEq(dre.balanceOf(operationsTreasury), 10e18);
+        assertEq(dre.balanceOf(address(treasury)), 40e18);
+
+        dre.mint(user1, DECLARED_VALUE);
+
+        // Switch to buyer
+        vm.stopPrank();
+        vm.startPrank(user1);
+
+        // Buy position
+        dre.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify ownership transfer
+        assertEq(staking.ownerOf(tokenId), user1);
+        assertEq(sDre.balanceOf(user1), STAKE_AMOUNT - 50e18);
+        assertEq(sDre.balanceOf(owner), 0);
+
+        // no taxes earned but the treasury gets 1% of the declared value
+        assertEq(dre.balanceOf(operationsTreasury), 20e18);
+        assertEq(dre.balanceOf(address(treasury)), 40e18);
+
+        vm.stopPrank();
+    }
+
+    function test_IncreaseAmount() public {
+        vm.startPrank(owner);
+
+        // Create initial position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 amount, uint256 declaredValue, , , , ) = staking.positions(tokenId);
+        assertEq(amount, STAKE_AMOUNT - 50e18);
+        assertEq(declaredValue, DECLARED_VALUE);
+        assertEq(staking.totalStaked(), STAKE_AMOUNT - 50e18);
+
+        // Increase amount
+        uint256 additionalAmount = 500e18;
+        uint256 additionalDeclaredValue = 50e18;
+        dre.mint(owner, additionalAmount);
+        dre.approve(address(staking), additionalAmount);
+        staking.increaseAmount(tokenId, additionalAmount, additionalDeclaredValue);
+
+        // Verify position updated
+        (amount, declaredValue, , , , ) = staking.positions(tokenId);
+        assertEq(amount, STAKE_AMOUNT + additionalAmount - 50e18 - 2.5e18);
+        assertEq(declaredValue, DECLARED_VALUE + additionalDeclaredValue);
+        assertEq(staking.totalStaked(), STAKE_AMOUNT + additionalAmount - 50e18 - 2.5e18);
+
+        vm.stopPrank();
+    }
+
+    function test_CancelUnstaking() public {
+        vm.startPrank(owner);
+
+        // Create position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Start unstaking
+        staking.startUnstaking(tokenId);
+
+        // Cancel unstaking
+        staking.cancelUnstaking(tokenId);
+
+        // Verify cooldown cancelled
+        (, , , , uint256 cooldownEnd, ) = staking.positions(tokenId);
+        assertEq(cooldownEnd, 0);
+
+        vm.stopPrank();
+    }
+
+    function testFail_CreatePositionWithZeroAmount() public {
+        vm.startPrank(owner);
+        staking.createPosition(owner, 0, DECLARED_VALUE, 0);
+        vm.stopPrank();
+    }
+
+    function testFail_CreatePositionWithZeroValue() public {
+        vm.startPrank(owner);
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        staking.createPosition(owner, STAKE_AMOUNT, 0, 0);
+        vm.stopPrank();
+    }
+
+    function testFail_StartUnstakingNotOwner() public {
+        vm.startPrank(owner);
+
+        // Create position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        vm.stopPrank();
+
+        // Try to start unstaking as non-owner
+        vm.startPrank(user1);
+        staking.startUnstaking(tokenId);
+        vm.stopPrank();
+    }
+
+    function testFail_CompleteUnstakingBeforeCooldown() public {
+        vm.startPrank(owner);
+
+        // Create position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Start unstaking
+        staking.startUnstaking(tokenId);
+
+        // Try to complete before cooldown
+        staking.completeUnstaking(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function testFail_ClaimRewardsBeforeCooldown() public {
+        vm.startPrank(owner);
+
+        // Create position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Add rewards
+        dre.mint(address(this), REWARD_AMOUNT);
+        dre.approve(address(staking), REWARD_AMOUNT);
+        staking.notifyRewardAmount(REWARD_AMOUNT);
+
+        // Try to claim before cooldown
+        staking.claimRewards(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function testFail_BuyOwnPosition() public {
+        vm.startPrank(owner);
+
+        // Create position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Try to buy own position
+        dre.mint(owner, DECLARED_VALUE);
+        dre.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function test_RewardDistribution() public {
+        vm.startPrank(owner);
+
+        // Create two positions
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId1, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        dre.mint(user1, STAKE_AMOUNT);
+
+        vm.stopPrank();
+        vm.startPrank(user1);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId2, ) = staking.createPosition(user1, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        vm.stopPrank();
+
+        // Add rewards
+        vm.startPrank(owner);
+        dre.mint(owner, REWARD_AMOUNT);
+        dre.approve(address(staking), REWARD_AMOUNT);
+        staking.notifyRewardAmount(REWARD_AMOUNT);
+
+        // Fast forward to distribute rewards
+        vm.warp(block.timestamp + staking.EPOCH_DURATION());
+
+        // Fast forward past reward cooldown
+        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+
+        // Claim rewards for both positions
+        uint256 reward1 = staking.claimRewards(tokenId1);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        uint256 reward2 = staking.claimRewards(tokenId2);
+
+        // Verify rewards are distributed equally
+        assertEq(reward1, reward2);
+        assertApproxEqAbs(reward1 + reward2, REWARD_AMOUNT, 1e18);
+
+        vm.stopPrank();
+    }
+
+    function test_TaxDistribution() public {
+        vm.startPrank(owner);
+
+        // Create position with high declared value to test tax
+        uint256 highValue = 10000e18;
+        dre.mint(owner, STAKE_AMOUNT + highValue);
+        dre.approve(address(staking), STAKE_AMOUNT + highValue);
+        staking.createPosition(owner, STAKE_AMOUNT, highValue, 0);
+
+        // Calculate expected tax distribution
+        uint256 operationsShare = (highValue * staking.TEAM_TREASURY_SHARE()) / staking.BASIS_POINTS();
+        uint256 treasuryShare = (highValue * staking.HARBERGER_TAX_RATE()) / staking.BASIS_POINTS();
+
+        // Verify tax distribution
+        assertEq(dre.balanceOf(dreAuthority.operationsTreasury()), operationsShare);
+        assertEq(dre.balanceOf(address(dreAuthority.treasury())), treasuryShare);
+
+        vm.stopPrank();
+    }
+
+    function test_BuyerCanWithdrawAndClaimRewards() public {
+        vm.startPrank(owner);
+
+        // Create initial position
+        dre.mint(owner, STAKE_AMOUNT);
+        dre.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId, ) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Add rewards before selling
+        dre.mint(owner, REWARD_AMOUNT);
+        dre.approve(address(staking), REWARD_AMOUNT);
+        staking.notifyRewardAmount(REWARD_AMOUNT);
+
+        // Fast forward to accumulate rewards
+        vm.warp(block.timestamp + staking.EPOCH_DURATION());
+
+        console.log("staking.earned(tokenId)", staking.earned(tokenId));
+
+        // Prepare buyer
+        dre.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        dre.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify buyer owns the position
+        assertEq(staking.ownerOf(tokenId), user1);
+        assertEq(sDre.balanceOf(user1), STAKE_AMOUNT - 50e18);
+
+        // Fast forward past reward cooldown
+        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+
+        console.log("staking.earned(tokenId)", staking.earned(tokenId));
+
+        // Claim rewards as buyer
+        uint256 reward = staking.claimRewards(tokenId);
+        assertTrue(reward > 0);
+
+        // Start unstaking process
+        staking.startUnstaking(tokenId);
+
+        // Fast forward past cooldown period
+        vm.warp(block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD() + 1);
+
+        // Complete unstaking
+        uint256 balanceBefore = dre.balanceOf(user1);
+        staking.completeUnstaking(tokenId);
+
+        // Verify tokens returned to buyer
+        assertEq(dre.balanceOf(user1), balanceBefore + STAKE_AMOUNT - 50e18);
+        assertEq(staking.totalStaked(), 0);
+        assertEq(sDre.balanceOf(user1), 0);
+
+        vm.stopPrank();
+    }
+
+    function testFuzz_RewardDistribution(uint256 stakeAmount1, uint256 stakeAmount2, uint256 rewardAmount) public {
+        // Bound the inputs to reasonable ranges
+        stakeAmount1 = bound(stakeAmount1, 1e18, 1000000e18);
+        stakeAmount2 = bound(stakeAmount2, 1e18, 1000000e18);
+        rewardAmount = bound(rewardAmount, 1e18, 1000000e18);
+        uint256 timeElapsed = staking.EPOCH_DURATION();
+
+        vm.startPrank(owner);
+
+        // Create two positions with different amounts
+        dre.mint(owner, stakeAmount1);
+        dre.approve(address(staking), stakeAmount1);
+        (uint256 tokenId1, ) = staking.createPosition(owner, stakeAmount1, stakeAmount1, 0);
+
+        dre.mint(user1, stakeAmount2);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        dre.approve(address(staking), stakeAmount2);
+        (uint256 tokenId2, ) = staking.createPosition(user1, stakeAmount2, stakeAmount2, 0);
+        vm.stopPrank();
+
+        // Add rewards
+        vm.startPrank(owner);
+        dre.mint(owner, rewardAmount);
+        dre.approve(address(staking), rewardAmount);
+        staking.notifyRewardAmount(rewardAmount);
+
+        // Fast forward by random time
+        vm.warp(block.timestamp + timeElapsed);
+
+        // Get earned rewards before claiming
+        uint256 earned1 = staking.earned(tokenId1);
+        uint256 earned2 = staking.earned(tokenId2);
+
+        // Verify rewards are proportional to stake amounts
+        if (stakeAmount1 > 0 && stakeAmount2 > 0) {
+            uint256 expectedRatio = (stakeAmount1 * 1e18) / stakeAmount2;
+            uint256 actualRatio = (earned1 * 1e18) / earned2;
+            assertApproxEqRel(actualRatio, expectedRatio, 0.01e18); // 1% tolerance
+        }
+
+        // Fast forward past reward cooldown
+        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+
+        // Claim rewards
+        uint256 reward1 = staking.claimRewards(tokenId1);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        uint256 reward2 = staking.claimRewards(tokenId2);
+
+        // Verify total rewards don't exceed notified amount
+        assertTrue(reward1 + reward2 <= rewardAmount, "Total rewards exceed notified amount");
+
+        // Verify claimed rewards match earned rewards
+        assertEq(reward1, earned1, "Claimed rewards don't match earned rewards for position 1");
+        assertEq(reward2, earned2, "Claimed rewards don't match earned rewards for position 2");
+
+        vm.stopPrank();
+    }
+
+    function testFuzz_PositionOperations(
+        uint256 stakeAmount,
+        uint256 declaredValue,
+        uint256 additionalAmount,
+        uint256 additionalValue
+    ) public {
+        // Bound the inputs to reasonable ranges
+        stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
+        declaredValue = bound(declaredValue, stakeAmount, stakeAmount * 2);
+        additionalAmount = bound(additionalAmount, 1e18, 1000000e18);
+        additionalValue = bound(additionalValue, additionalAmount, additionalAmount * 2);
+
+        vm.startPrank(owner);
+
+        // Create initial position
+        dre.mint(owner, stakeAmount + additionalAmount);
+        dre.approve(address(staking), stakeAmount + additionalAmount);
+        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+
+        // Get initial position details
+        (uint256 initialAmount, uint256 initialValue, , , , ) = staking.positions(tokenId);
+
+        // Increase position
+        staking.increaseAmount(tokenId, additionalAmount, additionalValue);
+
+        // Get updated position details
+        (uint256 finalAmount, uint256 finalValue, , , , ) = staking.positions(tokenId);
+
+        // Verify position was updated correctly
+        uint256 totalTax = staking.HARBERGER_TAX_RATE() + staking.TEAM_TREASURY_SHARE();
+        assertApproxEqAbs(
+            finalAmount,
+            initialAmount + additionalAmount - ((additionalValue * totalTax) / staking.BASIS_POINTS()),
+            100,
+            "Amount not updated correctly"
+        );
+        assertApproxEqAbs(finalValue, initialValue + additionalValue, 100, "Declared value not updated correctly");
+
+        // Start unstaking
+        staking.startUnstaking(tokenId);
+
+        // Verify cooldown started
+        (, , , , uint256 cooldownEnd, ) = staking.positions(tokenId);
+        assertTrue(cooldownEnd > 0, "Cooldown not started");
+
+        // Cancel unstaking
+        staking.cancelUnstaking(tokenId);
+
+        // Verify cooldown cancelled
+        (, , , , cooldownEnd, ) = staking.positions(tokenId);
+        assertEq(cooldownEnd, 0, "Cooldown not cancelled");
+
+        vm.stopPrank();
+    }
+
+    function testFuzz_RewardAccumulation(uint256 stakeAmount, uint256 rewardAmount, uint256 timeBetweenRewards) public {
+        // Bound the inputs to reasonable ranges
+        stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
+        rewardAmount = bound(rewardAmount, 1e18, 1000000e18);
+        timeBetweenRewards = bound(timeBetweenRewards, 1, staking.EPOCH_DURATION() / 2);
+
+        vm.startPrank(owner);
+
+        // Create position
+        dre.mint(owner, stakeAmount);
+        dre.approve(address(staking), stakeAmount);
+        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, stakeAmount, 0);
+
+        // Add first reward
+        dre.mint(owner, rewardAmount);
+        dre.approve(address(staking), rewardAmount);
+        staking.notifyRewardAmount(rewardAmount);
+
+        // Fast forward
+        vm.warp(block.timestamp + timeBetweenRewards);
+
+        // Add second reward
+        dre.mint(owner, rewardAmount);
+        dre.approve(address(staking), rewardAmount);
+        staking.notifyRewardAmount(rewardAmount);
+
+        // Fast forward past reward cooldown
+        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+
+        // Get earned rewards
+        uint256 earned = staking.earned(tokenId);
+
+        // Verify rewards don't exceed total notified amount
+        assertTrue(earned <= rewardAmount * 2, "Earned rewards exceed total notified amount");
+
+        // Claim rewards
+        uint256 claimed = staking.claimRewards(tokenId);
+
+        // Verify claimed amount matches earned amount
+        assertEq(claimed, earned, "Claimed amount doesn't match earned amount");
+
+        vm.stopPrank();
+    }
+
+    function testFuzz_BuyPosition(uint256 stakeAmount, uint256 declaredValue, uint256 rewardAmount) public {
+        // Bound the inputs to reasonable ranges
+        stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
+        declaredValue = bound(declaredValue, stakeAmount, stakeAmount * 2);
+        rewardAmount = bound(rewardAmount, 1e18, 1000000e18);
+
+        vm.startPrank(owner);
+
+        // Create initial position
+        dre.mint(owner, stakeAmount);
+        dre.approve(address(staking), stakeAmount);
+        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+
+        // Add rewards before selling
+        dre.mint(owner, rewardAmount);
+        dre.approve(address(staking), rewardAmount);
+        staking.notifyRewardAmount(rewardAmount);
+
+        // Fast forward to accumulate rewards
+        vm.warp(block.timestamp + staking.EPOCH_DURATION());
+
+        // Get earned rewards before selling
+        uint256 earnedBefore = staking.earned(tokenId);
+
+        // Prepare buyer
+        dre.mint(user1, declaredValue);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        dre.approve(address(staking), declaredValue);
+        staking.buyPosition(tokenId);
+
+        uint256 totalTax = staking.HARBERGER_TAX_RATE() + staking.TEAM_TREASURY_SHARE();
+
+        // Verify buyer owns the position
+        assertEq(staking.ownerOf(tokenId), user1, "Position ownership not transferred");
+        assertApproxEqRel(
+            sDre.balanceOf(user1),
+            stakeAmount - ((declaredValue * totalTax) / staking.BASIS_POINTS()),
+            0.0001e18,
+            "Tracking tokens not transferred correctly"
+        );
+
+        // Verify seller received payment minus fees
+        uint256 expectedSellerAmount = declaredValue -
+            ((declaredValue * staking.TEAM_TREASURY_SHARE()) / staking.BASIS_POINTS());
+        assertApproxEqRel(
+            dre.balanceOf(owner),
+            expectedSellerAmount,
+            0.0001e18,
+            "Seller did not receive correct amount"
+        );
+
+        // Fast forward past reward cooldown
+        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+
+        // Verify buyer can claim rewards
+        uint256 earnedAfter = staking.earned(tokenId);
+        assertEq(earnedAfter, earnedBefore, "Rewards not preserved after position transfer");
+
+        uint256 claimed = staking.claimRewards(tokenId);
+        assertEq(claimed, earnedBefore, "Buyer could not claim rewards");
+
+        vm.stopPrank();
+    }
+
+    function testFuzz_BuyPositionWithRewards(
+        uint256 stakeAmount,
+        uint256 declaredValue,
+        uint256 rewardAmount1,
+        uint256 rewardAmount2
+    ) public {
+        // Bound the inputs to reasonable ranges
+        stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
+        declaredValue = bound(declaredValue, stakeAmount, stakeAmount * 2);
+        rewardAmount1 = bound(rewardAmount1, 1e18, 1000000e18);
+        rewardAmount2 = bound(rewardAmount2, 1e18, 1000000e18);
+
+        vm.startPrank(owner);
+
+        // Create initial position
+        dre.mint(owner, stakeAmount);
+        dre.approve(address(staking), stakeAmount);
+        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+
+        // Add first reward
+        dre.mint(owner, rewardAmount1);
+        dre.approve(address(staking), rewardAmount1);
+        staking.notifyRewardAmount(rewardAmount1);
+
+        // Fast forward half the epoch
+        vm.warp(block.timestamp + staking.EPOCH_DURATION() / 2);
+
+        // Add second reward
+        dre.mint(owner, rewardAmount2);
+        dre.approve(address(staking), rewardAmount2);
+        staking.notifyRewardAmount(rewardAmount2);
+
+        vm.warp(block.timestamp + staking.EPOCH_DURATION());
+
+        // Get earned rewards before selling
+        uint256 earnedBefore = staking.earned(tokenId);
+
+        // Prepare buyer
+        dre.mint(user1, declaredValue);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        dre.approve(address(staking), declaredValue);
+        staking.buyPosition(tokenId);
+
+        // Fast forward past reward cooldown
+        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+
+        // Verify buyer can claim accumulated rewards
+        uint256 earnedAfter = staking.earned(tokenId);
+        assertEq(earnedAfter, earnedBefore, "Rewards not preserved after position transfer");
+
+        uint256 claimed = staking.claimRewards(tokenId);
+        assertEq(claimed, earnedBefore, "Buyer could not claim rewards");
+
+        vm.stopPrank();
+    }
+
+    function testFuzz_BuyPositionWithUnstaking(
+        uint256 stakeAmount,
+        uint256 declaredValue,
+        uint256 rewardAmount
+    ) public {
+        // Bound the inputs to reasonable ranges
+        stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
+        declaredValue = bound(declaredValue, stakeAmount, stakeAmount * 2);
+        rewardAmount = bound(rewardAmount, 1e18, 1000000e18);
+
+        vm.startPrank(owner);
+
+        // Create initial position
+        dre.mint(owner, stakeAmount);
+        dre.approve(address(staking), stakeAmount);
+        (uint256 tokenId, ) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+
+        // Add rewards
+        dre.mint(owner, rewardAmount);
+        dre.approve(address(staking), rewardAmount);
+        staking.notifyRewardAmount(rewardAmount);
+
+        // Start unstaking
+        staking.startUnstaking(tokenId);
+
+        // Prepare buyer
+        dre.mint(user1, declaredValue);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        dre.approve(address(staking), declaredValue);
+        staking.buyPosition(tokenId);
+
+        // Verify unstaking was cancelled
+        (, , , , uint256 cooldownEnd, ) = staking.positions(tokenId);
+        assertEq(cooldownEnd, 0, "Unstaking not cancelled after position transfer");
+
+        // Fast forward past reward cooldown
+        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+
+        // Verify buyer can claim rewards
+        uint256 earned = staking.earned(tokenId);
+        uint256 claimed = staking.claimRewards(tokenId);
+        assertEq(claimed, earned, "Buyer could not claim rewards");
+
+        vm.stopPrank();
+    }
+}
