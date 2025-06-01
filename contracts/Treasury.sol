@@ -123,10 +123,10 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
     /**
      * @notice enable permission from queue or set staking contract
      * @param _address address to enable
-     * @param _calculator address of the calculator
+     * @param _oracle address of the oracle
      */
-    function enable(address _address, address _calculator) external onlyGovernor {
-        oracles[_address] = AggregatorV3Interface(_calculator);
+    function enable(address _address, address _oracle) external onlyGovernor {
+        oracles[_address] = AggregatorV3Interface(_oracle);
         if (!enabledTokens[_address]) tokens.push(_address);
         enabledTokens[_address] = true;
         emit TokenEnabled(_address, true);
