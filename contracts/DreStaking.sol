@@ -40,7 +40,7 @@ contract DreStaking is
     IPermissionedERC20 public trackingToken;
 
     // Mapping from token ID to Position
-    mapping(uint256 => Position) public positions;
+    mapping(uint256 => Position) private _positions;
 
     uint256 public lastId;
 
@@ -51,8 +51,8 @@ contract DreStaking is
     uint256 public rewardPerTokenStored;
     uint256 public override totalStaked;
 
-    function initialize(address _dreToken, address _trackingToken, address _authority) public reinitializer(3) {
-        lastId = 2;
+    function initialize(address _dreToken, address _trackingToken, address _authority) public reinitializer(5) {
+        if (lastId == 0) { lastId = 1; }
 
         __ERC721_init("DRE Staking Position", "DRE-POS");
         __ReentrancyGuard_init();
@@ -63,6 +63,10 @@ contract DreStaking is
         dreToken = IERC20(_dreToken);
         trackingToken = IPermissionedERC20(_trackingToken);
         __DreAccessControlled_init(_authority);
+    }
+
+    function positions(uint256 tokenId) external view override returns (Position memory) {
+        return _positions[tokenId];
     }
 
     function lastTimeRewardApplicable() public view override returns (uint256) {
@@ -142,7 +146,7 @@ contract DreStaking is
         tokenId = lastId++;
         _safeMint(to, tokenId);
 
-        positions[tokenId] = Position({
+        _positions[tokenId] = Position({
             amount: amount,
             declaredValue: declaredValue,
             rewardPerTokenPaid: rewardPerTokenStored,
@@ -166,9 +170,9 @@ contract DreStaking is
      */
     function startUnstaking(uint256 tokenId) external override nonReentrant {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
-        require(positions[tokenId].cooldownEnd == 0, "Already in cooldown");
+        require(_positions[tokenId].cooldownEnd == 0, "Already in cooldown");
 
-        Position storage position = positions[tokenId];
+        Position storage position = _positions[tokenId];
         _updateReward(tokenId);
         position.cooldownEnd = block.timestamp + WITHDRAW_COOLDOWN_PERIOD;
 
@@ -182,7 +186,7 @@ contract DreStaking is
     function completeUnstaking(uint256 tokenId) external override nonReentrant {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
 
-        Position storage position = positions[tokenId];
+        Position storage position = _positions[tokenId];
         require(position.cooldownEnd > 0, "Not in cooldown");
         require(block.timestamp >= position.cooldownEnd, "Cooldown not finished");
 
@@ -199,7 +203,7 @@ contract DreStaking is
 
         // Burn the NFT
         _burn(tokenId);
-        delete positions[tokenId];
+        delete _positions[tokenId];
 
         emit PositionUnstaked(tokenId, msg.sender, amount);
     }
@@ -213,7 +217,7 @@ contract DreStaking is
         require(seller != address(0), "Position does not exist");
         require(seller != msg.sender, "Cannot buy your own position");
 
-        Position storage position = positions[tokenId];
+        Position storage position = _positions[tokenId];
         uint256 price = position.declaredValue;
 
         // Calculate resell fee
@@ -244,18 +248,17 @@ contract DreStaking is
      * @param tokenId The position ID
      */
     function claimRewards(uint256 tokenId) external override nonReentrant returns (uint256 reward) {
-        require(ownerOf(tokenId) == msg.sender, "Not owner");
-
-        Position storage position = positions[tokenId];
+        Position storage position = _positions[tokenId];
         require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
 
         _updateReward(tokenId);
 
         reward = position.rewards;
         if (reward > 0) {
+            address owner = ownerOf(tokenId);
             position.rewards = 0;
-            dreToken.safeTransfer(msg.sender, reward);
-            emit RewardsClaimed(tokenId, msg.sender, reward);
+            dreToken.safeTransfer(owner, reward);
+            emit RewardsClaimed(tokenId, owner, reward);
         }
     }
 
@@ -265,7 +268,7 @@ contract DreStaking is
      * @return The claimable rewards
      */
     function earned(uint256 tokenId) public view override returns (uint256) {
-        Position storage position = positions[tokenId];
+        Position storage position = _positions[tokenId];
         if (position.amount == 0) return 0;
 
         uint256 currentRewardPerToken = rewardPerToken();
@@ -287,9 +290,9 @@ contract DreStaking is
     ) external override nonReentrant {
         require(ownerOf(tokenId) != address(0), "Position does not exist");
         require(additionalAmount > 0, "Amount must be greater than 0");
-        require(positions[tokenId].cooldownEnd == 0, "Position is in cooldown");
+        require(_positions[tokenId].cooldownEnd == 0, "Position is in cooldown");
 
-        Position storage position = positions[tokenId];
+        Position storage position = _positions[tokenId];
         address owner = ownerOf(tokenId);
 
         // Transfer DRE tokens from user
@@ -323,7 +326,7 @@ contract DreStaking is
     function cancelUnstaking(uint256 tokenId) external override nonReentrant {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
 
-        Position storage position = positions[tokenId];
+        Position storage position = _positions[tokenId];
         require(position.cooldownEnd > 0, "Not in cooldown");
 
         // Update rewards to resume accrual
@@ -335,7 +338,7 @@ contract DreStaking is
      * @param tokenId The position ID
      */
     function _cancelUnstaking(uint256 tokenId) internal {
-        Position storage position = positions[tokenId];
+        Position storage position = _positions[tokenId];
 
         if (position.cooldownEnd > 0) {
             _updateReward(tokenId);
@@ -378,9 +381,13 @@ contract DreStaking is
         lastUpdateTime = lastTimeRewardApplicable();
 
         if (tokenId > 0) {
-            Position storage position = positions[tokenId];
+            Position storage position = _positions[tokenId];
             position.rewards = earned(tokenId);
             position.rewardPerTokenPaid = rewardPerTokenStored;
         }
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return "https://uri.dre.finance/staking/";
     }
 }

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.15;
 
-interface IDreStaking {
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+
+interface IDreStaking is IERC721Enumerable {
     // Structs
     struct Position {
         uint256 amount; // Amount of DRE staked
@@ -54,4 +56,8 @@ interface IDreStaking {
     function increaseAmount(uint256 tokenId, uint256 additionalAmount, uint256 addtionalDeclaredValue) external;
 
     function cancelUnstaking(uint256 tokenId) external;
+
+    function positions(uint256 tokenId) external view returns (Position memory);
+
+    function rewardRate() external view returns (uint256);
 }

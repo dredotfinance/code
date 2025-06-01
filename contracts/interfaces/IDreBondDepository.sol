@@ -5,8 +5,9 @@ pragma abicoder v2;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IDreStaking.sol";
 import "./ITreasury.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
-interface IDreBondDepository {
+interface IDreBondDepository is IERC721Enumerable {
     /* ======== EVENTS ======== */
     event CreateBond(uint256 indexed id, address indexed quoteToken, uint256 initialPrice, uint256 capacity);
     event CloseBond(uint256 indexed id);

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./DreAccessControlled.sol";
@@ -12,7 +12,7 @@ import "./interfaces/ITreasury.sol";
 
 /// @title DRE Bond Depository
 /// @author DRE Protocol
-contract DreBondDepository is DreAccessControlled, ERC721Upgradeable, ReentrancyGuardUpgradeable, IDreBondDepository {
+contract DreBondDepository is DreAccessControlled, ERC721EnumerableUpgradeable, ReentrancyGuardUpgradeable, IDreBondDepository {
     using SafeERC20 for IERC20;
 
     // Constants

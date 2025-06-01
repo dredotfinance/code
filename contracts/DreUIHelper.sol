@@ -1,0 +1,220 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+pragma solidity ^0.8.15;
+pragma abicoder v2;
+
+import "./interfaces/IDreStaking.sol";
+import "./interfaces/IDreBondDepository.sol";
+import "./interfaces/ITreasury.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+/// @title DRE UI Helper
+/// @author DRE Protocol
+contract DreUIHelper {
+    // Structs
+    struct TokenInfo {
+        address token;
+        string name;
+        string symbol;
+        uint256 balance;
+        uint256 allowance;
+        uint8 decimals;
+    }
+
+    struct StakingPositionInfo {
+        address owner;
+        uint256 id;
+        uint256 amount;
+        uint256 declaredValue;
+        uint256 rewards;
+        uint256 cooldownEnd;
+        uint256 rewardsUnlockAt;
+        bool isActive;
+    }
+
+    struct BondPositionInfo {
+        uint256 id;
+        uint256 bondId;
+        uint256 amount;
+        uint256 payout;
+        uint256 startTime;
+        uint256 endTime;
+        uint256 claimed;
+        bool isVested;
+    }
+
+    struct ProtocolInfo {
+        uint256 tvl;
+        uint256 totalSupply;
+        uint256 totalStaked;
+        uint256 totalRewards;
+        uint256 currentAPR;
+        mapping(address => TokenInfo) tokenBalances;
+        StakingPositionInfo[] stakingPositions;
+        BondPositionInfo[] bondPositions;
+    }
+
+    // State variables
+    IDreStaking public immutable staking;
+    IDreBondDepository public immutable bondDepository;
+    ITreasury public immutable treasury;
+    IERC20 public immutable dreToken;
+
+    // Events
+    event RewardsClaimed(uint256 indexed positionId, uint256 amount);
+
+    constructor(
+        address _staking,
+        address _bondDepository,
+        address _treasury,
+        address _dreToken
+    ) {
+        staking = IDreStaking(_staking);
+        bondDepository = IDreBondDepository(_bondDepository);
+        treasury = ITreasury(_treasury);
+        dreToken = IERC20(_dreToken);
+    }
+
+    /// @notice Get all protocol information for a user
+    /// @param user The address of the user
+    function getProtocolInfo(address user) external view returns (
+        uint256 tvl,
+        uint256 totalSupply,
+        uint256 totalStaked,
+        uint256 totalRewards,
+        uint256 currentAPR,
+        address[] memory bondTokens,
+        TokenInfo[] memory tokenInfos,
+        StakingPositionInfo[] memory stakingPositions,
+        BondPositionInfo[] memory bondPositions
+    ) {
+        // Get protocol-wide stats
+        tvl = staking.totalStaked();
+        totalSupply = dreToken.totalSupply();
+        totalStaked = staking.totalStaked();
+        totalRewards = staking.rewardPerToken();
+        currentAPR = calculateAPR();
+
+        // Get token balances and allowances
+        tokenInfos = new TokenInfo[](bondTokens.length + 1); // +1 for DRE token
+
+        // Add DRE token info
+        tokenInfos[0] = TokenInfo({
+            token: address(dreToken),
+            name: "DRE",
+            symbol: "DRE",
+            balance: dreToken.balanceOf(user),
+            allowance: dreToken.allowance(user, address(staking)),
+            decimals: 18
+        });
+
+        // Add bond token info
+        for (uint256 i = 0; i < bondTokens.length; i++) {
+            IERC20Metadata token = IERC20Metadata(bondTokens[i]);
+            tokenInfos[i + 1] = TokenInfo({
+                balance: token.balanceOf(user),
+                allowance: token.allowance(user, address(bondDepository)),
+                decimals: token.decimals(),
+                name: token.name(),
+                symbol: token.symbol(),
+                token: address(token)
+            });
+        }
+
+        // Get staking positions
+        uint256 stakingBalance = staking.balanceOf(user);
+        stakingPositions = new StakingPositionInfo[](stakingBalance);
+
+        for (uint256 i = 0; i < stakingBalance; i++) {
+            uint256 tokenId = staking.tokenOfOwnerByIndex(user, i);
+            if (tokenId == 0) continue;
+            IDreStaking.Position memory position = staking.positions(tokenId);
+
+            stakingPositions[i] = StakingPositionInfo({
+                owner: user,
+                id: tokenId,
+                amount: position.amount,
+                declaredValue: position.declaredValue,
+                rewards: staking.earned(tokenId),
+                cooldownEnd: position.cooldownEnd,
+                rewardsUnlockAt: position.rewardsUnlockAt,
+                isActive: position.cooldownEnd == 0
+            });
+        }
+
+        // Get bond positions
+        uint256 bondBalance = bondDepository.balanceOf(user);
+        bondPositions = new BondPositionInfo[](bondBalance);
+
+        for (uint256 i = 0; i < bondBalance; i++) {
+            uint256 tokenId = bondDepository.tokenOfOwnerByIndex(user, i);
+            (
+                uint256 bondId,
+                uint256 amount,
+                uint256 payout,
+                uint256 startTime,
+                uint256 lastClaimTime,
+                uint256 claimedAmount,
+                bool isStaked
+            ) = bondDepository.positions(tokenId);
+
+            bondPositions[i] = BondPositionInfo({
+                id: tokenId,
+                bondId: bondId,
+                amount: amount,
+                payout: payout,
+                startTime: startTime,
+                endTime: startTime + bondDepository.VESTING_PERIOD(),
+                claimed: claimedAmount,
+                isVested: isStaked
+            });
+        }
+    }
+
+    /// @notice Claim all rewards for a staking position
+    /// @return amount The amount of rewards claimed
+    function claimAllRewards(address user) external returns (uint256 amount) {
+        uint256 balance = staking.balanceOf(user);
+
+        for (uint256 i = 0; i < balance; i++) {
+            amount += staking.claimRewards(staking.tokenOfOwnerByIndex(user, i));
+        }
+    }
+
+    /// @notice Calculate the current APR
+    /// @return The current APR as a percentage (e.g., 1000 = 10%)
+    function calculateAPR() public view returns (uint256) {
+        uint256 totalStaked_ = staking.totalStaked();
+        if (totalStaked_ == 0) return 0;
+
+        uint256 rewardRate = staking.rewardRate();
+        uint256 yearInSeconds = 365 days;
+
+        // Calculate annual rewards
+        uint256 annualRewards = rewardRate * yearInSeconds;
+
+        // Calculate APR as a percentage (multiplied by 100 for precision)
+        return (annualRewards * 10000) / totalStaked_;
+    }
+
+    function getAllStakingPositions(uint256 startingIndex, uint256 endingIndex) external view returns (StakingPositionInfo[] memory) {
+        StakingPositionInfo[] memory positions = new StakingPositionInfo[](endingIndex - startingIndex);
+
+        for (uint256 i = startingIndex; i < endingIndex; i++) {
+            IDreStaking.Position memory position = staking.positions(i);
+
+            positions[i - startingIndex] = StakingPositionInfo({
+                id: i,
+                owner: staking.ownerOf(i),
+                amount: position.amount,
+                declaredValue: position.declaredValue,
+                rewards: staking.earned(i),
+                cooldownEnd: position.cooldownEnd,
+                rewardsUnlockAt: position.rewardsUnlockAt,
+                isActive: position.cooldownEnd == 0
+            });
+        }
+
+        return positions;
+    }
+}
