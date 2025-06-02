@@ -58,6 +58,11 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         router = IShadowRouter(_router);
         treasury = ITreasury(_treasury);
         maxUsdcCapacity = _maxUsdcCapacity;
+        bonus = _bonus;
+
+        dreToken.approve(address(router), type(uint256).max);
+        usdcToken.approve(address(router), type(uint256).max);
+        dreToken.approve(address(staking), type(uint256).max);
     }
 
     function setMaxUsdcCapacity(uint256 _maxUsdcCapacity) external onlyOwner {
@@ -85,7 +90,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         usdcToken.safeTransfer(address(treasury), usdcAmount / 2);
 
         // Deposit into LP
-        (uint256 dreUsed, uint256 usdcUsed, uint256 lpReceived) = router.addLiquidity(
+        (, , uint256 lpReceived) = router.addLiquidity(
             address(dreToken),
             address(usdcToken),
             false,
@@ -98,7 +103,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         );
 
         // Deposit the LP into the treasury
-        uint256 dreAmountOfLp = treasury.tokenValueE18(address(lpToken), lpReceived);
+        uint256 dreAmountOfLp = treasury.tokenValueE18(address(lpToken), lpReceived) * bonus / 1e18;
         lpToken.safeTransfer(address(treasury), lpReceived);
         dreToken.mint(address(this), dreAmountOfLp);
 

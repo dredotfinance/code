@@ -9,7 +9,11 @@ interface IDreAuthority {
     event TreasuryUpdated(address indexed newTreasury, address indexed oldTreasury);
     event OperationsTreasuryUpdated(address indexed newOperationsTreasury, address indexed oldOperationsTreasury);
 
-    /* ========== VIEW ========== */
+    function addGovernor(address _newGovernor) external;
+    function addGuardian(address _newGuardian) external;
+    function addPolicy(address _newPolicy) external;
+    function addRewardManager(address _newRewardManager) external;
+    function addReserveManager(address _newReserveManager) external;
 
     function isGovernor(address account) external view returns (bool);
 
