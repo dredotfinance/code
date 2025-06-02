@@ -713,7 +713,7 @@
     "name": "dre",
     "outputs": [
       {
-        "internalType": "contract IERC20",
+        "internalType": "contract IDRE",
         "name": "",
         "type": "address"
       }

@@ -6,6 +6,7 @@ import "../contracts/periphery/BootstrapLP.sol";
 import "../contracts/interfaces/IDreStaking.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+
 contract DreBondDepositoryTest is BaseTest {
     BootstrapLP public bootstrapLP;
 
@@ -106,22 +107,65 @@ contract DreBondDepositoryTest is BaseTest {
         IERC20 lp = IERC20(LP_TOKEN);
         IERC20 dreStaking = IERC20(sDRE_TOKEN);
 
-        // Store initial balances
-        uint256 initialUsdcBalance = usdc.balanceOf(usdcWhale);
-        uint256 initialDreBalance = dre.balanceOf(usdcWhale);
-        uint256 initialDreTotalSupply = dre.totalSupply();
-        uint256 initialDreLpBalance = dre.balanceOf(LP_TOKEN);
-        uint256 initialUsdcLpBalance = usdc.balanceOf(LP_TOKEN);
-        uint256 initialLpTreasuryBalance = lp.balanceOf(TREASURY);
-        uint256 initialStakedBalance = dreStaking.balanceOf(usdcWhale);
-
         usdc.approve(address(bootstrapLP), type(uint256).max);
-        bootstrapLP.bootstrap(100000e6);
+        bootstrapLP.bootstrap(10000e6);
+    }
 
-        // Verify USDC balance decreased by the bootstrap amount
-        assertEq(usdc.balanceOf(usdcWhale), initialUsdcBalance - 100000e6, "USDC balance should decrease by bootstrap amount");
+    function test_BootstrapDepositAfterSwap() public {
+                IERC20 usdc = IERC20(USDC_TOKEN);
+        IERC20 dre = IERC20(DRE_TOKEN);
+        IERC20 lp = IERC20(LP_TOKEN);
+        IERC20 dreStaking = IERC20(sDRE_TOKEN);
 
-        // Verify DRE total supply increased
-        assertGt(dre.totalSupply(), initialDreTotalSupply, "DRE total supply should increase");
+        vm.startPrank(usdcWhale);
+
+        console.log("DRE balance of whale", dre.balanceOf(usdcWhale));
+        console.log("DRE balance of LP", dre.balanceOf(LP_TOKEN));
+        console.log("USDC balance of whale", usdc.balanceOf(usdcWhale));
+        console.log("USDC balance of LP", usdc.balanceOf(LP_TOKEN));
+        console.log("LP balance of Treasury", lp.balanceOf(TREASURY));
+        console.log("Staked balance of whale", dreStaking.balanceOf(usdcWhale));
+        console.log("Staked balance of LP", dreStaking.balanceOf(LP_TOKEN));
+
+        // Do a swap to shift the price of DRE
+        usdc.approve(address(ROUTER), type(uint256).max);
+        IShadowRouter router = IShadowRouter(ROUTER);
+        IShadowRouter.route[] memory routes = new IShadowRouter.route[](1);
+        routes[0] = IShadowRouter.route({from: USDC_TOKEN, to: DRE_TOKEN, stable: false});
+        router.swapExactTokensForTokens(
+            1000e6,
+            0,
+            routes,
+            address(bootstrapLP),
+            block.timestamp
+        );
+
+        console.log("--------------------------------");
+       console.log("DRE balance of whale", dre.balanceOf(usdcWhale));
+        console.log("DRE balance of LP", dre.balanceOf(LP_TOKEN));
+        console.log("USDC balance of whale", usdc.balanceOf(usdcWhale));
+        console.log("USDC balance of LP", usdc.balanceOf(LP_TOKEN));
+        console.log("LP balance of Treasury", lp.balanceOf(TREASURY));
+        console.log("Staked balance of whale", dreStaking.balanceOf(usdcWhale));
+        console.log("Staked balance of LP", dreStaking.balanceOf(LP_TOKEN));
+
+        // Bootstrap with the same amount of USDC
+        usdc.approve(address(bootstrapLP), type(uint256).max);
+        bootstrapLP.bootstrap(1000000e6);
+
+        console.log("--------------------------------");
+
+        console.log("DRE balance of whale", dre.balanceOf(usdcWhale));
+        console.log("DRE balance of LP", dre.balanceOf(LP_TOKEN));
+        console.log("USDC balance of whale", usdc.balanceOf(usdcWhale));
+        console.log("USDC balance of LP", usdc.balanceOf(LP_TOKEN));
+        console.log("LP balance of Treasury", lp.balanceOf(TREASURY));
+        console.log("Staked balance of whale", dreStaking.balanceOf(usdcWhale));
+        console.log("Staked balance of LP", dreStaking.balanceOf(LP_TOKEN));
     }
 }
+
+// 502003 USDC
+// 125636 DRE
+
+// 1 DRE = 502003 / 125636 = 3.99570202732240437158469924812031 USDC

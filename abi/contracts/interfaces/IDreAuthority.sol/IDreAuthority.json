@@ -41,6 +41,71 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_newGovernor",
+        "type": "address"
+      }
+    ],
+    "name": "addGovernor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newGuardian",
+        "type": "address"
+      }
+    ],
+    "name": "addGuardian",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newPolicy",
+        "type": "address"
+      }
+    ],
+    "name": "addPolicy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newReserveManager",
+        "type": "address"
+      }
+    ],
+    "name": "addReserveManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newRewardManager",
+        "type": "address"
+      }
+    ],
+    "name": "addRewardManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "account",
         "type": "address"
       }

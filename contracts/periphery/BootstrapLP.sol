@@ -12,6 +12,15 @@ import "../interfaces/ITreasury.sol";
 import "../interfaces/IDRE.sol";
 
 interface IShadowRouter {
+struct route {
+        /// @dev token from
+        address from;
+        /// @dev token to
+        address to;
+        /// @dev is stable route
+        bool stable;
+    }
+
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -23,6 +32,14 @@ interface IShadowRouter {
         address to,
         uint256 deadline
     ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        route[] calldata routes,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
 }
 
 contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
