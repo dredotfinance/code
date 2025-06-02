@@ -214,8 +214,9 @@ contract DreUIHelper {
         uint256 balance = staking.balanceOf(user);
         for (uint256 i = 0; i < balance; i++) {
             uint256 tokenId = staking.tokenOfOwnerByIndex(user, i);
-            IDreStaking.Position memory position = staking.positions(tokenId);
-            if (position.cooldownEnd > block.timestamp) continue;
+            if (tokenId == 0) continue;
+            // IDreStaking.Position memory position = staking.positions(tokenId);
+            // if (position.cooldownEnd > block.timestamp) continue;
             amount += staking.claimRewards(tokenId);
         }
     }
