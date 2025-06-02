@@ -213,7 +213,10 @@ contract DreUIHelper {
     function claimAllRewards(address user) external returns (uint256 amount) {
         uint256 balance = staking.balanceOf(user);
         for (uint256 i = 0; i < balance; i++) {
-            amount += staking.claimRewards(staking.tokenOfOwnerByIndex(user, i));
+            uint256 tokenId = staking.tokenOfOwnerByIndex(user, i);
+            IDreStaking.Position memory position = staking.positions(tokenId);
+            if (position.cooldownEnd > block.timestamp) continue;
+            amount += staking.claimRewards(tokenId);
         }
     }
 

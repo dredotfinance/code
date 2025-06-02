@@ -32,7 +32,7 @@ contract DreStaking is
     uint256 public constant TREASURY_SHARE = 400; // 4% from harberger
     uint256 public constant BASIS_POINTS = 10000;
     uint256 public constant WITHDRAW_COOLDOWN_PERIOD = 3 days;
-    uint256 public constant REWARD_COOLDOWN_PERIOD = 3 days;
+    uint256 public constant REWARD_COOLDOWN_PERIOD = 1 days;
     uint256 public constant EPOCH_DURATION = 8 hours;
 
     // State variables
@@ -51,7 +51,7 @@ contract DreStaking is
     uint256 public rewardPerTokenStored;
     uint256 public override totalStaked;
 
-    function initialize(address _dreToken, address _trackingToken, address _authority) public reinitializer(5) {
+    function initialize(address _dreToken, address _trackingToken, address _authority) public reinitializer(6) {
         if (lastId == 0) { lastId = 1; }
 
         __ERC721_init("DRE Staking Position", "DRE-POS");
@@ -152,7 +152,7 @@ contract DreStaking is
             rewardPerTokenPaid: rewardPerTokenStored,
             rewards: 0,
             cooldownEnd: 0,
-            rewardsUnlockAt: block.timestamp + Math.max(minLockDuration, WITHDRAW_COOLDOWN_PERIOD)
+            rewardsUnlockAt: block.timestamp + Math.max(minLockDuration, REWARD_COOLDOWN_PERIOD)
         });
 
         totalStaked += amount;
@@ -249,7 +249,7 @@ contract DreStaking is
      */
     function claimRewards(uint256 tokenId) external override nonReentrant returns (uint256 reward) {
         Position storage position = _positions[tokenId];
-        require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
+        // require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
 
         _updateReward(tokenId);
 
