@@ -2,9 +2,10 @@
 pragma solidity ^0.8.15;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./IDRE.sol";
 import "./IDreStaking.sol";
 import "./ITreasury.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
 interface IDreBondDepository is IERC721Enumerable {
@@ -79,7 +80,7 @@ interface IDreBondDepository is IERC721Enumerable {
     function BASIS_POINTS() external view returns (uint256);
     function TEAM_SHARE() external view returns (uint256);
     function staking() external view returns (IDreStaking);
-    function dre() external view returns (IERC20);
+    function dre() external view returns (IDRE);
     function treasury() external view returns (ITreasury);
     function lastId() external view returns (uint256);
 }

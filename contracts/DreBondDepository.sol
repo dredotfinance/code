@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./DreAccessControlled.sol";
 import "./interfaces/IDreStaking.sol";
+import "./interfaces/IDRE.sol";
 import "./interfaces/IDreBondDepository.sol";
 import "./interfaces/ITreasury.sol";
 
@@ -29,7 +30,7 @@ contract DreBondDepository is
     // Storage
     Bond[] private _bonds;
     IDreStaking public override staking;
-    IERC20 public override dre;
+    IDRE public override dre;
     ITreasury public override treasury;
     mapping(uint256 => BondPosition) private _positions;
     uint256 public override lastId = 1;
@@ -37,14 +38,14 @@ contract DreBondDepository is
     function initialize(address _dre, address _staking, address _treasury, address _authority)
         public
         override
-        reinitializer(2)
+        reinitializer(3)
     {
         __ERC721_init("DRE Bond Position", "DRE-BOND");
         __ReentrancyGuard_init();
         __DreAccessControlled_init(_authority);
         staking = IDreStaking(_staking);
         treasury = ITreasury(_treasury);
-        dre = IERC20(_dre);
+        dre = IDRE(_dre);
         if (lastId == 0) {lastId = 1;
         }
     }
@@ -147,8 +148,9 @@ contract DreBondDepository is
         bond.quoteToken.safeTransfer(authority.operationsTreasury(), teamFee);
 
         // Deposit to treasury and mint DRE tokens
-        bond.quoteToken.approve(address(treasury), protocolAmount);
-        treasury.deposit(protocolAmount, address(bond.quoteToken), 0); // 0 profit since this is a bond
+        bond.quoteToken.safeTransfer(address(treasury), protocolAmount);
+        uint256 mintedAmount = treasury.tokenValueE18(address(bond.quoteToken), protocolAmount);
+        dre.mint(address(this), mintedAmount);
 
         // Create bond position NFT
         tokenId_ = lastId++;
@@ -182,7 +184,7 @@ contract DreBondDepository is
         position.claimedAmount += claimable;
         position.lastClaimTime = block.timestamp;
 
-        dre.safeTransfer(msg.sender, claimable);
+        dre.transfer(msg.sender, claimable);
 
         emit Claimed(_tokenId, claimable);
     }

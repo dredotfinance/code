@@ -266,7 +266,7 @@ contract DreBondDepositoryTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFail_StakeBeforeVesting() public {
+    function test_StakeBeforeVesting() public {
         vm.startPrank(owner);
 
         // Create bond
@@ -283,7 +283,7 @@ contract DreBondDepositoryTest is BaseTest {
         mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
         (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
-        // Try to stake before vesting
+        // Try to stake before vesting; it should work
         dreBondDepository.stake(tokenId, payout);
 
         vm.stopPrank();

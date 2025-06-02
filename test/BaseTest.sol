@@ -73,6 +73,7 @@ contract BaseTest is Test {
 
         dreAuthority.addPolicy(address(treasury));
         dreAuthority.addPolicy(address(rebaseController));
+        dreAuthority.addPolicy(address(dreBondDepository));
         dreAuthority.setOperationsTreasury(operationsTreasury);
         dreAuthority.setTreasury(address(treasury));
         dreAuthority.addReserveDepositor(address(dreBondDepository));
