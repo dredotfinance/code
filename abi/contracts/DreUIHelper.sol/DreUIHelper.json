@@ -25,6 +25,11 @@
         "internalType": "address",
         "name": "_stakingToken",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_rebaseController",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -322,6 +327,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint256",
+            "name": "treasuryBalance",
+            "type": "uint256"
+          },
+          {
             "internalType": "uint8",
             "name": "decimals",
             "type": "uint8"
@@ -424,6 +434,19 @@
         "internalType": "struct DreUIHelper.BondPositionInfo[]",
         "name": "bondPositions",
         "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rebaseController",
+    "outputs": [
+      {
+        "internalType": "contract IRebaseController",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",

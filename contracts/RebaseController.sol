@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/IDRE.sol";
 import "./interfaces/ITreasury.sol";
 import "./interfaces/IDreStaking.sol";
+import "./interfaces/IRebaseController.sol";
 import "./DreAccessControlled.sol";
 
 /**
@@ -23,7 +24,7 @@ import "./DreAccessControlled.sol";
  *          ▸ per-asset risk-weighting, circuit-breakers, and RBS / inverse-bond hooks
  */
 
-contract RebaseController is DreAccessControlled {
+contract RebaseController is DreAccessControlled, IRebaseController {
     IDRE public dre; // DRE token (decimals = 18)
     ITreasury public treasury;
     IDreStaking public staking; // staking contract or escrow
@@ -39,8 +40,6 @@ contract RebaseController is DreAccessControlled {
     uint16 public immutable FLOOR_APR = 1000; // 1000 % APR (≈0.092% per 8h)
     uint16 public immutable CEIL_APR = 5000; // 5000 % APR (≈0.46% per 8h)
 
-    // --- Events --------------------------------------------------------------
-    event Rebased(uint256 backingRatio, uint256 epochRate, uint256 tokensMinted);
 
     function initialize(address _dre, address _treasury, address _staking, address _authority) public initializer {
         dre = IDRE(_dre);

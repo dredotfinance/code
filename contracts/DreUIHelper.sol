@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import "./interfaces/IDreStaking.sol";
 import "./interfaces/IDreBondDepository.sol";
+import "./interfaces/IRebaseController.sol";
 import "./interfaces/ITreasury.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -18,6 +19,7 @@ contract DreUIHelper {
         string symbol;
         uint256 balance;
         uint256 allowance;
+        uint256 treasuryBalance;
         uint8 decimals;
     }
 
@@ -69,11 +71,12 @@ contract DreUIHelper {
     }
 
     // State variables
-    IDreStaking public immutable staking;
-    IDreBondDepository public immutable bondDepository;
-    ITreasury public immutable treasury;
-    IERC20 public immutable dreToken;
-    IERC20 public immutable stakingToken;
+    IDreStaking public staking;
+    IDreBondDepository public bondDepository;
+    ITreasury public treasury;
+    IERC20 public dreToken;
+    IERC20 public stakingToken;
+    IRebaseController public rebaseController;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
@@ -83,13 +86,15 @@ contract DreUIHelper {
         address _bondDepository,
         address _treasury,
         address _dreToken,
-        address _stakingToken
+        address _stakingToken,
+        address _rebaseController
     ) {
         staking = IDreStaking(_staking);
         bondDepository = IDreBondDepository(_bondDepository);
         treasury = ITreasury(_treasury);
         dreToken = IERC20(_dreToken);
         stakingToken = IERC20(_stakingToken);
+        rebaseController = IRebaseController(_rebaseController);
     }
 
     /// @notice Get all protocol information for a user
@@ -125,6 +130,7 @@ contract DreUIHelper {
             symbol: "DRE",
             balance: dreToken.balanceOf(user),
             allowance: dreToken.allowance(user, address(staking)),
+            treasuryBalance: 0,
             decimals: 18
         });
 
@@ -136,6 +142,7 @@ contract DreUIHelper {
             symbol: "sDRE",
             balance: stakingToken.balanceOf(user),
             allowance: stakingToken.allowance(user, address(staking)),
+            treasuryBalance: 0,
             decimals: 18
         });
 
@@ -148,6 +155,7 @@ contract DreUIHelper {
                 decimals: token.decimals(),
                 name: token.name(),
                 symbol: token.symbol(),
+                treasuryBalance: token.balanceOf(address(treasury)),
                 token: address(token)
             });
         }
@@ -206,17 +214,8 @@ contract DreUIHelper {
     /// @notice Calculate the current APR
     /// @return The current APR as a percentage (e.g., 1000 = 10%)
     function calculateAPR() public view returns (uint256) {
-        uint256 totalStaked_ = staking.totalStaked();
-        if (totalStaked_ == 0) return 0;
-
-        uint256 rewardRate = staking.rewardRate();
-        uint256 yearInSeconds = 365 days;
-
-        // Calculate annual rewards
-        uint256 annualRewards = rewardRate * yearInSeconds;
-
-        // Calculate APR as a percentage (multiplied by 100 for precision)
-        return (annualRewards * 10000) / totalStaked_;
+        (uint256 apr,, ) = rebaseController.projectedEpochRate();
+        return apr;
     }
 
     function getAllStakingPositions(uint256 startingIndex, uint256 endingIndex)
