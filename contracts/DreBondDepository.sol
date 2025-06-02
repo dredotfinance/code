@@ -34,6 +34,21 @@ contract DreBondDepository is
     mapping(uint256 => BondPosition) private _positions;
     uint256 public override lastId = 1;
 
+    function initialize(address _dre, address _staking, address _treasury, address _authority)
+        public
+        override
+        reinitializer(2)
+    {
+        __ERC721_init("DRE Bond Position", "DRE-BOND");
+        __ReentrancyGuard_init();
+        __DreAccessControlled_init(_authority);
+        staking = IDreStaking(_staking);
+        treasury = ITreasury(_treasury);
+        dre = IERC20(_dre);
+        if (lastId == 0) {lastId = 1;
+        }
+    }
+
     function bonds(uint256 index) external view override returns (Bond memory bond) {
         bond = _bonds[index];
     }
@@ -42,19 +57,6 @@ contract DreBondDepository is
         position = _positions[tokenId];
     }
 
-    function initialize(address _dre, address _staking, address _treasury, address _authority)
-        public
-        override
-        initializer
-    {
-        __ERC721_init("DRE Bond Position", "DRE-BOND");
-        __ReentrancyGuard_init();
-        __DreAccessControlled_init(_authority);
-        staking = IDreStaking(_staking);
-        treasury = ITreasury(_treasury);
-        dre = IERC20(_dre);
-        lastId = 1;
-    }
 
     /* ======== MUTATIVE FUNCTIONS ======== */
 
@@ -195,7 +197,7 @@ contract DreBondDepository is
         BondPosition storage position = _positions[_tokenId];
         require(!position.isStaked, "Already staked");
 
-        uint256 claimable = _claimableAmount(_tokenId);
+        uint256 claimable = position.amount - position.claimedAmount;
         require(claimable > 0, "Nothing to stake");
 
         position.isStaked = true;

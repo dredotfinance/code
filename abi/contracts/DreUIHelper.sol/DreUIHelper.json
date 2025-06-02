@@ -332,6 +332,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint256",
+            "name": "treasuryValueDre",
+            "type": "uint256"
+          },
+          {
             "internalType": "uint8",
             "name": "decimals",
             "type": "uint8"
@@ -423,6 +428,11 @@
           {
             "internalType": "uint256",
             "name": "claimedAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "claimableAmount",
             "type": "uint256"
           },
           {

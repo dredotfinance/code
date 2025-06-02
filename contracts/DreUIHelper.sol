@@ -20,6 +20,7 @@ contract DreUIHelper {
         uint256 balance;
         uint256 allowance;
         uint256 treasuryBalance;
+        uint256 treasuryValueDre;
         uint8 decimals;
     }
 
@@ -42,6 +43,7 @@ contract DreUIHelper {
         uint256 startTime; // when the bond was purchased
         uint256 lastClaimTime; // last time tokens were claimed
         uint256 claimedAmount; // amount of tokens already claimed
+        uint256 claimableAmount; // amount of tokens that can be claimed
         bool isStaked; // whether the position is staked
     }
 
@@ -131,6 +133,7 @@ contract DreUIHelper {
             balance: dreToken.balanceOf(user),
             allowance: dreToken.allowance(user, address(staking)),
             treasuryBalance: 0,
+            treasuryValueDre: 0,
             decimals: 18
         });
 
@@ -143,6 +146,7 @@ contract DreUIHelper {
             balance: stakingToken.balanceOf(user),
             allowance: stakingToken.allowance(user, address(staking)),
             treasuryBalance: 0,
+            treasuryValueDre: 0,
             decimals: 18
         });
 
@@ -156,6 +160,7 @@ contract DreUIHelper {
                 name: token.name(),
                 symbol: token.symbol(),
                 treasuryBalance: token.balanceOf(address(treasury)),
+                treasuryValueDre: treasury.tokenValueE18(address(token), token.balanceOf(address(treasury))),
                 token: address(token)
             });
         }
@@ -197,6 +202,7 @@ contract DreUIHelper {
                 startTime: position.startTime,
                 lastClaimTime: position.lastClaimTime,
                 claimedAmount: position.claimedAmount,
+                claimableAmount: bondDepository.claimableAmount(tokenId),
                 isStaked: position.isStaked
             });
         }
