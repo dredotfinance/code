@@ -4,6 +4,10 @@ pragma solidity ^0.8.15;
 import "../interfaces/IAggregatorV3.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title BeaconOracle
+ * @notice This contract is a wrapper around an AggregatorV3Interface that allows for the beacon to be updated.
+ */
 contract BeaconOracle is AggregatorV3Interface, Ownable {
     AggregatorV3Interface public beacon;
 
