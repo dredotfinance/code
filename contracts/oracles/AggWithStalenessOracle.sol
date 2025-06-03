@@ -5,6 +5,10 @@ import "../interfaces/IOracle.sol";
 import "../interfaces/IAggregatorV3.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title AggWithStalenessOracle
+ * @notice This contract is a wrapper around an IAggregatorV3 that ports it in the IOracle interface.
+ */
 contract AggWithStalenessOracle is IOracle {
     IAggregatorV3 public immutable AGGREGATOR;
     uint256 public immutable MAX_STALENESS;
@@ -18,7 +22,7 @@ contract AggWithStalenessOracle is IOracle {
     }
 
     function getPrice() external view override returns (uint256) {
-        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = AGGREGATOR
+        (, int256 answer, , uint256 updatedAt, ) = AGGREGATOR
             .latestRoundData();
         require(updatedAt > block.timestamp - MAX_STALENESS, "Stale price");
         return uint256(answer) * decimalsToAdjust;

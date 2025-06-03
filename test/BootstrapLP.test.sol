@@ -59,7 +59,7 @@ contract DreBondDepositoryTest is BaseTest {
 
         // Store initial balances
         uint256 initialUsdcBalance = usdc.balanceOf(usdcWhale);
-        uint256 initialDreBalance = dre.balanceOf(usdcWhale);
+        // uint256 initialDreBalance = dre.balanceOf(usdcWhale);
         uint256 initialDreTotalSupply = dre.totalSupply();
         uint256 initialDreLpBalance = dre.balanceOf(LP_TOKEN);
         uint256 initialUsdcLpBalance = usdc.balanceOf(LP_TOKEN);
@@ -97,9 +97,9 @@ contract DreBondDepositoryTest is BaseTest {
         vm.startPrank(usdcWhale);
 
         IERC20 usdc = IERC20(USDC_TOKEN);
-        IERC20 dre = IERC20(DRE_TOKEN);
-        IERC20 lp = IERC20(LP_TOKEN);
-        IERC20 dreStaking = IERC20(sDRE_TOKEN);
+        // IERC20 dre = IERC20(DRE_TOKEN);
+        // IERC20 lp = IERC20(LP_TOKEN);
+        // IERC20 dreStaking = IERC20(sDRE_TOKEN);
 
         usdc.approve(address(bootstrapLP), type(uint256).max);
         bootstrapLP.bootstrap(10000e6);

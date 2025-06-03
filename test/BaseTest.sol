@@ -10,11 +10,11 @@ import "../contracts/DreTreasury.sol";
 import "../contracts/DreStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockOracle.sol";
+import "../contracts/mocks/MockEndpoint.sol";
 import "../contracts/DreAuthority.sol";
 import "../contracts/DreBondDepository.sol";
-import "../contracts/oracles/TokenOracleE18.sol";
 import "../contracts/DreOracle.sol";
-import "../contracts/mocks/MockEndpoint.sol";
+
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -57,7 +57,7 @@ contract BaseTest is Test {
         mockOracle3 = new MockOracle(0.5e18); // 0.5:1 price
 
         // Deploy DRE token
-        MockLayerZero lz = new MockLayerZero();
+        MockEndpoint lz = new MockEndpoint();
         dre = new DRE(address(lz), address(dreAuthority));
 
         // Deploy sDRE token
