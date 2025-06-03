@@ -124,8 +124,11 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         lpToken.safeTransfer(address(treasury), lpReceived);
         dreToken.mint(address(this), dreAmountOfLp);
 
+        // require(dreAmountOfLp == dreAmount, "DRE amount of LP does not match DRE amount");
+
         // Stake into staking contract
         staking.createPosition(msg.sender, dreAmountOfLp, dreAmountOfLp, 0);
+        // staking.createPosition(msg.sender, dreAmount, dreAmount, 0);
 
         // Burn any pending DRE
         if (dreToken.balanceOf(address(this)) > 0) {

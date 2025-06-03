@@ -18,7 +18,7 @@ contract TwapOracleTest is Test {
         twapOracle = new TwapOracle(mockOracle, WINDOW_SIZE, 1 hours, address(this));
     }
 
-    function test_InitialState() public {
+    function test_InitialState() public view {
         assertEq(twapOracle.windowSize(), WINDOW_SIZE, "Window size should be set correctly");
         assertEq(address(twapOracle.oracle()), address(mockOracle), "Oracle address should be set correctly");
         assertEq(twapOracle.decimals(), 18, "Decimals should match oracle");
@@ -84,7 +84,7 @@ contract TwapOracleTest is Test {
         twapOracle.update();
     }
 
-    function test_DescriptionAndVersion() public {
+    function test_DescriptionAndVersion() public view {
         assertEq(twapOracle.version(), 1, "Version should be 1");
         assertEq(
             twapOracle.description(),

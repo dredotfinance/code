@@ -60,8 +60,14 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         uint256 mintAmount = (dre.totalSupply() * epochRate) / 1e18;
         require(mintAmount <= treasury.excessReserves(), "Insufficient reserves");
         if (mintAmount > 0 && apr > 0) {
+            // mintAmount is the amount of DRE to mint
             dre.mint(address(this), mintAmount);
-            staking.notifyRewardAmount(mintAmount);
+
+            // send 95% to staking
+            staking.notifyRewardAmount(mintAmount * 95 / 100);
+
+            // send 5% to treasury to cover bribes and rewards
+            dre.transfer(address(authority.operationsTreasury()), mintAmount * 5 / 100);
         }
 
         lastEpochTime = block.timestamp;
