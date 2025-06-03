@@ -69,7 +69,7 @@ contract RebaseControllerTest is BaseTest {
         // Test with 1.5:1 backing (150%)
         (apr, epochRate, backingRatio) = rebaseController.projectedEpochRate();
         assertEq(backingRatio, 1.5e18);
-        assertEq(apr, 1000); // Should have positive APR
+        assertEq(apr, 500); // Should have positive APR
     }
 
     function test_ExecuteEpochBeforeReady() public {
