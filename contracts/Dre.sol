@@ -1,15 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./DreAccessControlled.sol";
+import "./interfaces/IDRE.sol";
+import "@layerzerolabs/oft-evm/contracts/OFT.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "./interfaces/IDRE.sol";
-import "./DreAccessControlled.sol";
 
-contract DRE is ERC20Permit, Pausable, DreAccessControlled, IDRE {
-    constructor(address _authority) ERC20("Dre.finance", "DRE") ERC20Permit("DreFinance") {
+contract DRE is OFT, ERC20Permit, Pausable, DreAccessControlled, IDRE {
+    constructor(address _lzEndpoint, address _authority) OFT("Dre.finance", "DRE", _lzEndpoint, msg.sender) ERC20Permit("DreFinance") Ownable(msg.sender) {
         __DreAccessControlled_init(_authority);
+        _transferOwnership(address(0));
+        _mint(msg.sender, 1e18);
+        _burn(msg.sender, 1e18);
+    }
+
+    function _checkOwner() internal override view virtual {
+        if (!authority.isGovernor(_msgSender())) {
+            revert OwnableUnauthorizedAccount(_msgSender());
+        }
     }
 
     function pause() external onlyGuardian {

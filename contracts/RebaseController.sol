@@ -33,10 +33,10 @@ contract RebaseController is DreAccessControlled, IRebaseController {
 
     // piece-wise k slopes (all in APR %, 2 decimals eg 5000 = 5000%)
     uint16 public immutable K1 = 500; // rises 0->500 % over β 1-1.5
-    uint16 public immutable K2 = 4000; // rises 1000->5000 % over β 1.5-2.5 (slope 2k% per 0.5)
+    uint16 public immutable K2 = 1000; // rises 500->2000 % over β 1.5-2.5 (slope 2k% per 0.5)
 
-    uint16 public immutable FLOOR_APR = 1000; // 1000 % APR (≈0.092% per 8h)
-    uint16 public immutable CEIL_APR = 5000; // 5000 % APR (≈0.46% per 8h)
+    uint16 public immutable FLOOR_APR = 500; // 500 % APR (≈0.092% per 8h)
+    uint16 public immutable CEIL_APR = 2000; // 3000 % APR (≈0.46% per 8h)
 
     function initialize(address _dre, address _treasury, address _staking, address _authority) public initializer {
         dre = IDRE(_dre);

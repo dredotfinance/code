@@ -14,6 +14,7 @@ import "../contracts/DreAuthority.sol";
 import "../contracts/DreBondDepository.sol";
 import "../contracts/oracles/TokenOracleE18.sol";
 import "../contracts/DreOracle.sol";
+import "../contracts/mocks/MockEndpoint.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -56,7 +57,8 @@ contract BaseTest is Test {
         mockOracle3 = new MockOracle(0.5e18); // 0.5:1 price
 
         // Deploy DRE token
-        dre = new DRE(address(dreAuthority));
+        MockLayerZero lz = new MockLayerZero();
+        dre = new DRE(address(lz), address(dreAuthority));
 
         // Deploy sDRE token
         sDre = new sDRE(address(dreAuthority));

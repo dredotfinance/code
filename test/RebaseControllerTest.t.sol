@@ -144,16 +144,16 @@ contract RebaseControllerTest is BaseTest {
         // Test with 1.5:1 backing
         (apr, epochRate, backingRatio) = rebaseController.projectedEpochRateRaw(3e18, 2e18);
         assertEq(backingRatio, 1.5e18);
-        assertEq(apr, 1000); // Should have positive APR
+        assertEq(apr, 500); // Should have positive APR
 
         // Test with 2:1 backing
         (apr, epochRate, backingRatio) = rebaseController.projectedEpochRateRaw(3e18, 1.5e18);
         assertEq(backingRatio, 2e18);
-        assertEq(apr, 3000); // Should have positive APR
+        assertEq(apr, 1000); // Should have positive APR
 
         // Test with 2.5:1 backing
         (apr, epochRate, backingRatio) = rebaseController.projectedEpochRateRaw(2.5e18, 1e18);
         assertEq(backingRatio, 2.5e18);
-        assertEq(apr, 5000); // Should be at CEIL_APR
+        assertEq(apr, 2000); // Should be at CEIL_APR
     }
 }
