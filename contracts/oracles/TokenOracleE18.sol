@@ -2,11 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "../interfaces/IAggregatorV3.sol";
+import "../interfaces/ITokenOracleE18.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "../interfaces/ITokenOracleE18.sol";
 
 contract TokenOracleE18 is ITokenOracleE18 {
     AggregatorV3Interface public tokenOracle;
