@@ -16,7 +16,7 @@ contract DreBondDepositoryTest is BaseTest {
         dreAuthority.addPolicy(owner);
 
         // Enable mock quote token in treasury
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         vm.stopPrank();
     }
@@ -487,9 +487,9 @@ contract DreBondDepositoryTest is BaseTest {
         dreAuthority.addPolicy(owner);
 
         // Enable multiple quote tokens in treasury with different initial prices
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
-        treasury.enable(address(mockQuoteToken2), address(mockOracle2));
-        treasury.enable(address(mockQuoteToken3), address(mockOracle3));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken2), address(tokenOracle2));
+        treasury.enable(address(mockQuoteToken3), address(tokenOracle3));
 
         // Set initial oracle prices
         mockOracle.setPrice(1e18); // 1:1 price
@@ -585,8 +585,9 @@ contract DreBondDepositoryTest is BaseTest {
         MockERC20 usdc = new MockERC20("USD Coin", "USDC");
         usdc.setDecimals(6);
 
-        MockAggregatorV3 usdcOracle = new MockAggregatorV3(6, 1e18);
-        treasury.enable(address(usdc), address(usdcOracle));
+        MockAggregatorV3 usdcOracle = new MockAggregatorV3(6, 1e6);
+        TokenOracleE18 tokenOracle = new TokenOracleE18(usdcOracle, dreOracle, usdc);
+        treasury.enable(address(usdc), address(tokenOracle));
 
         // Calculate bond parameters
         uint256 dreAmount = 10000e18; // 10000 DRE

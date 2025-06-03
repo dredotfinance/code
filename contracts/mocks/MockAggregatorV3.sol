@@ -51,4 +51,8 @@ contract MockAggregatorV3 is AggregatorV3Interface {
     function setPrice(int256 price_) external {
         _price = price_;
     }
+
+    function setDecimals(uint8 decimals_) external {
+        _decimals = decimals_;
+    }
 }

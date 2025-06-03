@@ -12,6 +12,7 @@ import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockAggregatorV3.sol";
 import "../contracts/DreAuthority.sol";
 import "../contracts/DreBondDepository.sol";
+import "../contracts/oracles/TokenOracleE18.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -22,9 +23,13 @@ contract BaseTest is Test {
     MockERC20 public mockQuoteToken;
     MockERC20 public mockQuoteToken2;
     MockERC20 public mockQuoteToken3;
+    MockAggregatorV3 public dreOracle;
     MockAggregatorV3 public mockOracle;
     MockAggregatorV3 public mockOracle2;
     MockAggregatorV3 public mockOracle3;
+    TokenOracleE18 public tokenOracle;
+    TokenOracleE18 public tokenOracle2;
+    TokenOracleE18 public tokenOracle3;
     DreAuthority public dreAuthority;
     DreBondDepository public dreBondDepository;
 
@@ -47,6 +52,11 @@ contract BaseTest is Test {
         mockOracle2 = new MockAggregatorV3(18, 2e18); // 2:1 price
         mockOracle3 = new MockAggregatorV3(18, 0.5e18); // 0.5:1 price
 
+        dreOracle = new MockAggregatorV3(18, 1e18); // 1:1 price
+        tokenOracle = new TokenOracleE18(mockOracle, dreOracle, mockQuoteToken);
+        tokenOracle2 = new TokenOracleE18(mockOracle2, dreOracle, mockQuoteToken2);
+        tokenOracle3 = new TokenOracleE18(mockOracle3, dreOracle, mockQuoteToken3);
+
         // Deploy DRE token
         dre = new DRE(address(dreAuthority));
 
@@ -55,7 +65,7 @@ contract BaseTest is Test {
         // Deploy Treasury
         treasury = new Treasury();
         treasury.initialize(address(dre), address(dreAuthority));
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // Deploy Staking
         staking = new DreStaking();
@@ -90,6 +100,10 @@ contract BaseTest is Test {
         vm.label(address(mockOracle), "Mock Oracle");
         vm.label(address(mockOracle2), "Mock Oracle 2");
         vm.label(address(mockOracle3), "Mock Oracle 3");
+
+        vm.label(address(tokenOracle), "Token Oracle");
+        vm.label(address(tokenOracle2), "Token Oracle 2");
+        vm.label(address(tokenOracle3), "Token Oracle 3");
 
         vm.stopPrank();
     }

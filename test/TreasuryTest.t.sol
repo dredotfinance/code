@@ -2,6 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
+import "forge-std/console.sol";
 
 contract TreasuryTest is BaseTest {
     function setUp() public {
@@ -23,18 +24,18 @@ contract TreasuryTest is BaseTest {
 
     function test_EnableToken() public {
         // Enable a new token
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // Verify token is enabled
         assertTrue(treasury.enabledTokens(address(mockQuoteToken)));
-        assertEq(address(treasury.oracles(address(mockQuoteToken))), address(mockOracle));
+        assertEq(address(treasury.oracles(address(mockQuoteToken))), address(tokenOracle));
 
         vm.stopPrank();
     }
 
     function test_DisableToken() public {
         // First enable the token
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // Then disable it
         treasury.disable(address(mockQuoteToken));
@@ -47,7 +48,7 @@ contract TreasuryTest is BaseTest {
 
     function test_Deposit() public {
         // Enable token first
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // Mint some tokens to owner
         uint256 depositAmount = 1000e18;
@@ -60,19 +61,21 @@ contract TreasuryTest is BaseTest {
         uint256 profit = 100e18;
         uint256 dreMinted = treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
+        (int256 value, uint256 updatedAt) = tokenOracle.priceInDreE18();
+
         // Verify DRE was minted correctly
-        assertEq(dre.balanceOf(owner), dreMinted);
-        assertEq(dreMinted, depositAmount - profit);
+        assertEq(dre.balanceOf(owner), dreMinted, "DRE balance of owner should be equal to DRE minted");
+        assertEq(dreMinted, depositAmount - profit, "DRE minted should be equal to deposit amount minus profit");
 
         // Verify reserves were updated
-        assertEq(treasury.totalReserves(), depositAmount);
+        assertEq(treasury.totalReserves(), depositAmount, "Total reserves should be equal to deposit amount");
 
         vm.stopPrank();
     }
 
     function test_Withdraw() public {
         // Enable token first
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -104,7 +107,7 @@ contract TreasuryTest is BaseTest {
 
     function test_Manage() public {
         // Enable token first
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -128,7 +131,7 @@ contract TreasuryTest is BaseTest {
 
     function test_Mint() public {
         // Enable token first
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -149,7 +152,7 @@ contract TreasuryTest is BaseTest {
 
     function test_AuditReserves() public {
         // Enable token first
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -169,7 +172,7 @@ contract TreasuryTest is BaseTest {
 
     function test_BackingRatio() public {
         // Enable token first
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -201,7 +204,7 @@ contract TreasuryTest is BaseTest {
 
     function testFail_WithdrawInsufficientReserves() public {
         // Enable token first
-        treasury.enable(address(mockQuoteToken), address(mockOracle));
+        treasury.enable(address(mockQuoteToken), address(tokenOracle));
 
         // Try to withdraw without having any reserves
         treasury.withdraw(1000e18, address(mockQuoteToken));

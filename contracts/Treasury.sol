@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "./DreAccessControlled.sol";
-import "./interfaces/IAggregatorV3.sol";
+import "./interfaces/ITokenOracleE18.sol";
 import "./interfaces/IBondingCalculator.sol";
 import "./interfaces/IDRE.sol";
 import "./interfaces/ITreasury.sol";
@@ -20,7 +20,7 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
 
     address[] public tokens;
     mapping(address => bool) public enabledTokens;
-    mapping(address => AggregatorV3Interface) public oracles;
+    mapping(address => ITokenOracleE18) public oracles;
 
     uint256 public override totalReserves;
     uint256 public constant ORACLE_STALE_PERIOD = 1 hours;
@@ -126,7 +126,7 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @param _oracle address of the oracle
      */
     function enable(address _address, address _oracle) external onlyGovernor {
-        oracles[_address] = AggregatorV3Interface(_oracle);
+        oracles[_address] = ITokenOracleE18(_oracle);
         if (!enabledTokens[_address]) tokens.push(_address);
         enabledTokens[_address] = true;
         emit TokenEnabled(_address, true);
@@ -177,15 +177,14 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @return value_ value of the token in dre
      */
     function tokenValueE18(address _token, uint256 _amount) public view override returns (uint256 value_) {
-        AggregatorV3Interface oracle = oracles[_token];
+        ITokenOracleE18 oracle = oracles[_token];
         require(address(oracle) != address(0), "Oracle not set");
 
-        (, int256 priceE18, , uint256 updatedAt, ) = oracle.latestRoundData();
+        (int256 value, uint256 updatedAt) = oracle.priceInDreE18ForAmount(_amount);
         require(block.timestamp - updatedAt <= ORACLE_STALE_PERIOD, "Stale price");
-        require(priceE18 > 0, "Invalid price");
+        require(value > 0, "Invalid price");
 
-        uint256 decimals = oracle.decimals();
-        value_ = (uint256(priceE18) * _amount) / (10 ** decimals);
+        value_ = uint256(value);
     }
 
     /**

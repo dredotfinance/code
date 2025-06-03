@@ -10,7 +10,7 @@ contract MockERC20 is ERC20 {
         _mint(to, value);
     }
 
-    uint8 public decimals_;
+    uint8 public decimals_ = 18;
 
     function setDecimals(uint8 _decimals) public virtual {
         decimals_ = _decimals;
