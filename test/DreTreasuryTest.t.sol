@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
 
-contract TreasuryTest is BaseTest {
+contract DreTreasuryTest is BaseTest {
     function setUp() public {
         setUpBaseTest();
         vm.startPrank(owner);

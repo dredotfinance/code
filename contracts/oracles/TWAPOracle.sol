@@ -17,7 +17,7 @@ contract TwapOracle is IOracle, Ownable {
 
     IOracle public oracle;
     uint256 public windowSize;
-    uint256 public immutable MAX_OBSERVATIONS = 100;
+    uint256 public immutable MAX_OBSERVATIONS = 10;
     uint256 public minUpdateInterval;
 
     Observation[] public _observations;
