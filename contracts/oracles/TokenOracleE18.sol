@@ -28,15 +28,15 @@ contract TokenOracleE18 is ITokenOracleE18 {
     }
 
     function tokenValueE18(uint256 _amount) public view returns (int256 value, uint256 updatedAt) {
-        (, int256 price, , uint256 tokenUpdatedAt, ) = tokenOracle.latestRoundData(); // USDC/USD
+        (, int256 price,, uint256 tokenUpdatedAt,) = tokenOracle.latestRoundData(); // USDC/USD
         require(price > 0, "Invalid price");
         uint256 priceE18 = uint256(price) * 10 ** (18 - tokenOracleDecimals); // USDC/USD in E18
 
-        (, int256 drePriceE18, , uint256 dreUpdatedAt, ) = dreOracle.latestRoundData(); // DRE/USD
+        (, int256 drePriceE18,, uint256 dreUpdatedAt,) = dreOracle.latestRoundData(); // DRE/USD
         require(drePriceE18 > 0, "Invalid price");
 
         uint256 amountE18 = uint256(_amount) * 10 ** (18 - tokenDecimals); // amount in E18
-        value = int256(uint256(priceE18) * amountE18 / uint256(drePriceE18)) ;
+        value = int256(uint256(priceE18) * amountE18 / uint256(drePriceE18));
         updatedAt = Math.min(tokenUpdatedAt, dreUpdatedAt);
     }
 

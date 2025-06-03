@@ -25,9 +25,7 @@ contract FixedPriceOracle is AggregatorV3Interface, Ownable {
         return 1;
     }
 
-    function getRoundData(
-        uint80 _roundId
-    )
+    function getRoundData(uint80 _roundId)
         external
         view
         override

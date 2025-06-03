@@ -6,7 +6,6 @@ import "../contracts/periphery/BootstrapLP.sol";
 import "../contracts/interfaces/IDreStaking.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-
 contract DreBondDepositoryTest is BaseTest {
     BootstrapLP public bootstrapLP;
 
@@ -30,16 +29,7 @@ contract DreBondDepositoryTest is BaseTest {
         setUpBaseTest();
 
         vm.startPrank(DEPLOYER);
-        bootstrapLP = new BootstrapLP(
-            DRE_TOKEN,
-            USDC_TOKEN,
-            LP_TOKEN,
-            STAKING,
-            ROUTER,
-            TREASURY,
-            10000000e6,
-            1.1e18
-        );
+        bootstrapLP = new BootstrapLP(DRE_TOKEN, USDC_TOKEN, LP_TOKEN, STAKING, ROUTER, TREASURY, 10000000e6, 1.1e18);
 
         IDreAuthority(AUTHORITY).addPolicy(address(bootstrapLP));
         vm.stopPrank();
@@ -80,7 +70,11 @@ contract DreBondDepositoryTest is BaseTest {
         bootstrapLP.bootstrap(1000000e6);
 
         // Verify USDC balance decreased by the bootstrap amount
-        assertEq(usdc.balanceOf(usdcWhale), initialUsdcBalance - 1000000e6, "USDC balance should decrease by bootstrap amount");
+        assertEq(
+            usdc.balanceOf(usdcWhale),
+            initialUsdcBalance - 1000000e6,
+            "USDC balance should decrease by bootstrap amount"
+        );
 
         // Verify DRE total supply increased
         assertGt(dre.totalSupply(), initialDreTotalSupply, "DRE total supply should increase");
@@ -112,7 +106,7 @@ contract DreBondDepositoryTest is BaseTest {
     }
 
     function test_BootstrapDepositAfterSwap() public {
-                IERC20 usdc = IERC20(USDC_TOKEN);
+        IERC20 usdc = IERC20(USDC_TOKEN);
         IERC20 dre = IERC20(DRE_TOKEN);
         IERC20 lp = IERC20(LP_TOKEN);
         IERC20 dreStaking = IERC20(sDRE_TOKEN);
@@ -132,16 +126,10 @@ contract DreBondDepositoryTest is BaseTest {
         IShadowRouter router = IShadowRouter(ROUTER);
         IShadowRouter.route[] memory routes = new IShadowRouter.route[](1);
         routes[0] = IShadowRouter.route({from: USDC_TOKEN, to: DRE_TOKEN, stable: false});
-        router.swapExactTokensForTokens(
-            1000e6,
-            0,
-            routes,
-            address(bootstrapLP),
-            block.timestamp
-        );
+        router.swapExactTokensForTokens(1000e6, 0, routes, address(bootstrapLP), block.timestamp);
 
         console.log("--------------------------------");
-       console.log("DRE balance of whale", dre.balanceOf(usdcWhale));
+        console.log("DRE balance of whale", dre.balanceOf(usdcWhale));
         console.log("DRE balance of LP", dre.balanceOf(LP_TOKEN));
         console.log("USDC balance of whale", usdc.balanceOf(usdcWhale));
         console.log("USDC balance of LP", usdc.balanceOf(LP_TOKEN));

@@ -38,12 +38,9 @@ interface IDreStaking is IERC721Enumerable {
     // State changing functions
     function notifyRewardAmount(uint256 reward) external;
 
-    function createPosition(
-        address _user,
-        uint256 _amount,
-        uint256 _declaredValue,
-        uint256 _lockEnd
-    ) external returns (uint256 tokenId, uint256 taxPaid);
+    function createPosition(address _user, uint256 _amount, uint256 _declaredValue, uint256 _lockEnd)
+        external
+        returns (uint256 tokenId, uint256 taxPaid);
 
     function startUnstaking(uint256 tokenId) external;
 

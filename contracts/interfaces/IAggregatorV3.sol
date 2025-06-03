@@ -2,8 +2,8 @@
 pragma solidity ^0.8.15;
 
 /**
-    @title AggregatorV3Interface
-    @notice Copied directly from chainlink website as standard interface for oracles
+ * @title AggregatorV3Interface
+ *     @notice Copied directly from chainlink website as standard interface for oracles
  */
 interface AggregatorV3Interface {
     function decimals() external view returns (uint8);
@@ -17,9 +17,7 @@ interface AggregatorV3Interface {
     // getRoundData and latestRoundData should both raise "No data present"
     // if they do not have data to report, instead of returning unset values
     // which could be misinterpreted as actual reported values.
-    function getRoundData(
-        uint80 _roundId
-    )
+    function getRoundData(uint80 _roundId)
         external
         view
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);

@@ -12,7 +12,7 @@ import "../interfaces/ITreasury.sol";
 import "../interfaces/IDRE.sol";
 
 interface IShadowRouter {
-struct route {
+    struct route {
         /// @dev token from
         address from;
         /// @dev token to
@@ -67,7 +67,6 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         uint256 _maxUsdcCapacity,
         uint256 _bonus
     ) Ownable(msg.sender) {
-
         dreToken = IDRE(_dreToken);
         usdcToken = IERC20(_usdcToken);
         lpToken = IERC20(_lpToken);
@@ -107,7 +106,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         usdcToken.safeTransfer(address(treasury), usdcAmount / 2);
 
         // Deposit into LP
-        (, , uint256 lpReceived) = router.addLiquidity(
+        (,, uint256 lpReceived) = router.addLiquidity(
             address(dreToken),
             address(usdcToken),
             false,
@@ -147,10 +146,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
     }
 
     // Emergency functions
-    function rescueTokens(
-        address token,
-        uint256 amount
-    ) external onlyOwner {
+    function rescueTokens(address token, uint256 amount) external onlyOwner {
         IERC20(token).transfer(msg.sender, amount);
     }
 

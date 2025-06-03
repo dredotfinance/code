@@ -16,8 +16,8 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
     }
 
     AggregatorV3Interface public immutable oracle;
-    uint256 public   windowSize;
-    uint256 public   MAX_OBSERVATIONS = 100;
+    uint256 public windowSize;
+    uint256 public MAX_OBSERVATIONS = 100;
     uint256 public minUpdateInterval;
 
     Observation[] public _observations;
@@ -29,12 +29,9 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
 
     address public updater;
 
-    constructor(
-        AggregatorV3Interface _oracle,
-        uint256 _minUpdateInterval,
-        uint256 _windowSize,
-        address _updater
-    ) Ownable(msg.sender) {
+    constructor(AggregatorV3Interface _oracle, uint256 _minUpdateInterval, uint256 _windowSize, address _updater)
+        Ownable(msg.sender)
+    {
         require(address(_oracle) != address(0), "Invalid oracle address");
         require(_windowSize > 0, "Window size must be > 0");
 
@@ -44,10 +41,7 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         updater = _updater;
 
         // Initialize with one observation
-        _observations.push(Observation({
-            timestamp: block.timestamp,
-            price: _oracle.latestAnswer()
-        }));
+        _observations.push(Observation({timestamp: block.timestamp, price: _oracle.latestAnswer()}));
     }
 
     /**
@@ -62,16 +56,10 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         require(price > 0, "Invalid price");
 
         if (_observations.length < MAX_OBSERVATIONS) {
-            _observations.push(Observation({
-                timestamp: block.timestamp,
-                price: price
-            }));
+            _observations.push(Observation({timestamp: block.timestamp, price: price}));
         } else {
             currentIndex = (currentIndex + 1) % MAX_OBSERVATIONS;
-            _observations[currentIndex] = Observation({
-                timestamp: block.timestamp,
-                price: price
-            });
+            _observations[currentIndex] = Observation({timestamp: block.timestamp, price: price});
         }
 
         lastUpdateTime = block.timestamp;
@@ -130,13 +118,8 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         return latestRoundData();
     }
 
-    function latestRoundData()
-        public
-        view
-        override
-        returns (uint80  , int256  , uint256  , uint256  , uint80  )
-    {
-        (uint80 roundId, , uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = oracle.latestRoundData();
+    function latestRoundData() public view override returns (uint80, int256, uint256, uint256, uint80) {
+        (uint80 roundId,, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = oracle.latestRoundData();
         return (roundId, getTwap(), startedAt, updatedAt, answeredInRound);
     }
 

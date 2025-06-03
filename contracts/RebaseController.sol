@@ -23,7 +23,6 @@ import "./DreAccessControlled.sol";
  *          ▸ event emission for transparency & off-chain indexers
  *          ▸ per-asset risk-weighting, circuit-breakers, and RBS / inverse-bond hooks
  */
-
 contract RebaseController is DreAccessControlled, IRebaseController {
     IDRE public dre; // DRE token (decimals = 18)
     ITreasury public treasury;
@@ -39,7 +38,6 @@ contract RebaseController is DreAccessControlled, IRebaseController {
 
     uint16 public immutable FLOOR_APR = 1000; // 1000 % APR (≈0.092% per 8h)
     uint16 public immutable CEIL_APR = 5000; // 5000 % APR (≈0.46% per 8h)
-
 
     function initialize(address _dre, address _treasury, address _staking, address _authority) public initializer {
         dre = IDRE(_dre);
@@ -87,10 +85,11 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         return projectedEpochRateRaw(pcvUsd, supply);
     }
 
-    function projectedEpochRateRaw(
-        uint256 pcvUsd,
-        uint256 supply
-    ) public pure returns (uint256 apr, uint256 epochRate, uint256 backingRatio) {
+    function projectedEpochRateRaw(uint256 pcvUsd, uint256 supply)
+        public
+        pure
+        returns (uint256 apr, uint256 epochRate, uint256 backingRatio)
+    {
         if (supply == 0) return (0, 0, 0);
 
         backingRatio = (pcvUsd * 1e18) / supply;

@@ -21,29 +21,16 @@ interface IRebaseController {
     function CEIL_APR() external view returns (uint16);
 
     // --- Functions ----------------------------------------------------------
-    function initialize(
-        address _dre,
-        address _treasury,
-        address _staking,
-        address _authority
-    ) external;
+    function initialize(address _dre, address _treasury, address _staking, address _authority) external;
 
     function executeEpoch() external;
 
     function currentBackingRatio() external view returns (uint256);
 
-    function projectedEpochRate() external view returns (
-        uint256 apr,
-        uint256 epochRate,
-        uint256 backingRatio
-    );
+    function projectedEpochRate() external view returns (uint256 apr, uint256 epochRate, uint256 backingRatio);
 
-    function projectedEpochRateRaw(
-        uint256 pcvUsd,
-        uint256 supply
-    ) external pure returns (
-        uint256 apr,
-        uint256 epochRate,
-        uint256 backingRatio
-    );
+    function projectedEpochRateRaw(uint256 pcvUsd, uint256 supply)
+        external
+        pure
+        returns (uint256 apr, uint256 epochRate, uint256 backingRatio);
 }

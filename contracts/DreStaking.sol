@@ -52,7 +52,7 @@ contract DreStaking is
     uint256 public override totalStaked;
 
     function initialize(address _dreToken, address _trackingToken, address _authority) public reinitializer(6) {
-        if (lastId == 0) { lastId = 1; }
+        if (lastId == 0) lastId = 1;
 
         __ERC721_init("DRE Staking Position", "DRE-POS");
         __ReentrancyGuard_init();
@@ -126,12 +126,12 @@ contract DreStaking is
      * @return tokenId The token ID of the new position
      * @return taxPaid The amount of tax paid
      */
-    function createPosition(
-        address to,
-        uint256 amount,
-        uint256 declaredValue,
-        uint256 minLockDuration
-    ) external override nonReentrant returns (uint256 tokenId, uint256 taxPaid) {
+    function createPosition(address to, uint256 amount, uint256 declaredValue, uint256 minLockDuration)
+        external
+        override
+        nonReentrant
+        returns (uint256 tokenId, uint256 taxPaid)
+    {
         require(amount > 0, "Amount must be greater than 0");
         require(declaredValue > 0, "Declared value must be greater than 0");
 
@@ -283,11 +283,11 @@ contract DreStaking is
      * @param additionalAmount The amount to add to the stake
      * @param addtionalDeclaredValue The additional declared value
      */
-    function increaseAmount(
-        uint256 tokenId,
-        uint256 additionalAmount,
-        uint256 addtionalDeclaredValue
-    ) external override nonReentrant {
+    function increaseAmount(uint256 tokenId, uint256 additionalAmount, uint256 addtionalDeclaredValue)
+        external
+        override
+        nonReentrant
+    {
         require(ownerOf(tokenId) != address(0), "Position does not exist");
         require(additionalAmount > 0, "Amount must be greater than 0");
         require(_positions[tokenId].cooldownEnd == 0, "Position is in cooldown");

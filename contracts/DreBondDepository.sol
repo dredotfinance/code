@@ -46,8 +46,7 @@ contract DreBondDepository is
         staking = IDreStaking(_staking);
         treasury = ITreasury(_treasury);
         dre = IDRE(_dre);
-        if (lastId == 0) {lastId = 1;
-        }
+        if (lastId == 0) lastId = 1;
     }
 
     function bonds(uint256 index) external view override returns (Bond memory bond) {
@@ -57,7 +56,6 @@ contract DreBondDepository is
     function positions(uint256 tokenId) external view override returns (BondPosition memory position) {
         position = _positions[tokenId];
     }
-
 
     /* ======== MUTATIVE FUNCTIONS ======== */
 

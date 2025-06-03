@@ -224,7 +224,7 @@ contract DreUIHelper {
     /// @notice Calculate the current APR
     /// @return The current APR as a percentage (e.g., 1000 = 10%)
     function calculateAPR() public view returns (uint256) {
-        (uint256 apr,, ) = rebaseController.projectedEpochRate();
+        (uint256 apr,,) = rebaseController.projectedEpochRate();
         return apr;
     }
 

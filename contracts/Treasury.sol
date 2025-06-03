@@ -45,11 +45,14 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @param _profit uint256 amount of profit to mint
      * @return send_ uint256 amount of dre minted
      */
-    function deposit(
-        uint256 _amount,
-        address _token,
-        uint256 _profit
-    ) external override nonReentrant whenNotPaused onlyReserveDepositor returns (uint256 send_) {
+    function deposit(uint256 _amount, address _token, uint256 _profit)
+        external
+        override
+        nonReentrant
+        whenNotPaused
+        onlyReserveDepositor
+        returns (uint256 send_)
+    {
         require(enabledTokens[_token], invalidToken);
 
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
@@ -73,7 +76,13 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @param _amount amount of dre to burn
      * @param _token address of the token to burn
      */
-    function withdraw(uint256 _amount, address _token) external override nonReentrant whenNotPaused onlyReserveManager {
+    function withdraw(uint256 _amount, address _token)
+        external
+        override
+        nonReentrant
+        whenNotPaused
+        onlyReserveManager
+    {
         require(enabledTokens[_token], notAccepted); // Only reserves can be used for redemptions
 
         uint256 value = tokenValueE18(_token, _amount);

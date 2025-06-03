@@ -29,13 +29,9 @@ contract ScaledOracle is AggregatorV3Interface, Ownable {
         return oracle.version();
     }
 
-    function getRoundData(uint80 _roundId_)
-        external
-        view
-        override
-        returns (uint80  , int256  , uint256  , uint256  , uint80  )
-    {
-        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = oracle.getRoundData(_roundId_);
+    function getRoundData(uint80 _roundId_) external view override returns (uint80, int256, uint256, uint256, uint80) {
+        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
+            oracle.getRoundData(_roundId_);
         return (roundId, answer * scale, startedAt, updatedAt, answeredInRound);
     }
 
@@ -45,7 +41,8 @@ contract ScaledOracle is AggregatorV3Interface, Ownable {
         override
         returns (uint80 _roundId, int256 _answer, uint256 _startedAt, uint256 _updatedAt, uint80 _answeredInRound)
     {
-        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = oracle.latestRoundData();
+        (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
+            oracle.latestRoundData();
         return (roundId, answer * scale, startedAt, updatedAt, answeredInRound);
     }
 

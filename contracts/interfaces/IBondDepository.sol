@@ -54,13 +54,9 @@ interface IBondDepository is IERC721Enumerable {
      * @return expiry_ uint256
      * @return index_ uint256
      */
-    function deposit(
-        uint256 _bid,
-        uint256 _amount,
-        uint256 _maxPrice,
-        address _user,
-        address _referral
-    ) external returns (uint256 payout_, uint256 expiry_, uint256 index_);
+    function deposit(uint256 _bid, uint256 _amount, uint256 _maxPrice, address _user, address _referral)
+        external
+        returns (uint256 payout_, uint256 expiry_, uint256 index_);
 
     function create(
         IERC20 _quoteToken, // token used to deposit
