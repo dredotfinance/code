@@ -3,8 +3,13 @@
     "inputs": [
       {
         "internalType": "contract IAggregatorV3",
-        "name": "_oracle",
+        "name": "_aggregator",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxStaleness",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -12,20 +17,7 @@
   },
   {
     "inputs": [],
-    "name": "getPrice",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "oracle",
+    "name": "AGGREGATOR",
     "outputs": [
       {
         "internalType": "contract IAggregatorV3",
@@ -38,12 +30,25 @@
   },
   {
     "inputs": [],
-    "name": "scale",
+    "name": "MAX_STALENESS",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "",
-        "type": "int256"
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

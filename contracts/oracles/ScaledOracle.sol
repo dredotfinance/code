@@ -6,16 +6,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IOracle.sol";
 
 /**
- * @notice This contract is a wrapper around an AggregatorV3Interface that allows for the price to be scaled.
+ * @notice This contract is a wrapper around an IAggregatorV3 that allows for the price to be scaled.
  * @dev The price is scaled to 1e18.
- * @dev The oracle is the AggregatorV3Interface that provides the price.
+ * @dev The oracle is the IAggregatorV3 that provides the price.
  * @dev The scale is the factor by which the price is scaled.
  */
 contract ScaledAggregatorOracleE18 is IOracle {
-    AggregatorV3Interface public oracle;
+    IAggregatorV3 public oracle;
     int256 public scale;
 
-    constructor(AggregatorV3Interface _oracle) {
+    constructor(IAggregatorV3 _oracle) {
         oracle = _oracle;
         scale = int256(10 ** (18 - oracle.decimals()));
     }

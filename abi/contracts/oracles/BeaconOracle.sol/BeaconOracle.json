@@ -2,7 +2,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract AggregatorV3Interface",
+        "internalType": "contract IOracle",
         "name": "_beacon",
         "type": "address"
       }
@@ -37,7 +37,7 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "contract AggregatorV3Interface",
+        "internalType": "contract IOracle",
         "name": "newBeacon",
         "type": "address"
       }
@@ -69,7 +69,7 @@
     "name": "beacon",
     "outputs": [
       {
-        "internalType": "contract AggregatorV3Interface",
+        "internalType": "contract IOracle",
         "name": "",
         "type": "address"
       }
@@ -79,110 +79,12 @@
   },
   {
     "inputs": [],
-    "name": "decimals",
+    "name": "getPrice",
     "outputs": [
       {
-        "internalType": "uint8",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "description",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint80",
-        "name": "_roundId_",
-        "type": "uint80"
-      }
-    ],
-    "name": "getRoundData",
-    "outputs": [
-      {
-        "internalType": "uint80",
-        "name": "_roundId",
-        "type": "uint80"
-      },
-      {
-        "internalType": "int256",
-        "name": "_answer",
-        "type": "int256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_startedAt",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_updatedAt",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint80",
-        "name": "_answeredInRound",
-        "type": "uint80"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "latestAnswer",
-    "outputs": [
-      {
-        "internalType": "int256",
-        "name": "",
-        "type": "int256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "latestRoundData",
-    "outputs": [
-      {
-        "internalType": "uint80",
-        "name": "_roundId",
-        "type": "uint80"
-      },
-      {
-        "internalType": "int256",
-        "name": "_answer",
-        "type": "int256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_startedAt",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_updatedAt",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint80",
-        "name": "_answeredInRound",
-        "type": "uint80"
       }
     ],
     "stateMutability": "view",
@@ -211,7 +113,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract AggregatorV3Interface",
+        "internalType": "contract IOracle",
         "name": "_beacon",
         "type": "address"
       }
@@ -232,19 +134,6 @@
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "version",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

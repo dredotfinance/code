@@ -2,10 +2,10 @@
 pragma solidity ^0.8.15;
 
 /**
- * @title AggregatorV3Interface
+ * @title IAggregatorV3
  *     @notice Copied directly from chainlink website as standard interface for oracles
  */
-interface AggregatorV3Interface {
+interface IAggregatorV3 {
     function decimals() external view returns (uint8);
 
     function description() external view returns (string memory);
