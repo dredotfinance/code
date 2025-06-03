@@ -1,0 +1,109 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "contract IOracle",
+        "name": "_oracle0",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IOracle",
+        "name": "_oracle1",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxDeviationPercent",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "price0",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price1",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deviation",
+        "type": "uint256"
+      }
+    ],
+    "name": "ExcessiveDeviation",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newMaxDeviation",
+        "type": "uint256"
+      }
+    ],
+    "name": "MaxDeviationUpdated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "getPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxDeviationPercent",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle0",
+    "outputs": [
+      {
+        "internalType": "contract IOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle1",
+    "outputs": [
+      {
+        "internalType": "contract IOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

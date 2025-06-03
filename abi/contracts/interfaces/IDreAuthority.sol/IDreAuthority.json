@@ -272,7 +272,7 @@
     "name": "treasury",
     "outputs": [
       {
-        "internalType": "contract ITreasury",
+        "internalType": "contract IDreTreasury",
         "name": "",
         "type": "address"
       }

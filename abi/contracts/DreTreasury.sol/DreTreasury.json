@@ -215,19 +215,6 @@
   },
   {
     "inputs": [],
-    "name": "ORACLE_STALE_PERIOD",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "authority",
     "outputs": [
       {
@@ -334,15 +321,23 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "dreOracle",
+    "outputs": [
+      {
+        "internalType": "contract IDreOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
         "name": "_address",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_oracle",
         "type": "address"
       }
     ],
@@ -416,6 +411,11 @@
       },
       {
         "internalType": "address",
+        "name": "_dreOracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_authority",
         "type": "address"
       }
@@ -459,25 +459,6 @@
     "name": "mint",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "oracles",
-    "outputs": [
-      {
-        "internalType": "contract AggregatorV3Interface",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

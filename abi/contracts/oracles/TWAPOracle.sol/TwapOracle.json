@@ -2,58 +2,28 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_dreToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_usdcToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_lpToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_staking",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_router",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_treasury",
+        "internalType": "contract IOracle",
+        "name": "_oracle",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_maxUsdcCapacity",
+        "name": "_minUpdateInterval",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_bonus",
+        "name": "_windowSize",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_updater",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "inputs": [],
-    "name": "EnforcedPause",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ExpectedPause",
-    "type": "error"
   },
   {
     "inputs": [
@@ -78,20 +48,23 @@
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
+    "anonymous": false,
     "inputs": [
       {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
       }
     ],
-    "name": "SafeERC20FailedOperation",
-    "type": "error"
+    "name": "ObservationAdded",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -118,29 +91,16 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "account",
+        "name": "updater",
         "type": "address"
       }
     ],
-    "name": "Paused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "Unpaused",
+    "name": "UpdaterUpdated",
     "type": "event"
   },
   {
     "inputs": [],
-    "name": "bonus",
+    "name": "MAX_OBSERVATIONS",
     "outputs": [
       {
         "internalType": "uint256",
@@ -155,23 +115,21 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "usdcAmount",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "bootstrap",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "dreToken",
+    "name": "_observations",
     "outputs": [
       {
-        "internalType": "contract IDRE",
-        "name": "",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -179,25 +137,108 @@
   },
   {
     "inputs": [],
-    "name": "lpToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "maxUsdcCapacity",
+    "name": "currentIndex",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTwap",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "twap",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastUpdateTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minUpdateInterval",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "observations",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct TwapOracle.Observation",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oracle",
+    "outputs": [
+      {
+        "internalType": "contract IOracle",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -218,27 +259,7 @@
   },
   {
     "inputs": [],
-    "name": "paused",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "rescueETH",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -247,70 +268,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "rescueTokens",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "router",
-    "outputs": [
-      {
-        "internalType": "contract IShadowRouter",
-        "name": "",
+        "name": "_updater",
         "type": "address"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_bonus",
-        "type": "uint256"
-      }
-    ],
-    "name": "setBonus",
+    "name": "setUpdater",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_maxUsdcCapacity",
-        "type": "uint256"
-      }
-    ],
-    "name": "setMaxUsdcCapacity",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "staking",
-    "outputs": [
-      {
-        "internalType": "contract IDreStaking",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -328,10 +292,17 @@
   },
   {
     "inputs": [],
-    "name": "treasury",
+    "name": "update",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "updater",
     "outputs": [
       {
-        "internalType": "contract IDreTreasury",
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -341,25 +312,12 @@
   },
   {
     "inputs": [],
-    "name": "usdcAquired",
+    "name": "windowSize",
     "outputs": [
       {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "usdcToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",

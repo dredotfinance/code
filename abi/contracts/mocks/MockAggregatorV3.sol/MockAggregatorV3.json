@@ -129,6 +129,19 @@
   {
     "inputs": [
       {
+        "internalType": "uint8",
+        "name": "decimals_",
+        "type": "uint8"
+      }
+    ],
+    "name": "setDecimals",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "int256",
         "name": "price_",
         "type": "int256"

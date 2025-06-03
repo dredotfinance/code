@@ -18,6 +18,7 @@ contract DreOracle is DreAccessControlled, IDreOracle {
     function initialize(address _authority, address _dre) external initializer {
         __DreAccessControlled_init(_authority);
         dre = IERC20Metadata(_dre);
+        require(dre.decimals() == 18, "DRE must have 18 decimals");
     }
 
     /// @inheritdoc IDreOracle
