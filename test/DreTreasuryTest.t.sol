@@ -2,7 +2,6 @@
 pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
-import "forge-std/console.sol";
 
 contract TreasuryTest is BaseTest {
     function setUp() public {
@@ -24,18 +23,17 @@ contract TreasuryTest is BaseTest {
 
     function test_EnableToken() public {
         // Enable a new token
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // Verify token is enabled
         assertTrue(treasury.enabledTokens(address(mockQuoteToken)));
-        // assertEq(address(treasury.oracles(address(mockQuoteToken))), address(tokenOracle));
 
         vm.stopPrank();
     }
 
     function test_DisableToken() public {
         // First enable the token
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // Then disable it
         treasury.disable(address(mockQuoteToken));
@@ -48,7 +46,7 @@ contract TreasuryTest is BaseTest {
 
     function test_Deposit() public {
         // Enable token first
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // Mint some tokens to owner
         uint256 depositAmount = 1000e18;
@@ -60,8 +58,6 @@ contract TreasuryTest is BaseTest {
         // Deposit tokens
         uint256 profit = 100e18;
         uint256 dreMinted = treasury.deposit(depositAmount, address(mockQuoteToken), profit);
-
-        // (int256 value, uint256 updatedAt) = dreOracle.getPriceInDre(address(mockQuoteToken));
 
         // Verify DRE was minted correctly
         assertEq(dre.balanceOf(owner), dreMinted, "DRE balance of owner should be equal to DRE minted");
@@ -75,7 +71,7 @@ contract TreasuryTest is BaseTest {
 
     function test_Withdraw() public {
         // Enable token first
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -107,7 +103,7 @@ contract TreasuryTest is BaseTest {
 
     function test_Manage() public {
         // Enable token first
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -131,7 +127,7 @@ contract TreasuryTest is BaseTest {
 
     function test_Mint() public {
         // Enable token first
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -152,7 +148,7 @@ contract TreasuryTest is BaseTest {
 
     function test_AuditReserves() public {
         // Enable token first
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -172,7 +168,7 @@ contract TreasuryTest is BaseTest {
 
     function test_BackingRatio() public {
         // Enable token first
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
@@ -204,7 +200,7 @@ contract TreasuryTest is BaseTest {
 
     function testFail_WithdrawInsufficientReserves() public {
         // Enable token first
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         // Try to withdraw without having any reserves
         treasury.withdraw(1000e18, address(mockQuoteToken));

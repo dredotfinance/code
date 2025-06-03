@@ -16,7 +16,7 @@ contract DreBondDepositoryTest is BaseTest {
         dreAuthority.addPolicy(owner);
 
         // Enable mock quote token in treasury
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury.enable(address(mockQuoteToken));
 
         vm.stopPrank();
     }
@@ -430,7 +430,6 @@ contract DreBondDepositoryTest is BaseTest {
         uint256 numDeposits = bound(depositAmounts.length, 1, 10);
         for (uint256 i = 0; i < numDeposits; i++) {
             depositAmounts[i] = bound(depositAmounts[i], 1e16, bondAmount / numDeposits);
-            console.log("depositAmounts[i]", depositAmounts[i]);
         }
 
         vm.startPrank(owner);
@@ -486,10 +485,10 @@ contract DreBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
         dreAuthority.addPolicy(owner);
 
-        // // Enable multiple quote tokens in treasury with different initial prices
-        // treasury.enable(address(mockQuoteToken), address(tokenOracle));
-        // treasury.enable(address(mockQuoteToken2), address(tokenOracle2));
-        // treasury.enable(address(mockQuoteToken3), address(tokenOracle3));
+        // Enable multiple quote tokens in treasury with different initial prices
+        treasury.enable(address(mockQuoteToken));
+        treasury.enable(address(mockQuoteToken2));
+        treasury.enable(address(mockQuoteToken3));
 
         // Set initial oracle prices
         mockOracle.setPrice(1e18); // 1:1 price
@@ -585,12 +584,12 @@ contract DreBondDepositoryTest is BaseTest {
         MockERC20 usdc = new MockERC20("USD Coin", "USDC");
         usdc.setDecimals(6);
 
-        // MockAggregatorV3 usdcOracle = new MockAggregatorV3(6, 1e6);
-        // TokenOracleE18 tokenOracle = new TokenOracleE18(usdcOracle, dreOracle, usdc);
-        // treasury.enable(address(usdc), address(tokenOracle));
+        MockOracle usdcOracle = new MockOracle(1e18);
+        dreOracle.updateOracle(address(usdc), address(usdcOracle));
+        treasury.enable(address(usdc));
 
         // Calculate bond parameters
-        uint256 dreAmount = 10000e18; // 10000 DRE
+        // uint256 dreAmount = 10000e18; // 10000 DRE
         uint256 initialPrice = 2e6; // 1 DRE = 1 USDC
         uint256 finalPrice = 1.9e6; // 10% discount (0.9 * 1 = 0.9 USDC)
         uint256 duration = 7 days;

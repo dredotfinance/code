@@ -354,8 +354,6 @@ contract DreStakingTest is BaseTest {
         // Fast forward to accumulate rewards
         vm.warp(block.timestamp + staking.EPOCH_DURATION());
 
-        console.log("staking.earned(tokenId)", staking.earned(tokenId));
-
         // Prepare buyer
         dre.mint(user1, DECLARED_VALUE);
         vm.stopPrank();
@@ -371,8 +369,6 @@ contract DreStakingTest is BaseTest {
 
         // Fast forward past reward cooldown
         vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
-
-        console.log("staking.earned(tokenId)", staking.earned(tokenId));
 
         // Claim rewards as buyer
         uint256 reward = staking.claimRewards(tokenId);
