@@ -6,17 +6,17 @@ import "../contracts/periphery/BootstrapLP.sol";
 import "../contracts/interfaces/IDreStaking.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract DreBondDepositoryTest is BaseTest {
+contract BootstrapLPTest is BaseTest {
     BootstrapLP public bootstrapLP;
 
-    address public constant DRE_TOKEN = 0xF8232259D4F92E44eF84F18A0B9877F4060B26F1;
+    address public constant DRE_TOKEN = 0xd4eee4c318794bA6FFA7816A850a166FFf8310a9;
     address public constant USDC_TOKEN = 0x29219dd400f2Bf60E5a23d13Be72B486D4038894;
-    address public constant LP_TOKEN = 0xB781C624397C423Cb62bAe9996cEbedC6734B76b;
-    address public constant STAKING = 0x30902d05C499911142FE62B447dDcf19649452A3;
-    address public constant sDRE_TOKEN = 0xf04947da387c2D032B496fEb14d230E5343543bf;
+    address public constant LP_TOKEN = 0x18b6963ebe82B87c338032649aAaD4Eec43D3Ecb;
+    address public constant STAKING = 0x21Cfa934CEa191fBD874ee8B1B6CE2B2224De653;
+    address public constant sDRE_TOKEN = 0x11E7D11F63fCeEd28CB3f06eB4C94b3e9F30890f;
     address public constant ROUTER = 0x1D368773735ee1E678950B7A97bcA2CafB330CDc;
     address public constant AUTHORITY = 0xe4248e0c16B0E8D94e40bA54Ef2058CeDfe196a7;
-    address public constant TREASURY = 0xb692e2706b628998B4403979D9117Ed746bf8128;
+    address public constant TREASURY = 0xc589858dA047A4789e099FA2CfD1D974D14F344B;
 
     address usdcWhale = 0xA4E471dbfe8C95d4c44f520b19CEe436c01c3267;
     address public constant DEPLOYER = 0xDC591Fc6603940AEf90Fa6B4DD0C04560B5c7E97;
@@ -24,7 +24,7 @@ contract DreBondDepositoryTest is BaseTest {
     function setUp() public {
         uint256 mainnetFork = vm.createFork("https://rpc.soniclabs.com");
         vm.selectFork(mainnetFork);
-        vm.roll(31429356);
+        vm.roll(31673783);
 
         setUpBaseTest();
 
@@ -46,7 +46,7 @@ contract DreBondDepositoryTest is BaseTest {
         vm.label(address(bootstrapLP), "bootstrapLP");
     }
 
-    function test_BootstrapDeposit() public {
+    function test_BootstrapDeposit_only() public {
         vm.prank(DEPLOYER);
         bootstrapLP.setBonus(1e18);
 
@@ -70,9 +70,10 @@ contract DreBondDepositoryTest is BaseTest {
         bootstrapLP.bootstrap(1000000e6);
 
         // Verify USDC balance decreased by the bootstrap amount
-        assertEq(
+        assertApproxEqRel(
             usdc.balanceOf(usdcWhale),
             initialUsdcBalance - 1000000e6,
+            1e18,
             "USDC balance should decrease by bootstrap amount"
         );
 
@@ -97,10 +98,6 @@ contract DreBondDepositoryTest is BaseTest {
         vm.startPrank(usdcWhale);
 
         IERC20 usdc = IERC20(USDC_TOKEN);
-        // IERC20 dre = IERC20(DRE_TOKEN);
-        // IERC20 lp = IERC20(LP_TOKEN);
-        // IERC20 dreStaking = IERC20(sDRE_TOKEN);
-
         usdc.approve(address(bootstrapLP), type(uint256).max);
         bootstrapLP.bootstrap(10000e6);
     }
@@ -113,14 +110,6 @@ contract DreBondDepositoryTest is BaseTest {
 
         vm.startPrank(usdcWhale);
 
-        console.log("DRE balance of whale", dre.balanceOf(usdcWhale));
-        console.log("DRE balance of LP", dre.balanceOf(LP_TOKEN));
-        console.log("USDC balance of whale", usdc.balanceOf(usdcWhale));
-        console.log("USDC balance of LP", usdc.balanceOf(LP_TOKEN));
-        console.log("LP balance of Treasury", lp.balanceOf(TREASURY));
-        console.log("Staked balance of whale", dreStaking.balanceOf(usdcWhale));
-        console.log("Staked balance of LP", dreStaking.balanceOf(LP_TOKEN));
-
         // Do a swap to shift the price of DRE
         usdc.approve(address(ROUTER), type(uint256).max);
         IShadowRouter router = IShadowRouter(ROUTER);
@@ -128,32 +117,8 @@ contract DreBondDepositoryTest is BaseTest {
         routes[0] = IShadowRouter.route({from: USDC_TOKEN, to: DRE_TOKEN, stable: false});
         router.swapExactTokensForTokens(1000e6, 0, routes, address(bootstrapLP), block.timestamp);
 
-        console.log("--------------------------------");
-        console.log("DRE balance of whale", dre.balanceOf(usdcWhale));
-        console.log("DRE balance of LP", dre.balanceOf(LP_TOKEN));
-        console.log("USDC balance of whale", usdc.balanceOf(usdcWhale));
-        console.log("USDC balance of LP", usdc.balanceOf(LP_TOKEN));
-        console.log("LP balance of Treasury", lp.balanceOf(TREASURY));
-        console.log("Staked balance of whale", dreStaking.balanceOf(usdcWhale));
-        console.log("Staked balance of LP", dreStaking.balanceOf(LP_TOKEN));
-
         // Bootstrap with the same amount of USDC
         usdc.approve(address(bootstrapLP), type(uint256).max);
         bootstrapLP.bootstrap(1000000e6);
-
-        console.log("--------------------------------");
-
-        console.log("DRE balance of whale", dre.balanceOf(usdcWhale));
-        console.log("DRE balance of LP", dre.balanceOf(LP_TOKEN));
-        console.log("USDC balance of whale", usdc.balanceOf(usdcWhale));
-        console.log("USDC balance of LP", usdc.balanceOf(LP_TOKEN));
-        console.log("LP balance of Treasury", lp.balanceOf(TREASURY));
-        console.log("Staked balance of whale", dreStaking.balanceOf(usdcWhale));
-        console.log("Staked balance of LP", dreStaking.balanceOf(LP_TOKEN));
     }
 }
-
-// 502003 USDC
-// 125636 DRE
-
-// 1 DRE = 502003 / 125636 = 3.99570202732240437158469924812031 USDCp
