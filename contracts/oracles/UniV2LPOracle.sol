@@ -63,8 +63,8 @@ contract UniV2LPOracle is DumbAggregatorOracle {
         return int256((((sqrtK_2 * sqrt(px0)) / HALF_UNIT) * sqrt(px1)) / HALF_UNIT);
     }
 
-    function markdown() external view  returns (uint256) {
-        (uint256 reserve0, uint256 reserve1, ) = amm.getReserves();
+    function markdown() external view returns (uint256) {
+        (uint256 reserve0, uint256 reserve1,) = amm.getReserves();
         uint256 reserve;
         if (amm.token0() == dre) {
             reserve = reserve1;

@@ -2,36 +2,33 @@
 pragma solidity ^0.8.15;
 
 import "./DreAccessControlled.sol";
-import "./interfaces/ITokenOracleE18.sol";
-import "./interfaces/IBondingCalculator.sol";
+import "./interfaces/IDreOracle.sol";
 import "./interfaces/IDRE.sol";
-import "./interfaces/ITreasury.sol";
+import "./interfaces/IDreTreasury.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
     IDRE public dre;
 
     address[] public tokens;
     mapping(address => bool) public enabledTokens;
-    mapping(address => ITokenOracleE18) public oracles;
+    IDreOracle public dreOracle;
 
     uint256 public override totalReserves;
-    uint256 public constant ORACLE_STALE_PERIOD = 1 hours;
 
     string internal notAccepted = "Treasury: not accepted";
     string internal invalidToken = "Treasury: invalid token";
     string internal insufficientReserves = "Treasury: insufficient reserves";
 
-    function initialize(address _dre, address _authority) public initializer {
+    function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(1) {
         require(_dre != address(0), "Zero address: dre");
+        require(_dreOracle != address(0), "Zero address: dreOracle");
         dre = IDRE(_dre);
+        dreOracle = IDreOracle(_dreOracle);
         __Pausable_init();
         __DreAccessControlled_init(_authority);
     }
@@ -132,12 +129,13 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
     /**
      * @notice enable permission from queue or set staking contract
      * @param _address address to enable
-     * @param _oracle address of the oracle
      */
-    function enable(address _address, address _oracle) external onlyGovernor {
-        oracles[_address] = ITokenOracleE18(_oracle);
+    function enable(address _address) external onlyGovernor {
         if (!enabledTokens[_address]) tokens.push(_address);
         enabledTokens[_address] = true;
+
+        // ensure the token has a valid price in dreOracle contract
+        require(dreOracle.getPriceInDre(IERC20Metadata(_address)) > 0, "Invalid price");
         emit TokenEnabled(_address, true);
     }
 
@@ -186,14 +184,7 @@ contract Treasury is DreAccessControlled, ITreasury, PausableUpgradeable, Reentr
      * @return value_ value of the token in dre
      */
     function tokenValueE18(address _token, uint256 _amount) public view override returns (uint256 value_) {
-        ITokenOracleE18 oracle = oracles[_token];
-        require(address(oracle) != address(0), "Oracle not set");
-
-        (int256 value, uint256 updatedAt) = oracle.priceInDreE18ForAmount(_amount);
-        require(block.timestamp - updatedAt <= ORACLE_STALE_PERIOD, "Stale price");
-        require(value > 0, "Invalid price");
-
-        value_ = uint256(value);
+        value_ = dreOracle.getPriceInDreForAmount(_token, _amount);
     }
 
     /**

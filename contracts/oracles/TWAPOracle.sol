@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "../interfaces/IAggregatorV3.sol";
+import "../interfaces/IOracle.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -9,27 +9,34 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @notice This contract implements a Time-Weighted Average Price (TWAP) oracle
  * @dev Uses a circular buffer to store price _observations and calculate TWAP
  */
-contract TwapOracle is AggregatorV3Interface, Ownable {
+contract TwapOracle is IOracle, Ownable {
     struct Observation {
         uint256 timestamp;
-        int256 price;
+        uint256 price;
     }
 
-    AggregatorV3Interface public immutable oracle;
+    IOracle public oracle;
     uint256 public windowSize;
-    uint256 public MAX_OBSERVATIONS = 100;
+    uint256 public immutable MAX_OBSERVATIONS = 100;
     uint256 public minUpdateInterval;
 
     Observation[] public _observations;
     uint256 public currentIndex;
     uint256 public lastUpdateTime;
 
-    event ObservationAdded(uint256 timestamp, int256 price);
-    event WindowSizeUpdated(uint256 newWindowSize);
+    event ObservationAdded(uint256 timestamp, uint256 price);
+    event UpdaterUpdated(address updater);
 
     address public updater;
 
-    constructor(AggregatorV3Interface _oracle, uint256 _minUpdateInterval, uint256 _windowSize, address _updater)
+    /**
+     * @notice Constructor
+     * @param _oracle The oracle to use
+     * @param _minUpdateInterval The minimum update interval
+     * @param _windowSize The window size
+     * @param _updater The updater
+     */
+    constructor(IOracle _oracle, uint256 _minUpdateInterval, uint256 _windowSize, address _updater)
         Ownable(msg.sender)
     {
         require(address(_oracle) != address(0), "Invalid oracle address");
@@ -40,8 +47,18 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         minUpdateInterval = _minUpdateInterval;
         updater = _updater;
 
-        // Initialize with one observation
-        _observations.push(Observation({timestamp: block.timestamp, price: _oracle.latestAnswer()}));
+        _observations.push(Observation({timestamp: block.timestamp, price: _oracle.getPrice()}));
+        emit ObservationAdded(block.timestamp, _oracle.getPrice());
+        emit UpdaterUpdated(_updater);
+    }
+
+    /**
+     * @notice Sets the updater
+     * @param _updater The new updater
+     */
+    function setUpdater(address _updater) external onlyOwner {
+        updater = _updater;
+        emit UpdaterUpdated(_updater);
     }
 
     /**
@@ -52,7 +69,7 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         require(msg.sender == updater, "Only updater can update");
         require(block.timestamp >= lastUpdateTime + minUpdateInterval, "Too early to update");
 
-        int256 price = oracle.latestAnswer();
+        uint256 price = oracle.getPrice();
         require(price > 0, "Invalid price");
 
         if (_observations.length < MAX_OBSERVATIONS) {
@@ -66,6 +83,11 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         emit ObservationAdded(block.timestamp, price);
     }
 
+    /**
+     * @notice Returns an observation
+     * @param _index The index of the observation
+     * @return obs The observation
+     */
     function observations(uint256 _index) public view returns (Observation memory) {
         return _observations[_index];
     }
@@ -74,56 +96,34 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
      * @notice Calculates the TWAP over the window size
      * @return twap The time-weighted average price
      */
-    function getTwap() public view returns (int256 twap) {
+    function getTwap() public view returns (uint256 twap) {
         require(_observations.length > 0, "No _observations");
 
         uint256 endTime = block.timestamp;
         uint256 startTime = endTime - windowSize;
 
         uint256 totalTime = 0;
-        int256 weightedSum = 0;
+        uint256 weightedSum = 0;
 
         for (uint256 i = 0; i < _observations.length; i++) {
             Observation memory obs = _observations[i];
 
             if (obs.timestamp >= startTime) {
                 uint256 timeWeight = obs.timestamp - startTime;
-                weightedSum += obs.price * int256(timeWeight);
+                weightedSum += obs.price * timeWeight;
                 totalTime += timeWeight;
             }
         }
 
         require(totalTime > 0, "No _observations in window");
-        twap = weightedSum / int256(totalTime);
+        twap = weightedSum / totalTime;
     }
 
-    function decimals() external view override returns (uint8) {
-        return oracle.decimals();
-    }
-
-    function description() external view override returns (string memory) {
-        return string.concat("TWAP Oracle for ", oracle.description());
-    }
-
-    function version() external pure override returns (uint256) {
-        return 1;
-    }
-
-    function getRoundData(uint80)
-        external
-        view
-        override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
-    {
-        return latestRoundData();
-    }
-
-    function latestRoundData() public view override returns (uint80, int256, uint256, uint256, uint80) {
-        (uint80 roundId,, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) = oracle.latestRoundData();
-        return (roundId, getTwap(), startedAt, updatedAt, answeredInRound);
-    }
-
-    function latestAnswer() external view override returns (int256) {
+    /**
+     * @notice Returns the TWAP price
+     * @return twap The time-weighted average price
+     */
+    function getPrice() external view override returns (uint256) {
         return getTwap();
     }
 }

@@ -2,5 +2,5 @@
 pragma solidity ^0.8.15;
 
 interface IOracle {
-    function getPrice(address _pool) external returns (uint256);
+    function getPrice() external view returns (uint256);
 }
