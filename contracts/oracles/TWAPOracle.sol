@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @title TwapOracle
  * @notice This contract implements a Time-Weighted Average Price (TWAP) oracle
- * @dev Uses a circular buffer to store price observations and calculate TWAP
+ * @dev Uses a circular buffer to store price _observations and calculate TWAP
  */
 contract TwapOracle is AggregatorV3Interface, Ownable {
     struct Observation {
@@ -20,7 +20,7 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
     uint256 public   MAX_OBSERVATIONS = 100;
     uint256 public minUpdateInterval;
 
-    Observation[] public observations;
+    Observation[] public _observations;
     uint256 public currentIndex;
     uint256 public lastUpdateTime;
 
@@ -44,7 +44,7 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         updater = _updater;
 
         // Initialize with one observation
-        observations.push(Observation({
+        _observations.push(Observation({
             timestamp: block.timestamp,
             price: _oracle.latestAnswer()
         }));
@@ -61,14 +61,14 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         int256 price = oracle.latestAnswer();
         require(price > 0, "Invalid price");
 
-        if (observations.length < MAX_OBSERVATIONS) {
-            observations.push(Observation({
+        if (_observations.length < MAX_OBSERVATIONS) {
+            _observations.push(Observation({
                 timestamp: block.timestamp,
                 price: price
             }));
         } else {
             currentIndex = (currentIndex + 1) % MAX_OBSERVATIONS;
-            observations[currentIndex] = Observation({
+            _observations[currentIndex] = Observation({
                 timestamp: block.timestamp,
                 price: price
             });
@@ -78,12 +78,16 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         emit ObservationAdded(block.timestamp, price);
     }
 
+    function observations(uint256 _index) public view returns (Observation memory) {
+        return _observations[_index];
+    }
+
     /**
      * @notice Calculates the TWAP over the window size
      * @return twap The time-weighted average price
      */
     function getTwap() public view returns (int256 twap) {
-        require(observations.length > 0, "No observations");
+        require(_observations.length > 0, "No _observations");
 
         uint256 endTime = block.timestamp;
         uint256 startTime = endTime - windowSize;
@@ -91,8 +95,8 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
         uint256 totalTime = 0;
         int256 weightedSum = 0;
 
-        for (uint256 i = 0; i < observations.length; i++) {
-            Observation memory obs = observations[i];
+        for (uint256 i = 0; i < _observations.length; i++) {
+            Observation memory obs = _observations[i];
 
             if (obs.timestamp >= startTime) {
                 uint256 timeWeight = obs.timestamp - startTime;
@@ -101,7 +105,7 @@ contract TwapOracle is AggregatorV3Interface, Ownable {
             }
         }
 
-        require(totalTime > 0, "No observations in window");
+        require(totalTime > 0, "No _observations in window");
         twap = weightedSum / int256(totalTime);
     }
 

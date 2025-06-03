@@ -15,7 +15,7 @@ contract TwapOracleTest is Test {
         mockOracle = new MockAggregatorV3(18, 1e18);
 
         // Create TWAP oracle with 1 hour window
-        twapOracle = new TwapOracle(mockOracle, WINDOW_SIZE);
+        twapOracle = new TwapOracle(mockOracle, WINDOW_SIZE, 1 hours, address(this));
     }
 
     function test_InitialState() public {
@@ -71,7 +71,8 @@ contract TwapOracleTest is Test {
         }
 
         // Verify we have multiple observations
-        assertGt(twapOracle.observations(0).timestamp, 0, "Should have observations");
+        TwapOracle.Observation memory observation = twapOracle.observations(0);
+        assertGt(observation.timestamp, 0, "Should have observations");
     }
 
     function test_ZeroPrice() public {
