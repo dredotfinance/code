@@ -135,7 +135,7 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         enabledTokens[_address] = true;
 
         // ensure the token has a valid price in dreOracle contract
-        require(dreOracle.getPriceInDre(IERC20Metadata(_address)) > 0, "Invalid price");
+        require(dreOracle.getPriceInDre(_address) > 0, "Invalid price");
         emit TokenEnabled(_address, true);
     }
 

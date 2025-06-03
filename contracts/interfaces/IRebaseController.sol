@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "./IDRE.sol";
-import "./ITreasury.sol";
+import "./IDreTreasury.sol";
 import "./IDreStaking.sol";
 
 interface IRebaseController {
@@ -11,7 +11,7 @@ interface IRebaseController {
 
     // --- State Variables -----------------------------------------------------
     function dre() external view returns (IDRE);
-    function treasury() external view returns (ITreasury);
+    function treasury() external view returns (IDreTreasury);
     function staking() external view returns (IDreStaking);
     function EPOCH() external view returns (uint256);
     function lastEpochTime() external view returns (uint256);

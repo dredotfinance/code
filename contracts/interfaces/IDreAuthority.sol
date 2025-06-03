@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
-import "./ITreasury.sol";
+import "./IDreTreasury.sol";
 
 interface IDreAuthority {
     /* ========== EVENTS ========== */
@@ -33,5 +33,5 @@ interface IDreAuthority {
 
     function operationsTreasury() external view returns (address);
 
-    function treasury() external view returns (ITreasury);
+    function treasury() external view returns (IDreTreasury);
 }

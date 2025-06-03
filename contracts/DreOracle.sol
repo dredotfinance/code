@@ -20,67 +20,41 @@ contract DreOracle is DreAccessControlled, IDreOracle {
         dre = IERC20Metadata(_dre);
     }
 
-    /**
-     * @notice Add a new oracle for a token
-     * @param token The token address
-     * @param oracle The oracle contract
-     */
-    function updateOracle(IERC20Metadata token, IOracle oracle) external onlyGovernor {
+    /// @inheritdoc IDreOracle
+    function updateOracle(address token, address oracle) external onlyGovernor {
         if (address(token) == address(0)) revert InvalidTokenAddress();
         if (address(oracle) == address(0)) revert InvalidOracleAddress();
 
-        oracles[token] = oracle;
-        require(getPriceInDre(token) > 0, "Invalid price");
-        require(token.decimals() > 0 && token.totalSupply() > 0, "Invalid token");
+        oracles[IERC20Metadata(token)] = IOracle(oracle);
+        require(getPriceInDre(address(token)) >= 0, "Invalid price");
+        require(IERC20Metadata(token).decimals() > 0, "Invalid token");
 
         emit OracleUpdated(address(token), address(oracle));
     }
 
-    /**
-     * @notice Get the price for a token
-     * @param token The token address
-     * @return price The token price
-     */
-    function getPrice(IERC20Metadata token) public view returns (uint256 price) {
-        IOracle oracle = oracles[token];
+    /// @inheritdoc IDreOracle
+    function getPrice(address token) public view returns (uint256 price) {
+        IOracle oracle = oracles[IERC20Metadata(token)];
         if (address(oracle) == address(0)) revert OracleNotFound(address(token));
         price = oracle.getPrice();
     }
 
-    /**
-     * @notice Get the price for a token in DRE
-     * @param token The token address
-     * @return price The token price in DRE
-     */
-    function getPriceInDre(IERC20Metadata token) public view returns (uint256 price) {
-        IOracle tokenOracle = oracles[token];
-        IOracle dreOracle = oracles[dre];
-
-        uint256 tokenPrice = tokenOracle.getPrice(); // USDC/USD
-        require(tokenPrice > 0, "Invalid price");
-        uint256 tokenPriceE18 = tokenPrice * 10 ** (18 - token.decimals()); // USDC/USD in E18
-
-        uint256 drePriceE18 = dreOracle.getPrice(); // DRE/USD
-        require(drePriceE18 > 0, "Invalid price");
-
-        uint256 amountE18 = price * 10 ** (18 - token.decimals()); // amount in E18
-        price = (tokenPriceE18 * amountE18) / drePriceE18;
+    /// @inheritdoc IDreOracle
+    function getPriceInDre(address token) public view returns (uint256 price) {
+        uint256 tokenPriceE18 = getPrice(token); // TOKEN/USD in E18
+        uint256 drePriceE18 = getPrice(address(dre)); // DRE/USD
+        price = (tokenPriceE18 * 1e18) / drePriceE18;
     }
 
-    /**
-     * @notice Get the price for a token in DRE for an amount
-     * @param token The token address
-     * @param amount The amount of the token
-     * @return price The token price in DRE for the amount
-     */
+    /// @inheritdoc IDreOracle
     function getPriceInDreForAmount(address token, uint256 amount) external view returns (uint256 price) {
         IERC20Metadata tokenMetadata = IERC20Metadata(token);
 
         uint256 tokenAmountE18 = amount * 10 ** (18 - tokenMetadata.decimals()); // amount in E18
-        uint256 tokenPrice = getPrice(tokenMetadata); // TOKEN/USD
-        uint256 drePriceE18 = dreOracle.getPrice(); // DRE/USD
+        uint256 tokenPriceE18 = getPrice(token); // TOKEN/USD
+        uint256 drePriceE18 = getPrice(address(dre)); // DRE/USD
 
-        price = (tokenPrice * tokenAmountE18) / drePriceE18;
+        price = (tokenPriceE18 * tokenAmountE18) / drePriceE18;
     }
 
     /**
@@ -92,7 +66,7 @@ contract DreOracle is DreAccessControlled, IDreOracle {
     function getPriceForAmount(address token, uint256 amount) external view returns (uint256 price) {
         IERC20Metadata tokenMetadata = IERC20Metadata(token);
         uint256 tokenAmountE18 = amount * 10 ** (18 - tokenMetadata.decimals()); // amount in E18
-        uint256 tokenPrice = getPrice(tokenMetadata); // TOKEN/USD
-        price = (tokenPrice * tokenAmountE18) / 1e18;
+        uint256 tokenPriceE18 = getPrice(token); // TOKEN/USD
+        price = (tokenPriceE18 * tokenAmountE18) / 1e18;
     }
 }

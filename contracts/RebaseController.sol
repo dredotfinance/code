@@ -4,7 +4,6 @@ pragma solidity ^0.8.15;
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/IDRE.sol";
-import "./interfaces/ITreasury.sol";
 import "./interfaces/IDreStaking.sol";
 import "./interfaces/IRebaseController.sol";
 import "./DreAccessControlled.sol";
@@ -25,7 +24,7 @@ import "./DreAccessControlled.sol";
  */
 contract RebaseController is DreAccessControlled, IRebaseController {
     IDRE public dre; // DRE token (decimals = 18)
-    ITreasury public treasury;
+    IDreTreasury public treasury;
     IDreStaking public staking; // staking contract or escrow
 
     // --- Epoch params --------------------------------------------------------
@@ -41,7 +40,7 @@ contract RebaseController is DreAccessControlled, IRebaseController {
 
     function initialize(address _dre, address _treasury, address _staking, address _authority) public initializer {
         dre = IDRE(_dre);
-        treasury = ITreasury(_treasury);
+        treasury = IDreTreasury(_treasury);
         staking = IDreStaking(_staking);
         lastEpochTime = block.timestamp;
         __DreAccessControlled_init(_authority);

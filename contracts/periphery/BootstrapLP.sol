@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IDRE.sol";
 import "../interfaces/IDreStaking.sol";
-import "../interfaces/ITreasury.sol";
+import "../interfaces/IDreTreasury.sol";
 import "../interfaces/IDRE.sol";
 
 interface IShadowRouter {
@@ -51,7 +51,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
 
     IDreStaking public immutable staking;
     IShadowRouter public immutable router;
-    ITreasury public immutable treasury;
+    IDreTreasury public immutable treasury;
 
     uint256 public maxUsdcCapacity;
     uint256 public bonus;
@@ -72,7 +72,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         lpToken = IERC20(_lpToken);
         staking = IDreStaking(_staking);
         router = IShadowRouter(_router);
-        treasury = ITreasury(_treasury);
+        treasury = IDreTreasury(_treasury);
         maxUsdcCapacity = _maxUsdcCapacity;
         bonus = _bonus;
 

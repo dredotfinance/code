@@ -9,7 +9,7 @@ import "./DreAccessControlled.sol";
 import "./interfaces/IDreStaking.sol";
 import "./interfaces/IDRE.sol";
 import "./interfaces/IDreBondDepository.sol";
-import "./interfaces/ITreasury.sol";
+import "./interfaces/IDreTreasury.sol";
 
 /// @title DRE Bond Depository
 /// @author DRE Protocol
@@ -31,7 +31,7 @@ contract DreBondDepository is
     Bond[] private _bonds;
     IDreStaking public override staking;
     IDRE public override dre;
-    ITreasury public override treasury;
+    IDreTreasury public override treasury;
     mapping(uint256 => BondPosition) private _positions;
     uint256 public override lastId = 1;
 
@@ -44,7 +44,7 @@ contract DreBondDepository is
         __ReentrancyGuard_init();
         __DreAccessControlled_init(_authority);
         staking = IDreStaking(_staking);
-        treasury = ITreasury(_treasury);
+        treasury = IDreTreasury(_treasury);
         dre = IDRE(_dre);
         if (lastId == 0) lastId = 1;
     }

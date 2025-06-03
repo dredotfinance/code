@@ -7,7 +7,7 @@ import "./BaseTest.sol";
 import "../contracts/RebaseController.sol";
 import "../contracts/Dre.sol";
 import "../contracts/sDRE.sol";
-import "../contracts/Treasury.sol";
+import "../contracts/DreTreasury.sol";
 import "../contracts/DreStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockAggregatorV3.sol";

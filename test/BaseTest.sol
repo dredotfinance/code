@@ -6,30 +6,32 @@ import "forge-std/Test.sol";
 import "../contracts/RebaseController.sol";
 import "../contracts/Dre.sol";
 import "../contracts/sDRE.sol";
-import "../contracts/Treasury.sol";
+import "../contracts/DreTreasury.sol";
 import "../contracts/DreStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
-import "../contracts/mocks/MockAggregatorV3.sol";
+import "../contracts/mocks/MockOracle.sol";
 import "../contracts/DreAuthority.sol";
 import "../contracts/DreBondDepository.sol";
 import "../contracts/oracles/TokenOracleE18.sol";
+import "../contracts/DreOracle.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
     DRE public dre;
     sDRE public sDre;
-    Treasury public treasury;
+    DreTreasury public treasury;
     DreStaking public staking;
     MockERC20 public mockQuoteToken;
     MockERC20 public mockQuoteToken2;
     MockERC20 public mockQuoteToken3;
-    MockAggregatorV3 public dreOracle;
-    MockAggregatorV3 public mockOracle;
-    MockAggregatorV3 public mockOracle2;
-    MockAggregatorV3 public mockOracle3;
-    TokenOracleE18 public tokenOracle;
-    TokenOracleE18 public tokenOracle2;
-    TokenOracleE18 public tokenOracle3;
+
+    DreOracle public dreOracle;
+
+    MockOracle public mockDreOracle;
+    MockOracle public mockOracle;
+    MockOracle public mockOracle2;
+    MockOracle public mockOracle3;
+
     DreAuthority public dreAuthority;
     DreBondDepository public dreBondDepository;
 
@@ -48,24 +50,28 @@ contract BaseTest is Test {
         mockQuoteToken3 = new MockERC20("Mock Token 3", "MTK3");
 
         // Deploy mock oracle
-        mockOracle = new MockAggregatorV3(18, 1e18); // 1:1 price
-        mockOracle2 = new MockAggregatorV3(18, 2e18); // 2:1 price
-        mockOracle3 = new MockAggregatorV3(18, 0.5e18); // 0.5:1 price
-
-        dreOracle = new MockAggregatorV3(18, 1e18); // 1:1 price
-        tokenOracle = new TokenOracleE18(mockOracle, dreOracle, mockQuoteToken);
-        tokenOracle2 = new TokenOracleE18(mockOracle2, dreOracle, mockQuoteToken2);
-        tokenOracle3 = new TokenOracleE18(mockOracle3, dreOracle, mockQuoteToken3);
+        mockDreOracle = new MockOracle(1e18); // 1:1 price
+        mockOracle = new MockOracle(1e18); // 1:1 price
+        mockOracle2 = new MockOracle(2e18); // 2:1 price
+        mockOracle3 = new MockOracle(0.5e18); // 0.5:1 price
 
         // Deploy DRE token
         dre = new DRE(address(dreAuthority));
 
         // Deploy sDRE token
         sDre = new sDRE(address(dreAuthority));
+
+        dreOracle = new DreOracle();
+        dreOracle.initialize(address(dreAuthority), address(dre));
+        dreOracle.updateOracle(address(dre), address(mockDreOracle));
+        dreOracle.updateOracle(address(mockQuoteToken), address(mockOracle));
+        dreOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2));
+        dreOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
+
         // Deploy Treasury
-        treasury = new Treasury();
-        treasury.initialize(address(dre), address(dreAuthority));
-        treasury.enable(address(mockQuoteToken), address(tokenOracle));
+        treasury = new DreTreasury();
+        treasury.initialize(address(dre), address(dreOracle), address(dreAuthority));
+        treasury.enable(address(mockQuoteToken));
 
         // Deploy Staking
         staking = new DreStaking();
@@ -97,13 +103,12 @@ contract BaseTest is Test {
         vm.label(address(mockQuoteToken), "Mock Quote Token");
         vm.label(address(mockQuoteToken2), "Mock Quote Token 2");
         vm.label(address(mockQuoteToken3), "Mock Quote Token 3");
+
+        vm.label(address(dreOracle), "Dre Oracle");
+        vm.label(address(mockDreOracle), "Mock Dre Oracle");
         vm.label(address(mockOracle), "Mock Oracle");
         vm.label(address(mockOracle2), "Mock Oracle 2");
         vm.label(address(mockOracle3), "Mock Oracle 3");
-
-        vm.label(address(tokenOracle), "Token Oracle");
-        vm.label(address(tokenOracle2), "Token Oracle 2");
-        vm.label(address(tokenOracle3), "Token Oracle 3");
 
         vm.stopPrank();
     }

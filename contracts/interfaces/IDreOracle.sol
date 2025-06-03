@@ -13,9 +13,32 @@ interface IDreOracle {
     error InvalidOracleAddress();
     error InvalidTokenAddress();
 
-    function getPrice() external view returns (uint256);
+    /**
+     * @notice Update the oracle for a token
+     * @param token The token address
+     * @param oracle The oracle contract
+     */
+    function updateOracle(address token, address oracle) external;
 
-    function getPriceInDre(IERC20Metadata token) external view returns (uint256 price);
+    /**
+     * @notice Get the price for a token
+     * @param token The token address
+     * @return price The token price
+     */
+    function getPrice(address token) external view returns (uint256);
 
-    function getPriceInDreForAmount(IERC20Metadata token, uint256 amount) external view returns (uint256 price);
+    /**
+     * @notice Get the price for a token in DRE
+     * @param token The token address
+     * @return price The token price in DRE
+     */
+    function getPriceInDre(address token) external view returns (uint256 price);
+
+    /**
+     * @notice Get the price for a token in DRE for an amount
+     * @param token The token address
+     * @param amount The amount of the token
+     * @return price The token price in DRE for the amount
+     */
+    function getPriceInDreForAmount(address token, uint256 amount) external view returns (uint256 price);
 }

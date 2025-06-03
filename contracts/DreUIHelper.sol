@@ -5,7 +5,7 @@ pragma abicoder v2;
 import "./interfaces/IDreStaking.sol";
 import "./interfaces/IDreBondDepository.sol";
 import "./interfaces/IRebaseController.sol";
-import "./interfaces/ITreasury.sol";
+import "./interfaces/IDreTreasury.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -75,7 +75,7 @@ contract DreUIHelper {
     // State variables
     IDreStaking public staking;
     IDreBondDepository public bondDepository;
-    ITreasury public treasury;
+    IDreTreasury public treasury;
     IERC20 public dreToken;
     IERC20 public stakingToken;
     IRebaseController public rebaseController;
@@ -93,7 +93,7 @@ contract DreUIHelper {
     ) {
         staking = IDreStaking(_staking);
         bondDepository = IDreBondDepository(_bondDepository);
-        treasury = ITreasury(_treasury);
+        treasury = IDreTreasury(_treasury);
         dreToken = IERC20(_dreToken);
         stakingToken = IERC20(_stakingToken);
         rebaseController = IRebaseController(_rebaseController);

@@ -38,7 +38,7 @@ contract AverageCappedOracle is IOracle {
      * @notice Calculates the average price from both oracles
      * @return The average price
      */
-    function getPrice() external override returns (uint256) {
+    function getPrice() external view override returns (uint256) {
         uint256 price0 = oracle0.getPrice();
         uint256 price1 = oracle1.getPrice();
 

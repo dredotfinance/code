@@ -16,7 +16,7 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
     bytes32 public constant RESERVE_DEPOSITOR_ROLE = keccak256("RESERVE_DEPOSITOR_ROLE");
 
     address public override operationsTreasury;
-    ITreasury public override treasury;
+    IDreTreasury public override treasury;
 
     /* ========== Constructor ========== */
 
@@ -45,7 +45,7 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
 
     function setTreasury(address _newTreasury) external onlyGovernor {
         address oldTreasury = address(treasury);
-        treasury = ITreasury(_newTreasury);
+        treasury = IDreTreasury(_newTreasury);
         emit TreasuryUpdated(_newTreasury, oldTreasury);
     }
 
