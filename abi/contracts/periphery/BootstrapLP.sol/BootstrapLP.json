@@ -160,7 +160,13 @@
       }
     ],
     "name": "bootstrap",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "dreAmount",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },

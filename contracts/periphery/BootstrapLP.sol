@@ -89,7 +89,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         bonus = _bonus;
     }
 
-    function bootstrap(uint256 usdcAmount) external nonReentrant {
+    function bootstrap(uint256 usdcAmount) external nonReentrant returns (uint256 dreAmount) {
         require(usdcAmount > 0, "Amount must be greater than 0");
         uint256 totalReservesBefore = treasury.calculateReserves();
 
@@ -127,7 +127,6 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
 
         // Stake into staking contract
         staking.createPosition(msg.sender, dreAmountOfLp, dreAmountOfLp, 0);
-        // staking.createPosition(msg.sender, dreAmount, dreAmount, 0);
 
         // Burn any pending DRE
         if (dreToken.balanceOf(address(this)) > 0) {
@@ -143,6 +142,8 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         uint256 totalReservesAfter = treasury.calculateReserves();
         require(totalReservesAfter > totalReservesBefore, "Reserves invariant violated");
         require(totalReservesAfter >= dreToken.totalSupply(), "Reserves invariant violated");
+
+        return dreAmountOfLp;
     }
 
     // Emergency functions
