@@ -18,9 +18,15 @@ interface IDreTreasury {
 
     function manage(address _token, uint256 _amount) external;
 
+    function enable(address _address) external;
+
+    function disable(address _address) external;
+
     function excessReserves() external view returns (uint256);
 
     function totalReserves() external view returns (uint256);
+
+    function syncReserves() external;
 
     function calculateReserves() external view returns (uint256);
 
