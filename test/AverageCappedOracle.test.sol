@@ -16,11 +16,7 @@ contract AverageCappedOracleTest is Test {
         oracle1 = new MockOracle(1e18); // $1.00
 
         // Deploy AverageCappedOracle with 5% max deviation (500 basis points)
-        averageOracle = new AverageCappedOracle(
-            IOracle(address(oracle0)),
-            IOracle(address(oracle1)),
-            500
-        );
+        averageOracle = new AverageCappedOracle(IOracle(address(oracle0)), IOracle(address(oracle1)), 500);
     }
 
     function test_Constructor() public view {

@@ -106,7 +106,6 @@ contract RebaseController is DreAccessControlled, IRebaseController {
 
         if (apr > CEIL_APR) apr = CEIL_APR;
 
-
         uint256 epochsPerYear = 365 days / EPOCH;
         epochRate = (apr * 1e18) / (100 * epochsPerYear);
     }

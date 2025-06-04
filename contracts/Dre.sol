@@ -9,14 +9,18 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract DRE is OFT, ERC20Permit, Pausable, DreAccessControlled, IDRE {
-    constructor(address _lzEndpoint, address _authority) OFT("Dre.finance", "DRE", _lzEndpoint, msg.sender) ERC20Permit("DreFinance") Ownable(msg.sender) {
+    constructor(address _lzEndpoint, address _authority)
+        OFT("Dre.finance", "DRE", _lzEndpoint, msg.sender)
+        ERC20Permit("DreFinance")
+        Ownable(msg.sender)
+    {
         __DreAccessControlled_init(_authority);
         _transferOwnership(address(0));
         _mint(msg.sender, 1e18);
         _burn(msg.sender, 1e18);
     }
 
-    function _checkOwner() internal override view virtual {
+    function _checkOwner() internal view virtual override {
         if (!authority.isGovernor(_msgSender())) {
             revert OwnableUnauthorizedAccount(_msgSender());
         }

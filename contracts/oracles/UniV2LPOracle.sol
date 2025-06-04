@@ -32,7 +32,6 @@ contract UniV2LPOracle is IOracle {
         require(getPrice() > 0, "Invalid price");
     }
 
-
     function getKValue() public view returns (uint256 k_) {
         uint256 decimals = token0Decimals + token1Decimals - 18;
         (uint256 reserve0, uint256 reserve1,) = amm.getReserves();

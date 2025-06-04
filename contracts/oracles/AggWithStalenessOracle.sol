@@ -22,8 +22,7 @@ contract AggWithStalenessOracle is IOracle {
     }
 
     function getPrice() external view override returns (uint256) {
-        (, int256 answer, , uint256 updatedAt, ) = AGGREGATOR
-            .latestRoundData();
+        (, int256 answer,, uint256 updatedAt,) = AGGREGATOR.latestRoundData();
         require(updatedAt > block.timestamp - MAX_STALENESS, "Stale price");
         return uint256(answer) * decimalsToAdjust;
     }

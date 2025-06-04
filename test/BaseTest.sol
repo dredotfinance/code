@@ -15,7 +15,6 @@ import "../contracts/DreAuthority.sol";
 import "../contracts/DreBondDepository.sol";
 import "../contracts/DreOracle.sol";
 
-
 contract BaseTest is Test {
     RebaseController public rebaseController;
     DRE public dre;
