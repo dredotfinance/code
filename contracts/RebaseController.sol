@@ -32,8 +32,8 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     uint256 public lastEpochTime;
 
     // piece-wise k slopes (all in APR %, 2 decimals eg 5000 = 5000%)
-    uint16 public immutable K1 = 500; // rises 0->500 % over β 1-1.5
-    uint16 public immutable K2 = 1000; // rises 500->2000 % over β 1.5-2.5 (slope 2k% per 0.5)
+    uint16 public immutable K1 = 10; // rises 0->500 % over β 1-1.5
+    uint16 public immutable K2 = 1500; // rises 500->2000 % over β 1.5-2.5 (slope 2k% per 0.5)
 
     uint16 public immutable FLOOR_APR = 500; // 500 % APR (≈0.092% per 8h)
     uint16 public immutable CEIL_APR = 2000; // 3000 % APR (≈0.46% per 8h)
@@ -100,10 +100,12 @@ contract RebaseController is DreAccessControlled, IRebaseController {
             apr = (beta1e2 - 100) * K1;
         } else if (beta1e2 < 250) {
             apr = FLOOR_APR + ((beta1e2 - 150) * K2) / 100;
-            if (apr > CEIL_APR) apr = CEIL_APR;
         } else {
             apr = CEIL_APR;
         }
+
+        if (apr > CEIL_APR) apr = CEIL_APR;
+
 
         uint256 epochsPerYear = 365 days / EPOCH;
         epochRate = (apr * 1e18) / (100 * epochsPerYear);

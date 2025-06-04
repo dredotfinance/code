@@ -116,11 +116,11 @@ contract DreUIHelper {
         )
     {
         // Get protocol-wide stats
-        tvl = treasury.totalReserves();
+        tvl = treasury.calculateReserves();
         totalSupply = dreToken.totalSupply();
         totalStaked = staking.totalStaked();
         totalRewards = staking.rewardPerToken();
-        currentAPR = calculateAPR();
+        currentAPR = calculateAPRRaw(tvl, totalSupply);
 
         // Get token balances and allowances
         tokenInfos = new TokenInfo[](bondTokens.length + 2); // +1 for DRE token, +1 for staking token
@@ -225,6 +225,11 @@ contract DreUIHelper {
     /// @return The current APR as a percentage (e.g., 1000 = 10%)
     function calculateAPR() public view returns (uint256) {
         (uint256 apr,,) = rebaseController.projectedEpochRate();
+        return apr;
+    }
+
+    function calculateAPRRaw(uint256 pcvUsd, uint256 supply) public view returns (uint256) {
+        (uint256 apr,,) = rebaseController.projectedEpochRateRaw(pcvUsd, supply);
         return apr;
     }
 
