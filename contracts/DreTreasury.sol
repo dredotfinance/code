@@ -24,7 +24,10 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     string internal invalidToken = "Treasury: invalid token";
     string internal insufficientReserves = "Treasury: insufficient reserves";
 
-    function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(1) {
+    uint256 public credit;
+    uint256 public debit;
+
+    function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(2) {
         require(_dre != address(0), "Zero address: dre");
         require(_dreOracle != address(0), "Zero address: dreOracle");
         dre = IDRE(_dre);
@@ -34,6 +37,14 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
+
+    event CreditDebitSet(uint256 credit, uint256 debit);
+
+    function setCreditDebit(uint256 _credit, uint256 _debit) external onlyGovernor {
+        credit = _credit;
+        debit = _debit;
+        emit CreditDebitSet(_credit, _debit);
+    }
 
     /**
      * @notice allow approved address to deposit an asset for dre
@@ -209,7 +220,7 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
                 reserves = reserves + value;
             }
         }
-        return reserves;
+        return reserves + credit - debit;
     }
 
     function _updateReserves() internal {

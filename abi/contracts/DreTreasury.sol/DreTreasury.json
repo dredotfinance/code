@@ -52,6 +52,25 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "credit",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "debit",
+        "type": "uint256"
+      }
+    ],
+    "name": "CreditDebitSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "token",
@@ -255,6 +274,32 @@
   {
     "inputs": [],
     "name": "calculateReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "credit",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "debit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -490,6 +535,24 @@
       }
     ],
     "name": "setAuthority",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_credit",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_debit",
+        "type": "uint256"
+      }
+    ],
+    "name": "setCreditDebit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
