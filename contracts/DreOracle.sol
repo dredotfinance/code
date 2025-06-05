@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.15;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./DreAccessControlled.sol";
 import "./interfaces/IDreOracle.sol";
 import "./interfaces/IOracle.sol";
@@ -11,14 +12,18 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
  * @notice Central repository for managing token oracles
  * @dev Allows adding, updating, and removing oracles for different tokens
  */
-contract DreOracle is DreAccessControlled, IDreOracle {
+contract DreOracle is IDreOracle, DreAccessControlled {
     mapping(IERC20Metadata => IOracle) public oracles;
     IERC20Metadata public dre;
+    uint256 private _floorPrice; // in USD with 18 decimals
+
+    event FloorPriceUpdated(uint256 oldPrice, uint256 newPrice);
 
     function initialize(address _authority, address _dre) external initializer {
         __DreAccessControlled_init(_authority);
         dre = IERC20Metadata(_dre);
         require(dre.decimals() == 18, "DRE must have 18 decimals");
+        _floorPrice = 1e18; // Start at 1 USD
     }
 
     /// @inheritdoc IDreOracle
@@ -43,8 +48,7 @@ contract DreOracle is DreAccessControlled, IDreOracle {
     /// @inheritdoc IDreOracle
     function getPriceInDre(address token) public view returns (uint256 price) {
         uint256 tokenPriceE18 = getPrice(token); // TOKEN/USD in E18
-        uint256 drePriceE18 = getPrice(address(dre)); // DRE/USD
-        price = (tokenPriceE18 * 1e18) / drePriceE18;
+        price = (tokenPriceE18 * 1e18) / _floorPrice;
     }
 
     /// @inheritdoc IDreOracle
@@ -69,5 +73,18 @@ contract DreOracle is DreAccessControlled, IDreOracle {
         uint256 tokenAmountE18 = amount * 10 ** (18 - tokenMetadata.decimals()); // amount in E18
         uint256 tokenPriceE18 = getPrice(token); // TOKEN/USD
         price = (tokenPriceE18 * tokenAmountE18) / 1e18;
+    }
+
+    function getDrePrice() external view returns (uint256) {
+        return _floorPrice;
+    }
+
+    function setDrePrice(uint256 newFloorPrice) external onlyPolicy {
+        require(newFloorPrice >= _floorPrice, "floor price can only increase");
+
+        uint256 oldPrice = _floorPrice;
+        _floorPrice = newFloorPrice;
+
+        emit FloorPriceUpdated(oldPrice, newFloorPrice);
     }
 }

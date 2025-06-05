@@ -41,4 +41,16 @@ interface IDreOracle {
      * @return price The token price in DRE for the amount
      */
     function getPriceInDreForAmount(address token, uint256 amount) external view returns (uint256 price);
+
+    /**
+     * @notice Get the price for DRE
+     * @return price The DRE price
+     */
+    function getDrePrice() external view returns (uint256);
+
+    /**
+     * @notice Set the price for DRE
+     * @param newFloorPrice The new DRE price
+     */
+    function setDrePrice(uint256 newFloorPrice) external;
 }

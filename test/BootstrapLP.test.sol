@@ -104,9 +104,6 @@ contract BootstrapLPTest is BaseTest {
 
     function test_BootstrapDepositAfterSwap() public {
         IERC20 usdc = IERC20(USDC_TOKEN);
-        IERC20 dre = IERC20(DRE_TOKEN);
-        IERC20 lp = IERC20(LP_TOKEN);
-        IERC20 dreStaking = IERC20(sDRE_TOKEN);
 
         vm.startPrank(usdcWhale);
 

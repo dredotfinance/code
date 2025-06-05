@@ -99,10 +99,10 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         require(usdcAquired <= maxUsdcCapacity, "Max USDC capacity reached");
 
         // Calculate DRE amount to mint (1:1 ratio)
-        uint256 dreAmount = treasury.tokenValueE18(address(usdcToken), usdcAmount);
+        uint256 dreAmountToMint = treasury.tokenValueE18(address(usdcToken), usdcAmount);
 
         // Mint DRE tokens with the half the USDC
-        dreToken.mint(address(this), dreAmount / 2);
+        dreToken.mint(address(this), dreAmountToMint / 2);
         usdcToken.safeTransfer(address(treasury), usdcAmount / 2);
 
         // Deposit into LP

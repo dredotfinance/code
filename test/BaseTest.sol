@@ -86,7 +86,9 @@ contract BaseTest is Test {
 
         // Deploy RebaseController
         rebaseController = new RebaseController();
-        rebaseController.initialize(address(dre), address(treasury), address(staking), address(dreAuthority));
+        rebaseController.initialize(
+            address(dre), address(treasury), address(staking), address(dreOracle), address(dreAuthority)
+        );
 
         dreAuthority.addPolicy(address(treasury));
         dreAuthority.addPolicy(address(rebaseController));

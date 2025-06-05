@@ -27,7 +27,7 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     uint256 public credit;
     uint256 public debit;
 
-    function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(2) {
+    function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(3) {
         require(_dre != address(0), "Zero address: dre");
         require(_dreOracle != address(0), "Zero address: dreOracle");
         dre = IDRE(_dre);
@@ -133,7 +133,7 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
      * @notice takes inventory of all tracked assets
      * @notice always consolidate to recognized reserves before audit
      */
-    function syncReserves() external onlyGovernor {
+    function syncReserves() external onlyExecutor {
         _updateReserves();
     }
 
@@ -157,19 +157,6 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     function disable(address _toDisable) external onlyGuardianOrGovernor {
         enabledTokens[_toDisable] = false;
         emit TokenEnabled(_toDisable, false);
-    }
-
-    /**
-     * @notice check if registry contains address
-     * @return (bool, uint256)
-     */
-    function indexInRegistry(address _address) public view returns (bool, uint256) {
-        for (uint256 i = 0; i < tokens.length; i++) {
-            if (_address == tokens[i]) {
-                return (true, i);
-            }
-        }
-        return (false, 0);
     }
 
     /* ========== VIEW FUNCTIONS ========== */

@@ -11,9 +11,10 @@ import "../contracts/DreTreasury.sol";
 import "../contracts/DreStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockOracle.sol";
+import "../contracts/interfaces/IDreOracle.sol";
 
 contract RebaseControllerTest is BaseTest {
-    event Rebased(uint256 backingRatio, uint256 epochRate, uint256 tokensMinted);
+    event Rebased(uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice);
 
     function setUp() public {
         setUpBaseTest();
@@ -30,6 +31,7 @@ contract RebaseControllerTest is BaseTest {
         assertEq(address(rebaseController.dre()), address(dre));
         assertEq(address(rebaseController.treasury()), address(treasury));
         assertEq(address(rebaseController.staking()), address(staking));
+        assertEq(address(rebaseController.oracle()), address(dreOracle));
         assertEq(rebaseController.lastEpochTime(), block.timestamp);
     }
 
@@ -46,30 +48,35 @@ contract RebaseControllerTest is BaseTest {
         assertEq(backingRatio, 1e18); // 1:1 backing
     }
 
-    function test_ProjectedEpochRateZeroSupply() public view {
-        (uint256 apr, uint256 epochRate, uint256 backingRatio) = rebaseController.projectedEpochRate();
-        assertEq(apr, 0);
-        assertEq(epochRate, 0);
-        assertEq(backingRatio, 0);
+    function test_ProjectedMintZeroSupply() public view {
+        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = rebaseController.projectedMint();
+        assertEq(epochMint, 0);
+        assertEq(toStakers, 0);
+        assertEq(toOps, 0);
+        assertEq(newFloorPrice, dreOracle.getDrePrice());
     }
 
-    function test_ProjectedEpochRateWithBacking() public {
+    function test_ProjectedMintWithBacking() public {
         // Mint DRE tokens to create supply
         dre.mint(owner, 1_000_000e18);
 
         // Test with 1:1 backing (100%)
-        (uint256 apr, uint256 epochRate, uint256 backingRatio) = rebaseController.projectedEpochRate();
-        assertEq(backingRatio, 1e18);
-        assertEq(apr, 0); // Below 100% backing
+        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = rebaseController.projectedMint();
+        assertEq(epochMint, 0); // Below 100% backing
+        assertEq(toStakers, 0);
+        assertEq(toOps, 0);
+        assertEq(newFloorPrice, dreOracle.getDrePrice());
 
         // Add more PCV to treasury to increase backing ratio
         mockQuoteToken.mint(address(treasury), 500_000e18);
         treasury.syncReserves();
 
         // Test with 1.5:1 backing (150%)
-        (apr, epochRate, backingRatio) = rebaseController.projectedEpochRate();
-        assertEq(backingRatio, 1.5e18);
-        assertEq(apr, 500); // Should have positive APR
+        (epochMint, toStakers, toOps, newFloorPrice) = rebaseController.projectedMint();
+        assertGt(epochMint, 0); // Should have positive mint
+        assertGt(toStakers, 0); // Should have staker rewards
+        assertGt(toOps, 0); // Should have ops rewards
+        assertGt(newFloorPrice, dreOracle.getDrePrice()); // Should have new floor price
     }
 
     function test_ExecuteEpochBeforeReady() public {
@@ -94,18 +101,24 @@ contract RebaseControllerTest is BaseTest {
         uint256 epochLength = rebaseController.EPOCH();
         vm.warp(block.timestamp + epochLength);
 
-        // Execute epoch
-        (, uint256 epochRate, uint256 backingRatio) = rebaseController.projectedEpochRate();
-        uint256 tokensMinted = (dre.totalSupply() * epochRate) / 1e18;
+        // Get projected values
+        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = rebaseController.projectedMint();
 
         vm.expectEmit(true, true, true, true);
-        emit Rebased(backingRatio, epochRate, tokensMinted);
+        emit Rebased(epochMint, toStakers, toOps, newFloorPrice);
 
         rebaseController.executeEpoch();
 
         // Verify rewards were minted and sent to staking
         uint256 stakingBalance = dre.balanceOf(address(staking));
-        assertGt(stakingBalance, 0);
+        assertEq(stakingBalance, toStakers);
+
+        // Verify ops treasury received tokens
+        uint256 opsBalance = dre.balanceOf(address(dreAuthority.operationsTreasury()));
+        assertEq(opsBalance, toOps);
+
+        // Verify oracle price was updated
+        assertEq(dreOracle.getDrePrice(), newFloorPrice);
     }
 
     function test_ExecuteEpochInsufficientReserves() public {
@@ -119,8 +132,9 @@ contract RebaseControllerTest is BaseTest {
         vm.warp(block.timestamp + epochLength);
 
         // Execute epoch should succeed but not mint rewards
+        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = rebaseController.projectedMint();
         vm.expectEmit(true, true, true, true);
-        emit Rebased(1e18, 0, 0);
+        emit Rebased(epochMint, toStakers, toOps, newFloorPrice);
 
         rebaseController.executeEpoch();
 
@@ -131,29 +145,48 @@ contract RebaseControllerTest is BaseTest {
 
     function test_ProjectedEpochRateRaw() public view {
         // Test with zero supply
-        (uint256 apr, uint256 epochRate, uint256 backingRatio) = rebaseController.projectedEpochRateRaw(1e18, 0);
+        (uint256 apr, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) =
+            rebaseController.projectedEpochRateRaw(1e18, 0, dreOracle.getDrePrice(), 0);
         assertEq(apr, 0);
-        assertEq(epochRate, 0);
-        assertEq(backingRatio, 0);
+        assertEq(epochMint, 0);
+        assertEq(toStakers, 0);
+        assertEq(toOps, 0);
+        assertEq(newFloorPrice, dreOracle.getDrePrice());
 
         // Test with 1:1 backing
-        (apr, epochRate, backingRatio) = rebaseController.projectedEpochRateRaw(1e18, 1e18);
-        assertEq(backingRatio, 1e18);
+        (apr, epochMint, toStakers, toOps, newFloorPrice) =
+            rebaseController.projectedEpochRateRaw(1e18, 1e18, dreOracle.getDrePrice(), 0);
         assertEq(apr, 0); // Below 100% backing
+        assertEq(epochMint, 0);
+        assertEq(toStakers, 0);
+        assertEq(toOps, 0);
+        assertEq(newFloorPrice, dreOracle.getDrePrice());
 
         // Test with 1.5:1 backing
-        (apr, epochRate, backingRatio) = rebaseController.projectedEpochRateRaw(3e18, 2e18);
-        assertEq(backingRatio, 1.5e18);
+        (apr, epochMint, toStakers, toOps, newFloorPrice) =
+            rebaseController.projectedEpochRateRaw(3e18, 2e18, dreOracle.getDrePrice(), 1e18);
         assertEq(apr, 500); // Should have positive APR
+        assertGt(epochMint, 0);
+        assertGt(toStakers, 0);
+        assertGt(toOps, 0);
+        assertGt(newFloorPrice, dreOracle.getDrePrice());
 
         // Test with 2:1 backing
-        (apr, epochRate, backingRatio) = rebaseController.projectedEpochRateRaw(3e18, 1.5e18);
-        assertEq(backingRatio, 2e18);
+        (apr, epochMint, toStakers, toOps, newFloorPrice) =
+            rebaseController.projectedEpochRateRaw(3e18, 1.5e18, dreOracle.getDrePrice(), 1e18);
         assertEq(apr, 1000); // Should have positive APR
+        assertGt(epochMint, 0);
+        assertGt(toStakers, 0);
+        assertGt(toOps, 0);
+        assertGt(newFloorPrice, dreOracle.getDrePrice());
 
         // Test with 2.5:1 backing
-        (apr, epochRate, backingRatio) = rebaseController.projectedEpochRateRaw(2.5e18, 1e18);
-        assertEq(backingRatio, 2.5e18);
+        (apr, epochMint, toStakers, toOps, newFloorPrice) =
+            rebaseController.projectedEpochRateRaw(2.5e18, 1e18, dreOracle.getDrePrice(), 1e18);
         assertEq(apr, 2000); // Should be at CEIL_APR
+        assertGt(epochMint, 0);
+        assertGt(toStakers, 0);
+        assertGt(toOps, 0);
+        assertGt(newFloorPrice, dreOracle.getDrePrice());
     }
 }

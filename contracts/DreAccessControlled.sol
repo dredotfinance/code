@@ -60,6 +60,11 @@ abstract contract DreAccessControlled is Initializable {
         _;
     }
 
+    modifier onlyExecutor() {
+        require(authority.isExecutor(msg.sender), UNAUTHORIZED);
+        _;
+    }
+
     /* ========== GOV ONLY ========== */
 
     function setAuthority(IDreAuthority _newAuthority) external onlyGovernor {

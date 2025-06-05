@@ -12,6 +12,7 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
     bytes32 public constant POLICY_ROLE = keccak256("POLICY_ROLE");
     bytes32 public constant RESERVE_MANAGER_ROLE = keccak256("RESERVE_MANAGER_ROLE");
     bytes32 public constant VAULT_ROLE = keccak256("VAULT_ROLE");
+    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
     bytes32 public constant REWARD_MANAGER_ROLE = keccak256("REWARD_MANAGER_ROLE");
     bytes32 public constant RESERVE_DEPOSITOR_ROLE = keccak256("RESERVE_DEPOSITOR_ROLE");
 
@@ -30,6 +31,8 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
         _setRoleAdmin(RESERVE_MANAGER_ROLE, GOVERNOR_ROLE);
         _setRoleAdmin(REWARD_MANAGER_ROLE, GOVERNOR_ROLE);
         _setRoleAdmin(RESERVE_DEPOSITOR_ROLE, GOVERNOR_ROLE);
+        _setRoleAdmin(VAULT_ROLE, GOVERNOR_ROLE);
+        _setRoleAdmin(EXECUTOR_ROLE, GOVERNOR_ROLE);
     }
 
     modifier onlyGovernor() {
@@ -77,6 +80,42 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
         _grantRole(VAULT_ROLE, _newVault);
     }
 
+    function addExecutor(address _newExecutor) external onlyGovernor {
+        _grantRole(EXECUTOR_ROLE, _newExecutor);
+    }
+
+    function removeGovernor(address _oldGovernor) external onlyGovernor {
+        _revokeRole(GOVERNOR_ROLE, _oldGovernor);
+    }
+
+    function removeGuardian(address _oldGuardian) external onlyGovernor {
+        _revokeRole(GUARDIAN_ROLE, _oldGuardian);
+    }
+
+    function removePolicy(address _oldPolicy) external onlyGovernor {
+        _revokeRole(POLICY_ROLE, _oldPolicy);
+    }
+
+    function removeRewardManager(address _oldRewardManager) external onlyGovernor {
+        _revokeRole(REWARD_MANAGER_ROLE, _oldRewardManager);
+    }
+
+    function removeReserveManager(address _oldReserveManager) external onlyGovernor {
+        _revokeRole(RESERVE_MANAGER_ROLE, _oldReserveManager);
+    }
+
+    function removeReserveDepositor(address _oldReserveDepositor) external onlyGovernor {
+        _revokeRole(RESERVE_DEPOSITOR_ROLE, _oldReserveDepositor);
+    }
+
+    function removeVault(address _oldVault) external onlyGovernor {
+        _revokeRole(VAULT_ROLE, _oldVault);
+    }
+
+    function removeExecutor(address _oldExecutor) external onlyGovernor {
+        _revokeRole(EXECUTOR_ROLE, _oldExecutor);
+    }
+
     function isGovernor(address account) external view override returns (bool) {
         return hasRole(GOVERNOR_ROLE, account);
     }
@@ -107,5 +146,9 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
 
     function isTreasury(address account) external view override returns (bool) {
         return account == address(treasury);
+    }
+
+    function isExecutor(address account) external view override returns (bool) {
+        return hasRole(EXECUTOR_ROLE, account);
     }
 }

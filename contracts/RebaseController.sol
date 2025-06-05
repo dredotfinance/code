@@ -1,11 +1,14 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.15;
 
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./interfaces/IDRE.sol";
+import "./interfaces/IDreTreasury.sol";
 import "./interfaces/IDreStaking.sol";
+import "./interfaces/IDreOracle.sol";
 import "./interfaces/IRebaseController.sol";
+import "./libraries/StakingDistributionLogic.sol";
+import "./libraries/YieldLogic.sol";
 import "./DreAccessControlled.sol";
 
 /**
@@ -26,22 +29,20 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     IDRE public dre; // DRE token (decimals = 18)
     IDreTreasury public treasury;
     IDreStaking public staking; // staking contract or escrow
+    IDreOracle public oracle; // price oracle
 
     // --- Epoch params --------------------------------------------------------
     uint256 public immutable EPOCH = 8 hours;
     uint256 public lastEpochTime;
 
-    // piece-wise k slopes (all in APR %, 2 decimals eg 5000 = 5000%)
-    uint16 public immutable K1 = 10; // rises 0->500 % over β 1-1.5
-    uint16 public immutable K2 = 1500; // rises 500->2000 % over β 1.5-2.5 (slope 2k% per 0.5)
-
-    uint16 public immutable FLOOR_APR = 500; // 500 % APR (≈0.092% per 8h)
-    uint16 public immutable CEIL_APR = 2000; // 3000 % APR (≈0.46% per 8h)
-
-    function initialize(address _dre, address _treasury, address _staking, address _authority) public initializer {
+    function initialize(address _dre, address _treasury, address _staking, address _oracle, address _authority)
+        public
+        initializer
+    {
         dre = IDRE(_dre);
         treasury = IDreTreasury(_treasury);
         staking = IDreStaking(_staking);
+        oracle = IDreOracle(_oracle);
         lastEpochTime = block.timestamp;
         __DreAccessControlled_init(_authority);
 
@@ -52,61 +53,75 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     function executeEpoch() external {
         require(block.timestamp >= lastEpochTime + EPOCH, "epoch not ready");
 
-        (uint256 apr, uint256 epochRate, uint256 backingRatio) = projectedEpochRate();
+        treasury.syncReserves();
 
-        uint256 mintAmount = (dre.totalSupply() * epochRate) / 1e18;
-        require(mintAmount <= treasury.excessReserves(), "Insufficient reserves");
-        if (mintAmount > 0 && apr > 0) {
-            // mintAmount is the amount of DRE to mint
-            dre.mint(address(this), mintAmount);
+        // Get current state
+        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = projectedMint();
 
-            // send 95% to staking
-            staking.notifyRewardAmount(mintAmount * 95 / 100);
+        // Verify we have enough reserves
+        require(epochMint <= treasury.excessReserves(), "Insufficient reserves");
 
-            // send 5% to treasury to cover bribes and rewards
-            dre.transfer(address(authority.operationsTreasury()), mintAmount * 5 / 100);
+        if (epochMint > 0) {
+            // Mint tokens
+            dre.mint(address(this), epochMint);
+
+            // Distribute to stakers
+            staking.notifyRewardAmount(toStakers);
+
+            // Send to ops treasury
+            dre.transfer(address(authority.operationsTreasury()), toOps);
+
+            // Update oracle floor price
+            oracle.setDrePrice(newFloorPrice);
         }
 
         lastEpochTime = block.timestamp;
-        emit Rebased(backingRatio, epochRate, mintAmount);
+        emit Rebased(epochMint, toStakers, toOps, newFloorPrice);
     }
 
     // --- View helpers --------------------------------------------------------
     function currentBackingRatio() external view returns (uint256) {
-        uint256 pcvUsd = treasury.totalReserves();
+        uint256 pcv = treasury.totalReserves();
         uint256 supply = dre.totalSupply();
-        return (supply == 0) ? 0 : (pcvUsd * 1e18) / supply; // 1e18 == β=1
+        return (supply == 0) ? 0 : (pcv * 1e18) / supply; // 1e18 == β=1
     }
 
-    function projectedEpochRate() public view returns (uint256 apr, uint256 epochRate, uint256 backingRatio) {
-        uint256 pcvUsd = treasury.totalReserves();
+    function projectedMint()
+        public
+        view
+        returns (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice)
+    {
+        // Get current state
+        uint256 pcv = treasury.totalReserves();
         uint256 supply = dre.totalSupply();
-        return projectedEpochRateRaw(pcvUsd, supply);
+        uint256 stakedSupply = staking.totalStaked();
+        uint256 currentFloorPrice = oracle.getDrePrice();
+
+        // Calculate APR and epoch rate
+        (, epochMint, toStakers, toOps, newFloorPrice) =
+            projectedEpochRateRaw(pcv, supply, currentFloorPrice, stakedSupply);
     }
 
-    function projectedEpochRateRaw(uint256 pcvUsd, uint256 supply)
+    function projectedEpochRate()
+        public
+        view
+        returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 newFloorPrice)
+    {
+        uint256 pcv = treasury.calculateReserves();
+        uint256 supply = dre.totalSupply();
+        return projectedEpochRateRaw(pcv, supply, oracle.getDrePrice(), staking.totalStaked());
+    }
+
+    function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 currentFloorPrice, uint256 stakedSupply)
         public
         pure
-        returns (uint256 apr, uint256 epochRate, uint256 backingRatio)
+        returns (uint256 apr, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice)
     {
-        if (supply == 0) return (0, 0, 0);
+        // Calculate APR and epoch rate
+        (apr, epochMint) = YieldLogic.calcEpoch(pcv, supply, 365 days / EPOCH);
 
-        backingRatio = (pcvUsd * 1e18) / supply;
-        uint256 beta1e2 = backingRatio / 1e16;
-
-        if (beta1e2 < 100) {
-            apr = 0;
-        } else if (beta1e2 < 150) {
-            apr = (beta1e2 - 100) * K1;
-        } else if (beta1e2 < 250) {
-            apr = FLOOR_APR + ((beta1e2 - 150) * K2) / 100;
-        } else {
-            apr = CEIL_APR;
-        }
-
-        if (apr > CEIL_APR) apr = CEIL_APR;
-
-        uint256 epochsPerYear = 365 days / EPOCH;
-        epochRate = (apr * 1e18) / (100 * epochsPerYear);
+        // Calculate token distribution
+        (toStakers, toOps, newFloorPrice) =
+            StakingDistributionLogic.allocate(epochMint, supply, stakedSupply, currentFloorPrice);
     }
 }
