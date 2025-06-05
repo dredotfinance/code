@@ -27,7 +27,8 @@ contract DreBurner is DreAccessControlled {
         uint256 totalSupply = dre.totalSupply();
         uint256 newFloorPrice = calculateFloorUpdate(balance, totalSupply, floorPrice);
 
-        // console.log("Burning", balance);
+        require(newFloorPrice >= floorPrice, "New floor price must be greater than current floor price");
+        require(newFloorPrice <= floorPrice * 2, "New floor price must be less than 2x current floor price");
 
         dre.burn(balance);
         dreOracle.setDrePrice(newFloorPrice);
@@ -53,5 +54,9 @@ contract DreBurner is DreAccessControlled {
 
         // Apply the multiplier to get new floor price
         newFloorPrice = (floorPrice * priceMultiplier) / ONE;
+    }
+
+    function recoverERC20(address token, uint256 amount) external onlyGovernor {
+        IERC20(token).transfer(authority.operationsTreasury(), amount);
     }
 }
