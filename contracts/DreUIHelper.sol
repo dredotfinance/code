@@ -6,6 +6,7 @@ import "./interfaces/IDreStaking.sol";
 import "./interfaces/IDreBondDepository.sol";
 import "./interfaces/IRebaseController.sol";
 import "./interfaces/IDreTreasury.sol";
+import "./interfaces/IDreOracle.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -22,6 +23,8 @@ contract DreUIHelper {
         uint256 treasuryBalance;
         uint256 treasuryValueDre;
         uint8 decimals;
+        uint256 oraclePrice;
+        uint256 oraclePriceInDre;
     }
 
     struct StakingPositionInfo {
@@ -78,6 +81,7 @@ contract DreUIHelper {
     IDreTreasury public treasury;
     IERC20 public dreToken;
     IERC20 public stakingToken;
+    IDreOracle public dreOracle;
     IRebaseController public rebaseController;
 
     // Events
@@ -89,13 +93,15 @@ contract DreUIHelper {
         address _treasury,
         address _dreToken,
         address _stakingToken,
-        address _rebaseController
+        address _rebaseController,
+        address _dreOracle
     ) {
         staking = IDreStaking(_staking);
         bondDepository = IDreBondDepository(_bondDepository);
         treasury = IDreTreasury(_treasury);
         dreToken = IERC20(_dreToken);
         stakingToken = IERC20(_stakingToken);
+        dreOracle = IDreOracle(_dreOracle);
         rebaseController = IRebaseController(_rebaseController);
     }
 
@@ -134,7 +140,9 @@ contract DreUIHelper {
             allowance: dreToken.allowance(user, address(staking)),
             treasuryBalance: 0,
             treasuryValueDre: 0,
-            decimals: 18
+            decimals: 18,
+            oraclePrice: dreOracle.getPrice(address(dreToken)),
+            oraclePriceInDre: dreOracle.getPriceInDre(address(dreToken))
         });
 
         // Add staking token info
@@ -147,7 +155,9 @@ contract DreUIHelper {
             allowance: stakingToken.allowance(user, address(staking)),
             treasuryBalance: 0,
             treasuryValueDre: 0,
-            decimals: 18
+            decimals: 18,
+            oraclePrice: 0,
+            oraclePriceInDre: 0
         });
 
         // Add bond token info
@@ -161,7 +171,9 @@ contract DreUIHelper {
                 symbol: token.symbol(),
                 treasuryBalance: token.balanceOf(address(treasury)),
                 treasuryValueDre: treasury.tokenValueE18(address(token), token.balanceOf(address(treasury))),
-                token: address(token)
+                token: address(token),
+                oraclePriceInDre: dreOracle.getPriceInDre(address(token)),
+                oraclePrice: dreOracle.getPrice(address(token))
             });
         }
 

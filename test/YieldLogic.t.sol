@@ -11,20 +11,20 @@ contract YieldLogicTest is Test {
     uint256 constant EPOCHS_PER_YEAR = 1095; // 8-hour epochs
     uint256 constant PRECISION = 1e18;
 
-    function testZeroSupply() public {
+    function testZeroSupply() public pure {
         (uint256 apr, uint256 epochMint) = YieldLogic.calcEpoch(1000e18, 0, EPOCHS_PER_YEAR);
         assertEq(apr, 0, "APR should be 0 for zero supply");
         assertEq(epochMint, 0, "Epoch mint should be 0 for zero supply");
     }
 
-    function testBackingRatioBelowOne() public {
+    function testBackingRatioBelowOne() public pure {
         // PCV = 500e18, Supply = 1000e18 -> beta = 0.5
         (uint256 apr, uint256 epochMint) = YieldLogic.calcEpoch(500e18, 1000e18, EPOCHS_PER_YEAR);
         assertEq(apr, 0, "APR should be 0 for beta < 1.0");
         assertEq(epochMint, 0, "Epoch mint should be 0 for beta < 1.0");
     }
 
-    function testBackingRatioOneToOnePointFive() public {
+    function testBackingRatioOneToOnePointFive() public pure {
         // Test beta = 1.0 (minimum for non-zero APR)
         (uint256 apr, uint256 epochMint) = YieldLogic.calcEpoch(1000e18, 1000e18, EPOCHS_PER_YEAR);
         assertEq(apr, 0, "APR should be 0 for beta = 1.0");
@@ -38,7 +38,7 @@ contract YieldLogicTest is Test {
         assertEq(apr, 500, "APR should be 500% for beta = 1.5");
     }
 
-    function testBackingRatioOnePointFiveToTwo() public {
+    function testBackingRatioOnePointFiveToTwo() public pure {
         // Test beta = 1.5 (start of second band)
         (uint256 apr, uint256 epochMint) = YieldLogic.calcEpoch(1500e18, 1000e18, EPOCHS_PER_YEAR);
         assertEq(apr, 500, "APR should be 500% for beta = 1.5");
@@ -52,7 +52,7 @@ contract YieldLogicTest is Test {
         assertEq(apr, 1250, "APR should be 500% for beta = 2.0");
     }
 
-    function testBackingRatioTwoToTwoPointFive() public {
+    function testBackingRatioTwoToTwoPointFive() public pure {
         // Test beta = 2.0 (start of third band)
         (uint256 apr, uint256 epochMint) = YieldLogic.calcEpoch(2000e18, 1000e18, EPOCHS_PER_YEAR);
         assertEq(apr, 1250, "APR should be 500% for beta = 2.0");
@@ -66,7 +66,7 @@ contract YieldLogicTest is Test {
         assertEq(apr, 2000, "APR should be 2000% for beta = 2.5");
     }
 
-    function testBackingRatioAboveTwoPointFive() public {
+    function testBackingRatioAboveTwoPointFive() public pure {
         // Test beta = 2.5 (minimum for max APR)
         (uint256 apr, uint256 epochMint) = YieldLogic.calcEpoch(2500e18, 1000e18, EPOCHS_PER_YEAR);
         assertEq(apr, 2000, "APR should be 2000% for beta = 2.5");
@@ -76,7 +76,7 @@ contract YieldLogicTest is Test {
         assertEq(apr, 2000, "APR should be capped at 2000% for beta > 2.5");
     }
 
-    function testEpochMintCalculation() public {
+    function testEpochMintCalculation() public pure {
         uint256 supply = 1000e18;
         uint256 pcv = 2500e18; // beta = 2.5 for max APR
 
@@ -91,7 +91,7 @@ contract YieldLogicTest is Test {
         assertEq(epochMint, expectedEpochMint, "Epoch mint calculation incorrect");
     }
 
-    function testDifferentEpochsPerYear() public {
+    function testDifferentEpochsPerYear() public pure {
         uint256 supply = 1000e18;
         uint256 pcv = 2500e18; // beta = 2.5 for max APR
         uint256 customEpochsPerYear = 365; // Daily epochs
@@ -107,7 +107,7 @@ contract YieldLogicTest is Test {
         assertEq(epochMint, expectedEpochMint, "Epoch mint calculation incorrect for custom epochs");
     }
 
-    function testPrecisionHandling() public {
+    function testPrecisionHandling() public pure {
         // Test with very small numbers
         uint256 tinySupply = 1e10; // 0.00000001 tokens
         uint256 tinyPcv = 2e10; // beta = 2.0
