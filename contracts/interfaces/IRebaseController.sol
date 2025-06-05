@@ -15,6 +15,7 @@ interface IRebaseController {
 
     // --- Events --------------------------------------------------------------
     event Rebased(uint256 backingRatio, uint256 epochRate, uint256 tokensMinted, uint256 newFloorPrice);
+    event TargetPctsSet(uint256 targetOpsPct, uint256 minFloorPct, uint256 maxFloorPct, uint256 floorSlope);
 
     // --- Functions ----------------------------------------------------------
     function initialize(address _dre, address _treasury, address _staking, address _oracle, address _authority)
@@ -31,6 +32,6 @@ interface IRebaseController {
 
     function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 currentFloorPrice, uint256 stakedSupply)
         external
-        pure
+        view
         returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 newFloorPrice);
 }

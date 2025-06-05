@@ -35,39 +35,48 @@ library StakingDistributionLogic {
         uint256 floorPrice,
         uint256 targetOpsPct, // ideally 10%
         uint256 minFloorPct, // minimum to the floor price ideally 15%
+        uint256 maxFloorPct, // maximum to the floor price ideally 50%
         uint256 floorSlope // ideally 50%
     ) public pure returns (uint256 toStakers, uint256 toOps, uint256 newFloorPrice) {
         if (yield == 0 || floorPrice == 0 || totalSupply == 0) return (0, 0, floorPrice);
 
-        //--------------------------------------------------------------
-        // 1. derive staking ratio ρ  =  staked / total
-        //--------------------------------------------------------------
-        uint256 rho = (totalSupply == 0) ? 0 : (stakedSupply * ONE) / totalSupply;
+        uint256 floorPct;
+        {
+            // 1. derive staking ratio ρ  =  staked / total
+            //--------------------------------------------------------------
 
-        // See the graph below for the relationship between the staking ratio and the floor price.
-        // https://www.desmos.com/calculator/lqby6vttdy
+            // See the graph below for the relationship between the staking ratio and the floor price.
+            // https://www.desmos.com/calculator/lqby6vttdy
 
-        //--------------------------------------------------------------
-        // 2. decide split percentages
-        //    floorPct = min(15 % + 45 %·ρ , 50 %)
-        //--------------------------------------------------------------
-        uint256 floorPct = minFloorPct + (rho * floorSlope) / ONE; // 15 % + 50 %·ρ
-        if (floorPct > maxFloorPct) floorPct = maxFloorPct;
+            uint256 rho = (totalSupply == 0) ? 0 : (stakedSupply * ONE) / totalSupply;
 
-        uint256 opsPct = targetOpsPct;
-        uint256 stakePct = ONE - floorPct - opsPct; // rest to stakers
+            //--------------------------------------------------------------
+            // 2. decide split percentages
+            //    floorPct = min(15 % + 45 %·ρ , 50 %)
+            //--------------------------------------------------------------
 
-        //--------------------------------------------------------------
-        // 3. token distribution
-        //--------------------------------------------------------------
-        toOps = yield * opsPct / ONE;
-        toStakers = yield * stakePct / ONE;
+            floorPct = minFloorPct + (rho * floorSlope) / ONE; // 15 % + 50 %·ρ
+        }
+        {
+            if (floorPct > maxFloorPct) floorPct = maxFloorPct;
 
-        //--------------------------------------------------------------
-        // 4. raise the oracle floor by the share routed to floorPct
-        //    ΔFloor = floor × floorPct × yield / total
-        //--------------------------------------------------------------
-        uint256 deltaFloor = floorPrice * floorPct / ONE * yield / totalSupply;
-        newFloorPrice = floorPrice + deltaFloor;
+            uint256 opsPct = targetOpsPct;
+            uint256 stakePct = ONE - floorPct - opsPct; // rest to stakers
+
+            //--------------------------------------------------------------
+            // 3. token distribution
+            //--------------------------------------------------------------
+            toOps = yield * opsPct / ONE;
+            toStakers = yield * stakePct / ONE;
+        }
+
+        {
+            //--------------------------------------------------------------
+            // 4. raise the oracle floor by the share routed to floorPct
+            //    ΔFloor = floor × floorPct × yield / total
+            //--------------------------------------------------------------
+            uint256 deltaFloor = floorPrice * floorPct / ONE * yield / totalSupply;
+            newFloorPrice = floorPrice + deltaFloor;
+        }
     }
 }

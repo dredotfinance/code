@@ -86,6 +86,7 @@ contract BaseTest is Test {
         rebaseController.initialize(
             address(dre), address(treasury), address(staking), address(dreOracle), address(dreAuthority)
         );
+        rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 
         dreAuthority.addPolicy(address(treasury));
         dreAuthority.addPolicy(address(rebaseController));

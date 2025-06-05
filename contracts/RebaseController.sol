@@ -29,9 +29,10 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     uint256 public immutable EPOCH = 8 hours;
     uint256 public lastEpochTime;
 
-    uint256 public targetOpsPct; // 10 %
-    uint256 public targetFloorPct; // 15 %
-    uint256 public targetStakerPct; // 50 %
+    uint256 public targetOpsPct; // ideally 10%
+    uint256 public minFloorPct; // minimum to the floor price ideally 15%
+    uint256 public maxFloorPct; // maximum to the floor price ideally 50%
+    uint256 public floorSlope; // ideally 50%
 
     function initialize(address _dre, address _treasury, address _staking, address _oracle, address _authority)
         public
@@ -47,14 +48,15 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         dre.approve(address(staking), type(uint256).max);
     }
 
-    function setTargetPcts(uint256 _targetOpsPct, uint256 _targetFloorPct, uint256 _targetStakerPct)
+    function setTargetPcts(uint256 _targetOpsPct, uint256 _minFloorPct, uint256 _maxFloorPct, uint256 _floorSlope)
         external
         onlyGovernor
     {
         targetOpsPct = _targetOpsPct;
-        targetFloorPct = _targetFloorPct;
-        targetStakerPct = _targetStakerPct;
-        require(targetOpsPct + targetFloorPct + targetStakerPct == 1e18, "Invalid percentages");
+        minFloorPct = _minFloorPct;
+        maxFloorPct = _maxFloorPct;
+        floorSlope = _floorSlope;
+        emit TargetPctsSet(targetOpsPct, minFloorPct, maxFloorPct, floorSlope);
     }
 
     // --- Public keeper call --------------------------------------------------
@@ -122,14 +124,17 @@ contract RebaseController is DreAccessControlled, IRebaseController {
 
     function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 currentFloorPrice, uint256 stakedSupply)
         public
-        pure
+        view
         returns (uint256 apr, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice)
     {
+        require(targetOpsPct + minFloorPct + maxFloorPct > 0, "Invalid percentages");
+
         // Calculate APR and epoch rate
         (apr, epochMint) = YieldLogic.calcEpoch(pcv, supply, 365 days / EPOCH);
 
         // Calculate token distribution
-        (toStakers, toOps, newFloorPrice) =
-            StakingDistributionLogic.allocate(epochMint, supply, stakedSupply, currentFloorPrice);
+        (toStakers, toOps, newFloorPrice) = StakingDistributionLogic.allocate(
+            epochMint, supply, stakedSupply, currentFloorPrice, targetOpsPct, minFloorPct, maxFloorPct, floorSlope
+        );
     }
 }
