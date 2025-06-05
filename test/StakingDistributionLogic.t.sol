@@ -9,7 +9,7 @@ contract StakingDistributionLogicTest is Test {
 
     function setUp() public {}
 
-    function testAllocate_ZeroStakingRatio() public {
+    function testAllocate_ZeroStakingRatio() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 0; // No staked tokens
@@ -29,7 +29,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(newFloorPrice, 115e16); // 1.15 USD per token
     }
 
-    function testAllocate_FullStakingRatio() public {
+    function testAllocate_FullStakingRatio() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 1000e18; // All tokens staked
@@ -49,7 +49,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(newFloorPrice, 15e17); // 1.5 USD per token
     }
 
-    function testAllocate_HalfStakingRatio() public {
+    function testAllocate_HalfStakingRatio() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 500e18; // Half tokens staked
@@ -69,7 +69,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(newFloorPrice, 14e17); // 1.4 USD per token
     }
 
-    function testAllocate_ZeroYield() public {
+    function testAllocate_ZeroYield() public pure {
         uint256 yieldTokens = 0; // No yield
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 500e18; // Half tokens staked
@@ -89,7 +89,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(newFloorPrice, floorPrice); // No change in floor price
     }
 
-    function testAllocate_Precision() public {
+    function testAllocate_Precision() public pure {
         uint256 yieldTokens = 1e18; // 1 token
         uint256 totalSupply = 1e18; // 1 total supply
         uint256 stakedSupply = 1e17; // 10% staked
@@ -109,7 +109,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(newFloorPrice, 12e17); // 1.2 USD per token
     }
 
-    function testAllocate_ZeroTotalSupply() public {
+    function testAllocate_ZeroTotalSupply() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 0; // No tokens in circulation
         uint256 stakedSupply = 0; // No staked tokens
@@ -124,7 +124,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(newFloorPrice, floorPrice);
     }
 
-    function testAllocate_ZeroFloorPrice() public {
+    function testAllocate_ZeroFloorPrice() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 500e18; // Half tokens staked

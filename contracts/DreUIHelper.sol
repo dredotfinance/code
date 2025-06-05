@@ -224,13 +224,12 @@ contract DreUIHelper {
     /// @notice Calculate the current APR
     /// @return The current APR as a percentage (e.g., 1000 = 10%)
     function calculateAPR() public view returns (uint256) {
-        (uint256 apr,, uint256 toStakers,,) = rebaseController.projectedEpochRate();
-        return (toStakers * 1e18) / staking.totalStaked();
+        return calculateAPRRaw(staking.totalStaked());
     }
 
     function calculateAPRRaw(uint256 totalStaked) public view returns (uint256) {
         (uint256 apr,,,,) = rebaseController.projectedEpochRate();
-        return apr;
+        return apr * 1e18 / totalStaked;
     }
 
     function getAllStakingPositions(uint256 startingIndex, uint256 endingIndex)

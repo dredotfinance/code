@@ -151,4 +151,44 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
     function isExecutor(address account) external view override returns (bool) {
         return hasRole(EXECUTOR_ROLE, account);
     }
+
+    function getAllCandidates(bytes32 role) public view returns (address[] memory candidates) {
+        uint256 count = getRoleMemberCount(role);
+        candidates = new address[](count);
+        for (uint256 i = 0; i < count; i++) {
+            candidates[i] = getRoleMember(role, i);
+        }
+    }
+
+    function getAllReserveDepositorCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(RESERVE_DEPOSITOR_ROLE);
+    }
+
+    function getAllExecutorCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(EXECUTOR_ROLE);
+    }
+
+    function getAllPolicyCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(POLICY_ROLE);
+    }
+
+    function getAllVaultCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(VAULT_ROLE);
+    }
+
+    function getAllReserveManagerCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(RESERVE_MANAGER_ROLE);
+    }
+
+    function getAllRewardManagerCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(REWARD_MANAGER_ROLE);
+    }
+
+    function getAllGuardianCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(GUARDIAN_ROLE);
+    }
+
+    function getAllGovernorCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(GOVERNOR_ROLE);
+    }
 }

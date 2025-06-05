@@ -18,12 +18,6 @@ import "./DreAccessControlled.sol";
  *      ─ Determines epochic rebase rate r_t using piece-wise curve
  *      ─ Mints DRE supply for stakers each epoch once called by a keeper
  *      ─ Exposes view helpers for front-end gauges
- *
- *  NOTE:  This is a skeleton for demonstration. Production code must integrate:
- *          ▸ PCV accounting across multiple assets via an oracle aggregator
- *          ▸ access-control (onlyPolicy) on state-changing functions
- *          ▸ event emission for transparency & off-chain indexers
- *          ▸ per-asset risk-weighting, circuit-breakers, and RBS / inverse-bond hooks
  */
 contract RebaseController is DreAccessControlled, IRebaseController {
     IDRE public dre; // DRE token (decimals = 18)
@@ -50,7 +44,7 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     }
 
     // --- Public keeper call --------------------------------------------------
-    function executeEpoch() external {
+    function executeEpoch() external onlyExecutor {
         require(block.timestamp >= lastEpochTime + EPOCH, "epoch not ready");
 
         treasury.syncReserves();

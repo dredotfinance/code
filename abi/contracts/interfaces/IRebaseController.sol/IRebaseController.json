@@ -19,23 +19,16 @@
         "internalType": "uint256",
         "name": "tokensMinted",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newFloorPrice",
+        "type": "uint256"
       }
     ],
     "name": "Rebased",
     "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "CEIL_APR",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
     "inputs": [],
@@ -45,45 +38,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "FLOOR_APR",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "K1",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "K2",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
       }
     ],
     "stateMutability": "view",
@@ -141,6 +95,11 @@
       },
       {
         "internalType": "address",
+        "name": "_oracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_authority",
         "type": "address"
       }
@@ -179,7 +138,17 @@
       },
       {
         "internalType": "uint256",
-        "name": "backingRatio",
+        "name": "toStakers",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "toOps",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newFloorPrice",
         "type": "uint256"
       }
     ],
@@ -190,12 +159,22 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "pcvUsd",
+        "name": "pcv",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
         "name": "supply",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentFloorPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "stakedSupply",
         "type": "uint256"
       }
     ],
@@ -213,7 +192,17 @@
       },
       {
         "internalType": "uint256",
-        "name": "backingRatio",
+        "name": "toStakers",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "toOps",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newFloorPrice",
         "type": "uint256"
       }
     ],
