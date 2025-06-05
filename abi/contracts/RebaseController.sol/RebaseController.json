@@ -125,6 +125,19 @@
   },
   {
     "inputs": [],
+    "name": "burner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "currentBackingRatio",
     "outputs": [
       {
@@ -194,6 +207,11 @@
       {
         "internalType": "address",
         "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_burner",
         "type": "address"
       }
     ],

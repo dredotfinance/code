@@ -133,6 +133,11 @@
         "internalType": "address",
         "name": "_authority",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_burner",
+        "type": "address"
       }
     ],
     "name": "initialize",
