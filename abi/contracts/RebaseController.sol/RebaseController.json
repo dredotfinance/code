@@ -67,6 +67,37 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "targetOpsPct",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "minFloorPct",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "maxFloorPct",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "floorSlope",
+        "type": "uint256"
+      }
+    ],
+    "name": "TargetPctsSet",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "EPOCH",
     "outputs": [
@@ -126,6 +157,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "floorSlope",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -161,6 +205,32 @@
   {
     "inputs": [],
     "name": "lastEpochTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxFloorPct",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "minFloorPct",
     "outputs": [
       {
         "internalType": "uint256",
@@ -268,7 +338,7 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -313,6 +383,34 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_targetOpsPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minFloorPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_maxFloorPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_floorSlope",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTargetPcts",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "staking",
     "outputs": [
@@ -320,6 +418,19 @@
         "internalType": "contract IDreStaking",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "targetOpsPct",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

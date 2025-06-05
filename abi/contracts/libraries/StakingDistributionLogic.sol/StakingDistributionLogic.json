@@ -20,6 +20,26 @@
         "internalType": "uint256",
         "name": "floorPrice",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "targetOpsPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minFloorPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxFloorPct",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "floorSlope",
+        "type": "uint256"
       }
     ],
     "name": "allocate",
