@@ -33,7 +33,7 @@ contract RebaseControllerTest is BaseTest {
         assertEq(address(rebaseController.treasury()), address(treasury));
         assertEq(address(rebaseController.staking()), address(staking));
         assertEq(address(rebaseController.oracle()), address(dreOracle));
-        assertEq(rebaseController.lastEpochTime(), block.timestamp);
+        assertEq(rebaseController.lastEpochTime(), 0);
     }
 
     function test_BackingRatioZeroSupply() public view {
@@ -50,7 +50,8 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_ProjectedMintZeroSupply() public view {
-        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = rebaseController.projectedMint();
+        (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) =
+            rebaseController.projectedEpochRate();
         assertEq(epochMint, 0);
         assertEq(toStakers, 0);
         assertEq(toOps, 0);
@@ -62,7 +63,8 @@ contract RebaseControllerTest is BaseTest {
         dre.mint(owner, 1_000_000e18);
 
         // Test with 1:1 backing (100%)
-        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = rebaseController.projectedMint();
+        (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) =
+            rebaseController.projectedEpochRate();
         assertEq(epochMint, 0); // Below 100% backing
         assertEq(toStakers, 0);
         assertEq(toOps, 0);
@@ -73,7 +75,7 @@ contract RebaseControllerTest is BaseTest {
         treasury.syncReserves();
 
         // Test with 1.5:1 backing (150%)
-        (epochMint, toStakers, toOps, newFloorPrice) = rebaseController.projectedMint();
+        (, epochMint, toStakers, toOps, newFloorPrice) = rebaseController.projectedEpochRate();
         assertGt(epochMint, 0); // Should have positive mint
         assertGt(toStakers, 0); // Should have staker rewards
         assertGt(toOps, 0); // Should have ops rewards
@@ -103,7 +105,8 @@ contract RebaseControllerTest is BaseTest {
         vm.warp(block.timestamp + epochLength);
 
         // Get projected values
-        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = rebaseController.projectedMint();
+        (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) =
+            rebaseController.projectedEpochRate();
 
         uint256 stakingBalanceBefore = dre.balanceOf(address(staking));
         uint256 opsBalanceBefore = dre.balanceOf(address(dreAuthority.operationsTreasury()));
@@ -135,7 +138,8 @@ contract RebaseControllerTest is BaseTest {
         vm.warp(block.timestamp + epochLength);
 
         // Execute epoch should succeed but not mint rewards
-        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = rebaseController.projectedMint();
+        (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) =
+            rebaseController.projectedEpochRate();
         vm.expectEmit(true, true, true, true);
         emit Rebased(epochMint, toStakers, toOps, newFloorPrice);
 

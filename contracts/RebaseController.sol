@@ -42,7 +42,6 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         treasury = IDreTreasury(_treasury);
         staking = IDreStaking(_staking);
         oracle = IDreOracle(_oracle);
-        lastEpochTime = block.timestamp;
         __DreAccessControlled_init(_authority);
 
         dre.approve(address(staking), type(uint256).max);
@@ -66,7 +65,7 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         treasury.syncReserves();
 
         // Get current state
-        (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = projectedMint();
+        (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = projectedEpochRate();
 
         // Verify we have enough reserves
         require(epochMint <= treasury.excessReserves(), "Insufficient reserves");
@@ -94,22 +93,6 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         uint256 pcv = treasury.totalReserves();
         uint256 supply = dre.totalSupply();
         return (supply == 0) ? 0 : (pcv * 1e18) / supply; // 1e18 == β=1
-    }
-
-    function projectedMint()
-        public
-        view
-        returns (uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice)
-    {
-        // Get current state
-        uint256 pcv = treasury.totalReserves();
-        uint256 supply = dre.totalSupply();
-        uint256 stakedSupply = staking.totalStaked();
-        uint256 currentFloorPrice = oracle.getDrePrice();
-
-        // Calculate APR and epoch rate
-        (, epochMint, toStakers, toOps, newFloorPrice) =
-            projectedEpochRateRaw(pcv, supply, currentFloorPrice, stakedSupply);
     }
 
     function projectedEpochRate()

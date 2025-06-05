@@ -342,34 +342,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "projectedMint",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "epochMint",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "toStakers",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "toOps",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newFloorPrice",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "contract IDreAuthority",

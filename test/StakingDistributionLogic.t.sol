@@ -230,6 +230,74 @@ contract StakingDistributionLogicTest is Test {
         assertEq(newFloorPrice, 1.225e18); // 1.225 USD per token
     }
 
+    function testAllocate_CustomRatios_2() public pure {
+        uint256 yieldTokens = 100e18; // 100 tokens
+        uint256 totalSupply = 1000e18; // 1000 total supply
+        uint256 stakedSupply = 500e18; // Half tokens staked
+        uint256 floorPrice = 1e18; // 1 USD per token
+
+        // Custom ratios
+        uint256 customOpsRatio = 0.05e18; // 5%
+        uint256 customFloorMin = 0.1e18; // 10%
+        uint256 customFloorMax = 0.4e18; // 40%
+        uint256 customFloorSlope = 0.45e18; // 0.45
+
+        (uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = StakingDistributionLogic.allocate(
+            yieldTokens,
+            totalSupply,
+            stakedSupply,
+            floorPrice,
+            customOpsRatio,
+            customFloorMin,
+            customFloorMax,
+            customFloorSlope
+        );
+
+        // With 50% staking ratio and custom ratios:
+        // - 25% to floor (10% + 40% * 0.5)
+        // - 5% to ops
+        // - 70% to stakers
+        assertEq(toOps, 5e18, "toOps"); // 5% of 1000
+        assertEq(toStakers, 62.5e18, "toStakers"); // 62.5% of 1000
+
+        // Floor price increase = 1 * 0.25 * 1000 / 1000 = 0.25
+        assertEq(newFloorPrice, 1.0325e18, "newFloorPrice"); // 1.0325 USD per token
+    }
+
+    function testAllocate_CustomRatios_3() public pure {
+        uint256 yieldTokens = 100e18; // 100 tokens
+        uint256 totalSupply = 1000e18; // 1000 total supply
+        uint256 stakedSupply = 900e18; // 90% tokens staked
+        uint256 floorPrice = 1e18; // 1 USD per token
+
+        // Custom ratios
+        uint256 customOpsRatio = 0.05e18; // 5%
+        uint256 customFloorMin = 0.15e18; // 15%
+        uint256 customFloorMax = 0.5e18; // 40%
+        uint256 customFloorSlope = 0.45e18; // 0.45
+
+        (uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = StakingDistributionLogic.allocate(
+            yieldTokens,
+            totalSupply,
+            stakedSupply,
+            floorPrice,
+            customOpsRatio,
+            customFloorMin,
+            customFloorMax,
+            customFloorSlope
+        );
+
+        // With 50% staking ratio and custom ratios:
+        // - 25% to floor (10% + 40% * 0.5)
+        // - 5% to ops
+        // - 70% to stakers
+        assertEq(toOps, 5e18, "toOps"); // 5% of 1000
+        assertEq(toStakers, 45e18, "toStakers"); // 45% of 1000
+
+        // Floor price increase = 1 * 0.25 * 1000 / 1000 = 0.25
+        assertEq(newFloorPrice, 1.05e18, "newFloorPrice"); // 1.05 USD per token
+    }
+
     function testAllocate_EdgeCases() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply

@@ -228,8 +228,8 @@ contract DreUIHelper {
     }
 
     function calculateAPRRaw(uint256 totalStaked) public view returns (uint256) {
-        (uint256 apr,,,,) = rebaseController.projectedEpochRate();
-        return apr * 1e18 / totalStaked;
+        (,, uint256 toStakers,,) = rebaseController.projectedEpochRate();
+        return toStakers * 1e18 * 365 * 4 / totalStaked;
     }
 
     function getAllStakingPositions(uint256 startingIndex, uint256 endingIndex)
