@@ -11,18 +11,32 @@ pragma solidity ^0.8.15;
  * @dev All dollar values use 18-decimals fixed-point (1e18 == 1 USD).
  *      The caller must pass in `supply` (current circulating DRE) so the
  *      function can test whether the floor should ratchet.
+ *
+ *  Inputs
+ *  ──────
+ *  • yieldTokens   – fresh tokens created by the rebase engine this epoch
+ *  • totalSupply   – circulating supply *before* mint
+ *  • stakedSupply  – amount of DRE already locked in the staking vault
+ *  • floorPrice    – current oracle hard-floor (18-dec USD per DRE)
+ *
+ *  Outputs
+ *  ───────
+ *  • toStakers     – tokens that go to the staking contract
+ *  • toOps         – tokens that go to the DAO operations wallet (10 %)
+ *  • newFloorPrice – floorPrice after adding   ΔFloor = floor × floorPct × yield/total
  */
 library StakingDistributionLogic {
     uint256 private constant ONE = 1e18; // 100 %
-    uint256 private constant TEN_PCT = 1e17; // 10 %
-    uint256 private constant FIFTEEN_PCT = 15e16;
-    uint256 private constant FIFTY_PCT = 5e17;
 
-    function allocate(uint256 yield, uint256 totalSupply, uint256 stakedSupply, uint256 floorPrice)
-        public
-        pure
-        returns (uint256 toStakers, uint256 toOps, uint256 newFloorPrice)
-    {
+    function allocate(
+        uint256 yield,
+        uint256 totalSupply,
+        uint256 stakedSupply,
+        uint256 floorPrice,
+        uint256 targetOpsPct, // ideally 10%
+        uint256 minFloorPct, // minimum to the floor price ideally 15%
+        uint256 floorSlope // ideally 50%
+    ) public pure returns (uint256 toStakers, uint256 toOps, uint256 newFloorPrice) {
         if (yield == 0 || floorPrice == 0 || totalSupply == 0) return (0, 0, floorPrice);
 
         //--------------------------------------------------------------
@@ -30,14 +44,17 @@ library StakingDistributionLogic {
         //--------------------------------------------------------------
         uint256 rho = (totalSupply == 0) ? 0 : (stakedSupply * ONE) / totalSupply;
 
+        // See the graph below for the relationship between the staking ratio and the floor price.
+        // https://www.desmos.com/calculator/lqby6vttdy
+
         //--------------------------------------------------------------
         // 2. decide split percentages
-        //    floorPct = min(15 % + 50 %·ρ , 50 %)
+        //    floorPct = min(15 % + 45 %·ρ , 50 %)
         //--------------------------------------------------------------
-        uint256 floorPct = FIFTEEN_PCT + (rho * FIFTY_PCT) / ONE; // 15 % + 50 %·ρ
-        if (floorPct > FIFTY_PCT) floorPct = FIFTY_PCT;
+        uint256 floorPct = minFloorPct + (rho * floorSlope) / ONE; // 15 % + 50 %·ρ
+        if (floorPct > maxFloorPct) floorPct = maxFloorPct;
 
-        uint256 opsPct = TEN_PCT;
+        uint256 opsPct = targetOpsPct;
         uint256 stakePct = ONE - floorPct - opsPct; // rest to stakers
 
         //--------------------------------------------------------------

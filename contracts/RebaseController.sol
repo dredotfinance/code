@@ -29,6 +29,10 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     uint256 public immutable EPOCH = 8 hours;
     uint256 public lastEpochTime;
 
+    uint256 public targetOpsPct; // 10 %
+    uint256 public targetFloorPct; // 15 %
+    uint256 public targetStakerPct; // 50 %
+
     function initialize(address _dre, address _treasury, address _staking, address _oracle, address _authority)
         public
         initializer
@@ -41,6 +45,16 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         __DreAccessControlled_init(_authority);
 
         dre.approve(address(staking), type(uint256).max);
+    }
+
+    function setTargetPcts(uint256 _targetOpsPct, uint256 _targetFloorPct, uint256 _targetStakerPct)
+        external
+        onlyGovernor
+    {
+        targetOpsPct = _targetOpsPct;
+        targetFloorPct = _targetFloorPct;
+        targetStakerPct = _targetStakerPct;
+        require(targetOpsPct + targetFloorPct + targetStakerPct == 1e18, "Invalid percentages");
     }
 
     // --- Public keeper call --------------------------------------------------
@@ -57,7 +71,7 @@ contract RebaseController is DreAccessControlled, IRebaseController {
 
         if (epochMint > 0) {
             // Mint tokens
-            dre.mint(address(this), epochMint);
+            dre.mint(address(this), toStakers + toOps);
 
             // Distribute to stakers
             staking.notifyRewardAmount(toStakers);
