@@ -140,6 +140,19 @@
   },
   {
     "inputs": [],
+    "name": "BOND_MANAGER_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "DEFAULT_ADMIN_ROLE",
     "outputs": [
       {
@@ -253,6 +266,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newBondManager",
+        "type": "address"
+      }
+    ],
+    "name": "addBondManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -613,6 +639,25 @@
         "type": "address"
       }
     ],
+    "name": "isBondManager",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
     "name": "isExecutor",
     "outputs": [
       {
@@ -787,6 +832,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_oldBondManager",
+        "type": "address"
+      }
+    ],
+    "name": "removeBondManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

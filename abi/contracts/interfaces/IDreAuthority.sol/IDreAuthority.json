@@ -41,6 +41,19 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_newBondManager",
+        "type": "address"
+      }
+    ],
+    "name": "addBondManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_newExecutor",
         "type": "address"
       }
@@ -113,6 +126,25 @@
     "name": "addRewardManager",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "isBondManager",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -297,6 +329,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_oldBondManager",
+        "type": "address"
+      }
+    ],
+    "name": "removeBondManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
