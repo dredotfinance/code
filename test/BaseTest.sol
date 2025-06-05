@@ -90,13 +90,19 @@ contract BaseTest is Test {
         // Deploy RebaseController
         rebaseController = new RebaseController();
         rebaseController.initialize(
-            address(dre), address(treasury), address(staking), address(dreOracle), address(dreAuthority)
+            address(dre),
+            address(treasury),
+            address(staking),
+            address(dreOracle),
+            address(dreAuthority),
+            address(burner)
         );
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 
         dreAuthority.addPolicy(address(treasury));
         dreAuthority.addPolicy(address(rebaseController));
         dreAuthority.addPolicy(address(owner));
+        dreAuthority.addPolicy(address(burner));
         dreAuthority.addExecutor(address(owner));
         dreAuthority.addExecutor(address(rebaseController));
         dreAuthority.addPolicy(address(dreBondDepository));
@@ -110,6 +116,8 @@ contract BaseTest is Test {
         vm.label(address(staking), "Staking");
         vm.label(address(rebaseController), "RebaseController");
         vm.label(address(dreBondDepository), "DreBondDepository");
+        vm.label(address(burner), "Burner");
+        vm.label(address(dreAuthority), "Authority");
         vm.label(address(mockQuoteToken), "Mock Quote Token");
         vm.label(address(mockQuoteToken2), "Mock Quote Token 2");
         vm.label(address(mockQuoteToken3), "Mock Quote Token 3");

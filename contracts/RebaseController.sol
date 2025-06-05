@@ -24,6 +24,7 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     IDreTreasury public treasury;
     IDreStaking public staking; // staking contract or escrow
     IDreOracle public oracle; // price oracle
+    address public burner; // burner contract
 
     // --- Epoch params --------------------------------------------------------
     uint256 public immutable EPOCH = 8 hours;
@@ -34,14 +35,19 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     uint256 public maxFloorPct; // maximum to the floor price ideally 50%
     uint256 public floorSlope; // ideally 50%
 
-    function initialize(address _dre, address _treasury, address _staking, address _oracle, address _authority)
-        public
-        initializer
-    {
+    function initialize(
+        address _dre,
+        address _treasury,
+        address _staking,
+        address _oracle,
+        address _authority,
+        address _burner
+    ) public initializer {
         dre = IDRE(_dre);
         treasury = IDreTreasury(_treasury);
         staking = IDreStaking(_staking);
         oracle = IDreOracle(_oracle);
+        burner = _burner;
         __DreAccessControlled_init(_authority);
 
         dre.approve(address(staking), type(uint256).max);
@@ -65,14 +71,14 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         treasury.syncReserves();
 
         // Get current state
-        (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice) = projectedEpochRate();
+        (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) = projectedEpochRate();
 
         // Verify we have enough reserves
         require(epochMint <= treasury.excessReserves(), "Insufficient reserves");
 
         if (epochMint > 0) {
             // Mint tokens
-            dre.mint(address(this), toStakers + toOps);
+            dre.mint(address(this), epochMint);
 
             // Distribute to stakers
             staking.notifyRewardAmount(toStakers);
@@ -80,12 +86,12 @@ contract RebaseController is DreAccessControlled, IRebaseController {
             // Send to ops treasury
             dre.transfer(address(authority.operationsTreasury()), toOps);
 
-            // Update oracle floor price
-            oracle.setDrePrice(newFloorPrice);
+            // Send to burner
+            dre.transfer(burner, toBurner);
         }
 
         lastEpochTime = block.timestamp;
-        emit Rebased(epochMint, toStakers, toOps, newFloorPrice);
+        emit Rebased(epochMint, toStakers, toOps, toBurner);
     }
 
     // --- View helpers --------------------------------------------------------

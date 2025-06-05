@@ -640,6 +640,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "burner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -825,6 +838,11 @@
       {
         "internalType": "address",
         "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_burner",
         "type": "address"
       }
     ],

@@ -18,8 +18,14 @@ interface IRebaseController {
     event TargetPctsSet(uint256 targetOpsPct, uint256 minFloorPct, uint256 maxFloorPct, uint256 floorSlope);
 
     // --- Functions ----------------------------------------------------------
-    function initialize(address _dre, address _treasury, address _staking, address _oracle, address _authority)
-        external;
+    function initialize(
+        address _dre,
+        address _treasury,
+        address _staking,
+        address _oracle,
+        address _authority,
+        address _burner
+    ) external;
 
     function executeEpoch() external;
 

@@ -33,6 +33,8 @@ interface IDreStaking is IERC721Enumerable {
 
     function earned(uint256 tokenId) external view returns (uint256);
 
+    function burner() external view returns (address);
+
     function totalStaked() external view returns (uint256);
 
     // State changing functions

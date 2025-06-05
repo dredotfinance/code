@@ -280,7 +280,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "newFloorPrice",
+        "name": "toBurner",
         "type": "uint256"
       }
     ],
@@ -297,11 +297,6 @@
       {
         "internalType": "uint256",
         "name": "supply",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "currentFloorPrice",
         "type": "uint256"
       },
       {
@@ -334,7 +329,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "newFloorPrice",
+        "name": "toBurner",
         "type": "uint256"
       }
     ],

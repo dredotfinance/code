@@ -1,0 +1,168 @@
+[
+  {
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IDreAuthority",
+        "name": "authority",
+        "type": "address"
+      }
+    ],
+    "name": "AuthorityUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newFloorPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "Burned",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "authority",
+    "outputs": [
+      {
+        "internalType": "contract IDreAuthority",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "burn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amountToBurn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalSupply",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "floorPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "calculateFloorUpdate",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "newFloorPrice",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "dre",
+    "outputs": [
+      {
+        "internalType": "contract IDRE",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "dreOracle",
+    "outputs": [
+      {
+        "internalType": "contract IDreOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_dreOracle",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_dre",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_authority",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IDreAuthority",
+        "name": "_newAuthority",
+        "type": "address"
+      }
+    ],
+    "name": "setAuthority",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
