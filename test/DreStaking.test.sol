@@ -120,7 +120,7 @@ contract DreStakingTest is BaseTest {
 
         // taxes would've been paid
         assertEq(dre.balanceOf(operationsTreasury), 10e18);
-        assertEq(dre.balanceOf(address(treasury)), 40e18);
+        assertEq(dre.balanceOf(address(burner)), 40e18);
 
         dre.mint(user1, DECLARED_VALUE);
 
@@ -139,7 +139,7 @@ contract DreStakingTest is BaseTest {
 
         // no taxes earned but the treasury gets 1% of the declared value
         assertEq(dre.balanceOf(operationsTreasury), 20e18);
-        assertEq(dre.balanceOf(address(treasury)), 40e18);
+        assertEq(dre.balanceOf(address(burner)), 40e18);
 
         vm.stopPrank();
     }
@@ -333,7 +333,7 @@ contract DreStakingTest is BaseTest {
 
         // Verify tax distribution
         assertEq(dre.balanceOf(dreAuthority.operationsTreasury()), operationsShare);
-        assertEq(dre.balanceOf(address(dreAuthority.treasury())), treasuryShare);
+        assertEq(dre.balanceOf(address(burner)), treasuryShare);
 
         vm.stopPrank();
     }

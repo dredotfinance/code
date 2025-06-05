@@ -14,6 +14,7 @@ import "../contracts/mocks/MockEndpoint.sol";
 import "../contracts/DreAuthority.sol";
 import "../contracts/DreBondDepository.sol";
 import "../contracts/DreOracle.sol";
+import "../contracts/DreBurner.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -33,6 +34,7 @@ contract BaseTest is Test {
 
     DreAuthority public dreAuthority;
     DreBondDepository public dreBondDepository;
+    DreBurner public burner;
 
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
@@ -66,6 +68,10 @@ contract BaseTest is Test {
         dreOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2));
         dreOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
 
+        // Deploy Burner
+        burner = new DreBurner();
+        burner.initialize(address(dreOracle), address(dre), address(dreAuthority));
+
         // Deploy Treasury
         treasury = new DreTreasury();
         treasury.initialize(address(dre), address(dreOracle), address(dreAuthority));
@@ -73,7 +79,7 @@ contract BaseTest is Test {
 
         // Deploy Staking
         staking = new DreStaking();
-        staking.initialize(address(dre), address(sDre), address(dreAuthority));
+        staking.initialize(address(dre), address(sDre), address(dreAuthority), address(burner));
 
         // Deploy DreBondDepository
         dreBondDepository = new DreBondDepository();

@@ -28,10 +28,10 @@ interface IRebaseController {
     function projectedEpochRate()
         external
         view
-        returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 newFloorPrice);
+        returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner);
 
-    function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 currentFloorPrice, uint256 stakedSupply)
+    function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 stakedSupply)
         external
         view
-        returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 newFloorPrice);
+        returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner);
 }

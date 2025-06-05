@@ -98,17 +98,17 @@ contract RebaseController is DreAccessControlled, IRebaseController {
     function projectedEpochRate()
         public
         view
-        returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 newFloorPrice)
+        returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner)
     {
         uint256 pcv = treasury.calculateReserves();
         uint256 supply = dre.totalSupply();
-        return projectedEpochRateRaw(pcv, supply, oracle.getDrePrice(), staking.totalStaked());
+        return projectedEpochRateRaw(pcv, supply, staking.totalStaked());
     }
 
-    function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 currentFloorPrice, uint256 stakedSupply)
+    function projectedEpochRateRaw(uint256 pcv, uint256 supply, uint256 stakedSupply)
         public
         view
-        returns (uint256 apr, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 newFloorPrice)
+        returns (uint256 apr, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner)
     {
         require(targetOpsPct + minFloorPct + maxFloorPct > 0, "Invalid percentages");
 
@@ -116,8 +116,8 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         (apr, epochMint) = YieldLogic.calcEpoch(pcv, supply, 365 days / EPOCH);
 
         // Calculate token distribution
-        (toStakers, toOps, newFloorPrice) = StakingDistributionLogic.allocate(
-            epochMint, supply, stakedSupply, currentFloorPrice, targetOpsPct, minFloorPct, maxFloorPct, floorSlope
+        (toStakers, toOps, toBurner) = StakingDistributionLogic.allocate(
+            epochMint, supply, stakedSupply, targetOpsPct, minFloorPct, maxFloorPct, floorSlope
         );
     }
 }

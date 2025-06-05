@@ -17,13 +17,12 @@ pragma solidity ^0.8.15;
  *  • yieldTokens   – fresh tokens created by the rebase engine this epoch
  *  • totalSupply   – circulating supply *before* mint
  *  • stakedSupply  – amount of DRE already locked in the staking vault
- *  • floorPrice    – current oracle hard-floor (18-dec USD per DRE)
  *
  *  Outputs
  *  ───────
  *  • toStakers     – tokens that go to the staking contract
  *  • toOps         – tokens that go to the DAO operations wallet (10 %)
- *  • newFloorPrice – floorPrice after adding   ΔFloor = floor × floorPct × yield/total
+ *  • toBurner      – tokens that go to the burner contract
  */
 library StakingDistributionLogic {
     uint256 private constant ONE = 1e18; // 100 %
@@ -32,13 +31,12 @@ library StakingDistributionLogic {
         uint256 yield,
         uint256 totalSupply,
         uint256 stakedSupply,
-        uint256 floorPrice,
         uint256 targetOpsPct, // ideally 10%
         uint256 minFloorPct, // minimum to the floor price ideally 15%
         uint256 maxFloorPct, // maximum to the floor price ideally 50%
         uint256 floorSlope // ideally 50%
-    ) public pure returns (uint256 toStakers, uint256 toOps, uint256 newFloorPrice) {
-        if (yield == 0 || floorPrice == 0 || totalSupply == 0) return (0, 0, floorPrice);
+    ) public pure returns (uint256 toStakers, uint256 toOps, uint256 toBurner) {
+        if (yield == 0 || totalSupply == 0) return (0, 0, 0);
 
         uint256 floorPct;
         {
@@ -56,8 +54,6 @@ library StakingDistributionLogic {
             //--------------------------------------------------------------
 
             floorPct = minFloorPct + (rho * floorSlope) / ONE; // 15 % + 50 %·ρ
-        }
-        {
             if (floorPct > maxFloorPct) floorPct = maxFloorPct;
 
             uint256 opsPct = targetOpsPct;
@@ -68,15 +64,7 @@ library StakingDistributionLogic {
             //--------------------------------------------------------------
             toOps = yield * opsPct / ONE;
             toStakers = yield * stakePct / ONE;
-        }
-
-        {
-            //--------------------------------------------------------------
-            // 4. raise the oracle floor by the share routed to floorPct
-            //    ΔFloor = floor × floorPct × yield / total
-            //--------------------------------------------------------------
-            uint256 deltaFloor = floorPrice * floorPct / ONE * yield / totalSupply;
-            newFloorPrice = floorPrice + deltaFloor;
+            toBurner = yield * floorPct / ONE;
         }
     }
 }

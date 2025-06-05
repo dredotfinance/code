@@ -30,6 +30,11 @@
         "internalType": "address",
         "name": "_rebaseController",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_dreOracle",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -116,6 +121,19 @@
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "dreOracle",
+    "outputs": [
+      {
+        "internalType": "contract IDreOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -359,6 +377,16 @@
             "internalType": "uint8",
             "name": "decimals",
             "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "oraclePrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "oraclePriceInDre",
+            "type": "uint256"
           }
         ],
         "internalType": "struct DreUIHelper.TokenInfo[]",

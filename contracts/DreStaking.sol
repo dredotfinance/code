@@ -51,7 +51,12 @@ contract DreStaking is
     uint256 public rewardPerTokenStored;
     uint256 public override totalStaked;
 
-    function initialize(address _dreToken, address _trackingToken, address _authority) public reinitializer(6) {
+    address public burner;
+
+    function initialize(address _dreToken, address _trackingToken, address _authority, address _burner)
+        public
+        reinitializer(8)
+    {
         if (lastId == 0) lastId = 1;
 
         __ERC721_init("DRE Staking Position", "DRE-POS");
@@ -63,6 +68,8 @@ contract DreStaking is
         dreToken = IERC20(_dreToken);
         trackingToken = IPermissionedERC20(_trackingToken);
         __DreAccessControlled_init(_authority);
+
+        burner = _burner;
     }
 
     function positions(uint256 tokenId) external view override returns (Position memory) {
@@ -367,7 +374,7 @@ contract DreStaking is
         uint256 taxPaidOperations = (amount * TEAM_TREASURY_SHARE) / BASIS_POINTS;
 
         dreToken.safeTransfer(address(authority.operationsTreasury()), taxPaidOperations);
-        dreToken.safeTransfer(address(authority.treasury()), taxPaidTreasury);
+        dreToken.safeTransfer(burner, taxPaidTreasury); // burn the tax so that the floor price increases
 
         taxPaid = taxPaidOperations + taxPaidTreasury;
     }
