@@ -15,6 +15,7 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
     bytes32 public constant REWARD_MANAGER_ROLE = keccak256("REWARD_MANAGER_ROLE");
     bytes32 public constant RESERVE_DEPOSITOR_ROLE = keccak256("RESERVE_DEPOSITOR_ROLE");
+    bytes32 public constant BOND_MANAGER_ROLE = keccak256("BOND_MANAGER_ROLE");
 
     address public override operationsTreasury;
     IDreTreasury public override treasury;
@@ -33,6 +34,7 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
         _setRoleAdmin(RESERVE_DEPOSITOR_ROLE, GOVERNOR_ROLE);
         _setRoleAdmin(VAULT_ROLE, GOVERNOR_ROLE);
         _setRoleAdmin(EXECUTOR_ROLE, GOVERNOR_ROLE);
+        _setRoleAdmin(BOND_MANAGER_ROLE, GOVERNOR_ROLE);
     }
 
     modifier onlyGovernor() {
@@ -80,6 +82,10 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
         _grantRole(VAULT_ROLE, _newVault);
     }
 
+    function addBondManager(address _newBondManager) external onlyGovernor {
+        _grantRole(BOND_MANAGER_ROLE, _newBondManager);
+    }
+
     function addExecutor(address _newExecutor) external onlyGovernor {
         _grantRole(EXECUTOR_ROLE, _newExecutor);
     }
@@ -116,6 +122,10 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
         _revokeRole(EXECUTOR_ROLE, _oldExecutor);
     }
 
+    function removeBondManager(address _oldBondManager) external onlyGovernor {
+        _revokeRole(BOND_MANAGER_ROLE, _oldBondManager);
+    }
+
     function isGovernor(address account) external view override returns (bool) {
         return hasRole(GOVERNOR_ROLE, account);
     }
@@ -150,6 +160,10 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
 
     function isExecutor(address account) external view override returns (bool) {
         return hasRole(EXECUTOR_ROLE, account);
+    }
+
+    function isBondManager(address account) external view override returns (bool) {
+        return hasRole(BOND_MANAGER_ROLE, account);
     }
 
     function getAllCandidates(bytes32 role) public view returns (address[] memory candidates) {

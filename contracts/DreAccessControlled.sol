@@ -65,6 +65,11 @@ abstract contract DreAccessControlled is Initializable {
         _;
     }
 
+    modifier onlyBondManager() {
+        require(authority.isBondManager(msg.sender), UNAUTHORIZED);
+        _;
+    }
+
     /* ========== GOV ONLY ========== */
 
     function setAuthority(IDreAuthority _newAuthority) external onlyGovernor {

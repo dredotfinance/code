@@ -74,7 +74,7 @@ contract DreBondDepository is
         uint256 _initialPrice,
         uint256 _finalPrice,
         uint256 _duration
-    ) external override onlyPolicy returns (uint256 id_) {
+    ) external override onlyBondManager returns (uint256 id_) {
         require(_initialPrice > _finalPrice, "Invalid price range");
         require(_duration > 0, "Invalid duration");
 
