@@ -21,11 +21,10 @@ contract DreOracleTest is BaseTest {
         vm.startPrank(owner);
 
         // Deploy price oracles
-        mockDreOracle = new MockOracle(1e18); // 1 DRE = $1
         usdcPriceOracle = new MockOracle(1e18); // 1 USDC = $1
 
         // Set up oracles
-        dreOracle.updateOracle(address(dre), address(mockDreOracle));
+        dreOracle.setDrePrice(1e18);
         dreOracle.updateOracle(address(usdc), address(usdcPriceOracle));
     }
 
@@ -50,12 +49,12 @@ contract DreOracleTest is BaseTest {
         // Try to update oracle as non-governor
         vm.prank(user1);
         vm.expectRevert("UNAUTHORIZED");
-        dreOracle.updateOracle(address(dre), address(mockDreOracle));
+        dreOracle.updateOracle(address(dre), address(mockOracle));
 
         // Try to update with zero address token
         vm.prank(owner);
         vm.expectRevert(IDreOracle.InvalidTokenAddress.selector);
-        dreOracle.updateOracle(address(0), address(mockDreOracle));
+        dreOracle.updateOracle(address(0), address(mockOracle));
 
         // Try to update with zero address oracle
         vm.prank(owner);
@@ -88,7 +87,7 @@ contract DreOracleTest is BaseTest {
         assertEq(usdcPriceInDre, 1e18, "USDC price in DRE should be 1 DRE");
 
         // Update DRE price to $2
-        mockDreOracle.setPrice(2e18);
+        dreOracle.setDrePrice(2e18);
         usdcPriceInDre = dreOracle.getPriceInDre(address(usdc));
         assertEq(usdcPriceInDre, 5e17, "USDC price in DRE should be 0.5 DRE");
     }
@@ -99,7 +98,7 @@ contract DreOracleTest is BaseTest {
         assertEq(price, 1000 * 1e18, "1000 USDC should be worth 1000 DRE");
 
         // Update DRE price to $2
-        mockDreOracle.setPrice(2e18);
+        dreOracle.setDrePrice(2e18);
         price = dreOracle.getPriceInDreForAmount(address(usdc), amount);
         assertEq(price, 500 * 1e18, "1000 USDC should be worth 500 DRE");
     }
@@ -139,7 +138,7 @@ contract DreOracleTest is BaseTest {
         assertEq(dreOracle.getPrice(address(usdc)), 1e18, "Initial USDC price should be 1 USD");
 
         // Update prices
-        mockDreOracle.setPrice(2e18); // DRE = $2
+        dreOracle.setDrePrice(2e18); // DRE = $2
         usdcPriceOracle.setPrice(1.5e18); // USDC = $1.5
 
         // Verify updated prices

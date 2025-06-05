@@ -23,7 +23,7 @@ contract DreOracle is IDreOracle, DreAccessControlled {
         __DreAccessControlled_init(_authority);
         dre = IERC20Metadata(_dre);
         require(dre.decimals() == 18, "DRE must have 18 decimals");
-        _floorPrice = 1e18; // Start at 1 USD
+        if (_floorPrice == 0) _floorPrice = 1e18; // Start at 1 USD
     }
 
     /// @inheritdoc IDreOracle
@@ -40,6 +40,7 @@ contract DreOracle is IDreOracle, DreAccessControlled {
 
     /// @inheritdoc IDreOracle
     function getPrice(address token) public view returns (uint256 price) {
+        if (token == address(dre)) return _floorPrice;
         IOracle oracle = oracles[IERC20Metadata(token)];
         if (address(oracle) == address(0)) revert OracleNotFound(address(token));
         price = oracle.getPrice();
@@ -57,7 +58,7 @@ contract DreOracle is IDreOracle, DreAccessControlled {
 
         uint256 tokenAmountE18 = amount * 10 ** (18 - tokenMetadata.decimals()); // amount in E18
         uint256 tokenPriceE18 = getPrice(token); // TOKEN/USD
-        uint256 drePriceE18 = getPrice(address(dre)); // DRE/USD
+        uint256 drePriceE18 = _floorPrice; // DRE/USD
 
         price = (tokenPriceE18 * tokenAmountE18) / drePriceE18;
     }

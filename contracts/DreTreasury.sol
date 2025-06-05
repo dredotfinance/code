@@ -40,7 +40,7 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
 
     event CreditDebitSet(uint256 credit, uint256 debit);
 
-    function setCreditDebit(uint256 _credit, uint256 _debit) external onlyGovernor {
+    function setCreditDebit(uint256 _credit, uint256 _debit) external onlyPolicy {
         credit = _credit;
         debit = _debit;
         emit CreditDebitSet(_credit, _debit);

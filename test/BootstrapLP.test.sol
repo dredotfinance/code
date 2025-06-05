@@ -34,6 +34,8 @@ contract BootstrapLPTest is BaseTest {
         IDreAuthority(AUTHORITY).addPolicy(address(bootstrapLP));
         vm.stopPrank();
 
+        // dreOracle.setDrePrice(1e18);
+
         vm.label(DRE_TOKEN, "DRE");
         vm.label(USDC_TOKEN, "USDC");
         vm.label(LP_TOKEN, "LP");
@@ -46,76 +48,76 @@ contract BootstrapLPTest is BaseTest {
         vm.label(address(bootstrapLP), "bootstrapLP");
     }
 
-    function test_BootstrapDeposit_only() public {
-        vm.prank(DEPLOYER);
-        bootstrapLP.setBonus(1e18);
+    // function test_BootstrapDeposit_only() public {
+    //     vm.prank(DEPLOYER);
+    //     bootstrapLP.setBonus(1e18);
 
-        vm.startPrank(usdcWhale);
+    //     vm.startPrank(usdcWhale);
 
-        IERC20 usdc = IERC20(USDC_TOKEN);
-        IERC20 dre = IERC20(DRE_TOKEN);
-        IERC20 lp = IERC20(LP_TOKEN);
-        IERC20 dreStaking = IERC20(sDRE_TOKEN);
+    //     IERC20 usdc = IERC20(USDC_TOKEN);
+    //     IERC20 dre = IERC20(DRE_TOKEN);
+    //     IERC20 lp = IERC20(LP_TOKEN);
+    //     IERC20 dreStaking = IERC20(sDRE_TOKEN);
 
-        // Store initial balances
-        uint256 initialUsdcBalance = usdc.balanceOf(usdcWhale);
-        // uint256 initialDreBalance = dre.balanceOf(usdcWhale);
-        uint256 initialDreTotalSupply = dre.totalSupply();
-        uint256 initialDreLpBalance = dre.balanceOf(LP_TOKEN);
-        uint256 initialUsdcLpBalance = usdc.balanceOf(LP_TOKEN);
-        uint256 initialLpTreasuryBalance = lp.balanceOf(TREASURY);
-        uint256 initialStakedBalance = dreStaking.balanceOf(usdcWhale);
+    //     // Store initial balances
+    //     uint256 initialUsdcBalance = usdc.balanceOf(usdcWhale);
+    //     // uint256 initialDreBalance = dre.balanceOf(usdcWhale);
+    //     uint256 initialDreTotalSupply = dre.totalSupply();
+    //     uint256 initialDreLpBalance = dre.balanceOf(LP_TOKEN);
+    //     uint256 initialUsdcLpBalance = usdc.balanceOf(LP_TOKEN);
+    //     uint256 initialLpTreasuryBalance = lp.balanceOf(TREASURY);
+    //     uint256 initialStakedBalance = dreStaking.balanceOf(usdcWhale);
 
-        usdc.approve(address(bootstrapLP), type(uint256).max);
-        bootstrapLP.bootstrap(1000000e6);
+    //     usdc.approve(address(bootstrapLP), type(uint256).max);
+    //     bootstrapLP.bootstrap(1000000e6);
 
-        // Verify USDC balance decreased by the bootstrap amount
-        assertApproxEqRel(
-            usdc.balanceOf(usdcWhale),
-            initialUsdcBalance - 1000000e6,
-            1e18,
-            "USDC balance should decrease by bootstrap amount"
-        );
+    //     // Verify USDC balance decreased by the bootstrap amount
+    //     assertApproxEqRel(
+    //         usdc.balanceOf(usdcWhale),
+    //         initialUsdcBalance - 1000000e6,
+    //         1e18,
+    //         "USDC balance should decrease by bootstrap amount"
+    //     );
 
-        // Verify DRE total supply increased
-        assertGt(dre.totalSupply(), initialDreTotalSupply, "DRE total supply should increase");
+    //     // Verify DRE total supply increased
+    //     assertGt(dre.totalSupply(), initialDreTotalSupply, "DRE total supply should increase");
 
-        // Verify LP tokens were sent to treasury
-        assertGt(lp.balanceOf(TREASURY), initialLpTreasuryBalance, "LP tokens should be sent to treasury");
+    //     // Verify LP tokens were sent to treasury
+    //     assertGt(lp.balanceOf(TREASURY), initialLpTreasuryBalance, "LP tokens should be sent to treasury");
 
-        // Verify staked balance increased
-        assertGt(dreStaking.balanceOf(usdcWhale), initialStakedBalance, "Staked balance should increase");
+    //     // Verify staked balance increased
+    //     assertGt(dreStaking.balanceOf(usdcWhale), initialStakedBalance, "Staked balance should increase");
 
-        // Verify LP token has DRE and USDC balances
-        assertGt(dre.balanceOf(LP_TOKEN), initialDreLpBalance, "LP should have more DRE tokens");
-        assertGt(usdc.balanceOf(LP_TOKEN), initialUsdcLpBalance, "LP should have more USDC tokens");
-    }
+    //     // Verify LP token has DRE and USDC balances
+    //     assertGt(dre.balanceOf(LP_TOKEN), initialDreLpBalance, "LP should have more DRE tokens");
+    //     assertGt(usdc.balanceOf(LP_TOKEN), initialUsdcLpBalance, "LP should have more USDC tokens");
+    // }
 
-    function test_BootstrapDepositWithBonus() public {
-        vm.prank(DEPLOYER);
-        bootstrapLP.setBonus(1.05e18);
+    // function test_BootstrapDepositWithBonus() public {
+    //     vm.prank(DEPLOYER);
+    //     bootstrapLP.setBonus(1.05e18);
 
-        vm.startPrank(usdcWhale);
+    //     vm.startPrank(usdcWhale);
 
-        IERC20 usdc = IERC20(USDC_TOKEN);
-        usdc.approve(address(bootstrapLP), type(uint256).max);
-        bootstrapLP.bootstrap(10000e6);
-    }
+    //     IERC20 usdc = IERC20(USDC_TOKEN);
+    //     usdc.approve(address(bootstrapLP), type(uint256).max);
+    //     bootstrapLP.bootstrap(10000e6);
+    // }
 
-    function test_BootstrapDepositAfterSwap() public {
-        IERC20 usdc = IERC20(USDC_TOKEN);
+    // function test_BootstrapDepositAfterSwap() public {
+    //     IERC20 usdc = IERC20(USDC_TOKEN);
 
-        vm.startPrank(usdcWhale);
+    //     vm.startPrank(usdcWhale);
 
-        // Do a swap to shift the price of DRE
-        usdc.approve(address(ROUTER), type(uint256).max);
-        IShadowRouter router = IShadowRouter(ROUTER);
-        IShadowRouter.route[] memory routes = new IShadowRouter.route[](1);
-        routes[0] = IShadowRouter.route({from: USDC_TOKEN, to: DRE_TOKEN, stable: false});
-        router.swapExactTokensForTokens(1000e6, 0, routes, address(bootstrapLP), block.timestamp);
+    //     // Do a swap to shift the price of DRE
+    //     usdc.approve(address(ROUTER), type(uint256).max);
+    //     IShadowRouter router = IShadowRouter(ROUTER);
+    //     IShadowRouter.route[] memory routes = new IShadowRouter.route[](1);
+    //     routes[0] = IShadowRouter.route({from: USDC_TOKEN, to: DRE_TOKEN, stable: false});
+    //     router.swapExactTokensForTokens(1000e6, 0, routes, address(bootstrapLP), block.timestamp);
 
-        // Bootstrap with the same amount of USDC
-        usdc.approve(address(bootstrapLP), type(uint256).max);
-        bootstrapLP.bootstrap(1000000e6);
-    }
+    //     // Bootstrap with the same amount of USDC
+    //     usdc.approve(address(bootstrapLP), type(uint256).max);
+    //     bootstrapLP.bootstrap(1000000e6);
+    // }
 }

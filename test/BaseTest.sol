@@ -27,7 +27,6 @@ contract BaseTest is Test {
 
     DreOracle public dreOracle;
 
-    MockOracle public mockDreOracle;
     MockOracle public mockOracle;
     MockOracle public mockOracle2;
     MockOracle public mockOracle3;
@@ -50,7 +49,6 @@ contract BaseTest is Test {
         mockQuoteToken3 = new MockERC20("Mock Token 3", "MTK3");
 
         // Deploy mock oracle
-        mockDreOracle = new MockOracle(1e18); // 1:1 price
         mockOracle = new MockOracle(1e18); // 1:1 price
         mockOracle2 = new MockOracle(2e18); // 2:1 price
         mockOracle3 = new MockOracle(0.5e18); // 0.5:1 price
@@ -64,7 +62,6 @@ contract BaseTest is Test {
 
         dreOracle = new DreOracle();
         dreOracle.initialize(address(dreAuthority), address(dre));
-        dreOracle.updateOracle(address(dre), address(mockDreOracle));
         dreOracle.updateOracle(address(mockQuoteToken), address(mockOracle));
         dreOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2));
         dreOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
@@ -92,6 +89,9 @@ contract BaseTest is Test {
 
         dreAuthority.addPolicy(address(treasury));
         dreAuthority.addPolicy(address(rebaseController));
+        dreAuthority.addPolicy(address(owner));
+        dreAuthority.addExecutor(address(owner));
+        dreAuthority.addExecutor(address(rebaseController));
         dreAuthority.addPolicy(address(dreBondDepository));
         dreAuthority.setOperationsTreasury(operationsTreasury);
         dreAuthority.setTreasury(address(treasury));
@@ -108,7 +108,6 @@ contract BaseTest is Test {
         vm.label(address(mockQuoteToken3), "Mock Quote Token 3");
 
         vm.label(address(dreOracle), "Dre Oracle");
-        vm.label(address(mockDreOracle), "Mock Dre Oracle");
         vm.label(address(mockOracle), "Mock Oracle");
         vm.label(address(mockOracle2), "Mock Oracle 2");
         vm.label(address(mockOracle3), "Mock Oracle 3");
