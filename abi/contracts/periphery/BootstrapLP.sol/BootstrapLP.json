@@ -168,7 +168,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "dreAmount",
+        "name": "dreAmountOfLp",
         "type": "uint256"
       }
     ],

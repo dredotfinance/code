@@ -91,7 +91,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         bonus = _bonus;
     }
 
-    function bootstrap(uint256 usdcAmount) external nonReentrant returns (uint256 dreAmount) {
+    function bootstrap(uint256 usdcAmount) external nonReentrant returns (uint256 dreAmountOfLp) {
         require(usdcAmount > 0, "Amount must be greater than 0");
         uint256 totalReservesBefore = treasury.calculateReserves();
 
@@ -113,7 +113,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
             address(dreToken),
             false,
             usdcAmount / 2,
-            dreAmount / 2,
+            dreAmountToMint / 2,
             0,
             0,
             address(this),
@@ -121,7 +121,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         );
 
         // Deposit the LP into the treasury
-        uint256 dreAmountOfLp = treasury.tokenValueE18(address(lpToken), lpReceived) * bonus / 1e18;
+        dreAmountOfLp = treasury.tokenValueE18(address(lpToken), lpReceived) * bonus / 1e18;
         lpToken.safeTransfer(address(treasury), lpReceived);
         dreToken.mint(address(this), dreAmountOfLp);
 
