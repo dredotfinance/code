@@ -40,6 +40,11 @@
         "internalType": "uint256",
         "name": "_bonus",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_filled",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",

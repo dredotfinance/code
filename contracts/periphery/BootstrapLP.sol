@@ -109,11 +109,11 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
 
         // Deposit into LP
         (,, uint256 lpReceived) = router.addLiquidity(
-            address(dreToken),
             address(usdcToken),
+            address(dreToken),
             false,
-            dreAmount / 2,
             usdcAmount / 2,
+            dreAmount / 2,
             0,
             0,
             address(this),
