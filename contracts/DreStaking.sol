@@ -236,7 +236,7 @@ contract DreStaking is
 
         // Distribute payment
         dreToken.safeTransfer(seller, sellerAmount);
-        dreToken.safeTransfer(authority.operationsTreasury(), resellFee);
+        dreToken.safeTransfer(burner, resellFee);
 
         // Burn tracking tokens from seller and mint to buyer
         trackingToken.burn(seller, position.amount);

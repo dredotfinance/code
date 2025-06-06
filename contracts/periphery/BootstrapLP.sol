@@ -65,7 +65,8 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         address _router,
         address _treasury,
         uint256 _maxUsdcCapacity,
-        uint256 _bonus
+        uint256 _bonus,
+        uint256 _filled
     ) Ownable(msg.sender) {
         dreToken = IDRE(_dreToken);
         usdcToken = IERC20(_usdcToken);
@@ -75,6 +76,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         treasury = IDreTreasury(_treasury);
         maxUsdcCapacity = _maxUsdcCapacity;
         bonus = _bonus;
+        usdcAquired = _filled;
 
         dreToken.approve(address(router), type(uint256).max);
         usdcToken.approve(address(router), type(uint256).max);
