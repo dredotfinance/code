@@ -7,8 +7,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "./DreAccessControlled.sol";
 import "./interfaces/IDreStaking.sol";
+import "./DreAccessControlled.sol";
 
 // Permissioned ERC20 for tracking events
 interface IPermissionedERC20 {
@@ -245,7 +245,9 @@ contract DreStaking is
         // Transfer NFT to buyer
         _transfer(seller, msg.sender, tokenId);
 
+        // Cancel unstaking and claim any pending rewards to avoid getting sniped
         _cancelUnstaking(tokenId);
+        _claimRewards(tokenId);
 
         emit PositionSold(tokenId, seller, msg.sender, price);
     }
@@ -255,18 +257,7 @@ contract DreStaking is
      * @param tokenId The position ID
      */
     function claimRewards(uint256 tokenId) external override nonReentrant returns (uint256 reward) {
-        Position storage position = _positions[tokenId];
-        // require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
-
-        _updateReward(tokenId);
-
-        reward = position.rewards;
-        if (reward > 0) {
-            address owner = ownerOf(tokenId);
-            position.rewards = 0;
-            dreToken.safeTransfer(owner, reward);
-            emit RewardsClaimed(tokenId, owner, reward);
-        }
+        _claimRewards(tokenId);
     }
 
     /**
@@ -355,6 +346,21 @@ contract DreStaking is
         }
 
         _updateReward(tokenId);
+    }
+
+    function _claimRewards(uint256 tokenId) internal override {
+        Position storage position = _positions[tokenId];
+        // require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
+
+        _updateReward(tokenId);
+
+        reward = position.rewards;
+        if (reward > 0) {
+            address owner = ownerOf(tokenId);
+            position.rewards = 0;
+            dreToken.safeTransfer(owner, reward);
+            emit RewardsClaimed(tokenId, owner, reward);
+        }
     }
 
     /**
