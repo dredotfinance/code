@@ -205,4 +205,8 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
     function getAllGovernorCandidates() external view returns (address[] memory candidates) {
         return getAllCandidates(GOVERNOR_ROLE);
     }
+
+    function getAllBondManagerCandidates() external view returns (address[] memory candidates) {
+        return getAllCandidates(BOND_MANAGER_ROLE);
+    }
 }
