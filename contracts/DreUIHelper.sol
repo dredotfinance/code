@@ -7,6 +7,7 @@ import "./interfaces/IDreBondDepository.sol";
 import "./interfaces/IRebaseController.sol";
 import "./interfaces/IDreTreasury.sol";
 import "./interfaces/IDreOracle.sol";
+import "./interfaces/IOracle.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -83,6 +84,7 @@ contract DreUIHelper {
     IERC20 public stakingToken;
     IDreOracle public dreOracle;
     IRebaseController public rebaseController;
+    IOracle public shadowLP;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
@@ -94,7 +96,8 @@ contract DreUIHelper {
         address _dreToken,
         address _stakingToken,
         address _rebaseController,
-        address _dreOracle
+        address _dreOracle,
+        address _shadowLP
     ) {
         staking = IDreStaking(_staking);
         bondDepository = IDreBondDepository(_bondDepository);
@@ -102,6 +105,7 @@ contract DreUIHelper {
         dreToken = IERC20(_dreToken);
         stakingToken = IERC20(_stakingToken);
         dreOracle = IDreOracle(_dreOracle);
+        shadowLP = IOracle(_shadowLP);
         rebaseController = IRebaseController(_rebaseController);
     }
 
@@ -116,6 +120,7 @@ contract DreUIHelper {
             uint256 totalStaked,
             uint256 totalRewards,
             uint256 currentAPR,
+            uint256 currentSpotPrice,
             TokenInfo[] memory tokenInfos,
             StakingPositionInfo[] memory stakingPositions,
             BondPositionInfo[] memory bondPositions
@@ -127,8 +132,18 @@ contract DreUIHelper {
         totalStaked = staking.totalStaked();
         totalRewards = staking.rewardPerToken();
         currentAPR = calculateAPRRaw(totalStaked);
+        currentSpotPrice = shadowLP.getPrice();
 
-        // Get token balances and allowances
+        tokenInfos = getTokenInfos(user, bondTokens);
+        stakingPositions = getStakingPositions(user);
+        bondPositions = getBondPositions(user);
+    }
+
+    function getTokenInfos(address user, address[] memory bondTokens)
+        internal
+        view
+        returns (TokenInfo[] memory tokenInfos)
+    {
         tokenInfos = new TokenInfo[](bondTokens.length + 2); // +1 for DRE token, +1 for staking token
 
         // Add DRE token info
@@ -138,15 +153,14 @@ contract DreUIHelper {
             symbol: "DRE",
             balance: dreToken.balanceOf(user),
             allowance: dreToken.allowance(user, address(staking)),
-            treasuryBalance: 0,
-            treasuryValueDre: 0,
+            treasuryBalance: dreToken.balanceOf(address(treasury)),
+            treasuryValueDre: dreToken.balanceOf(address(treasury)),
             decimals: 18,
-            oraclePrice: dreOracle.getPrice(address(dreToken)),
-            oraclePriceInDre: dreOracle.getPriceInDre(address(dreToken))
+            oraclePrice: dreOracle.getDrePrice(),
+            oraclePriceInDre: dreOracle.getDrePrice()
         });
 
         // Add staking token info
-
         tokenInfos[1] = TokenInfo({
             token: address(stakingToken),
             name: "Staked DRE",
@@ -176,8 +190,9 @@ contract DreUIHelper {
                 oraclePrice: dreOracle.getPrice(address(token))
             });
         }
+    }
 
-        // Get staking positions
+    function getStakingPositions(address user) internal view returns (StakingPositionInfo[] memory stakingPositions) {
         uint256 stakingBalance = staking.balanceOf(user);
         stakingPositions = new StakingPositionInfo[](stakingBalance);
 
@@ -197,8 +212,9 @@ contract DreUIHelper {
                 isActive: position.cooldownEnd == 0
             });
         }
+    }
 
-        // Get bond positions
+    function getBondPositions(address user) internal view returns (BondPositionInfo[] memory bondPositions) {
         uint256 bondBalance = bondDepository.balanceOf(user);
         bondPositions = new BondPositionInfo[](bondBalance);
 
