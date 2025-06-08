@@ -37,8 +37,9 @@ interface IDreTreasury {
      * @notice allow approved address to manage the reserves of the treasury
      * @param _token address of the token to manage
      * @param _amount amount of the token to manage
+     * @return value amount of dre that was managed
      */
-    function manage(address _token, uint256 _amount) external;
+    function manage(address _token, uint256 _amount) external returns (uint256 value);
 
     /**
      * @notice allow approved address to enable a token as a reserve
@@ -59,18 +60,16 @@ interface IDreTreasury {
     function disable(address _address) external;
 
     /**
-     * @notice Sets the credit and debit reserves of the treasury
-     * @param _credit The amount of reserves (in DRE terms) that has been credited to the treasury but not yet minted
-     * @param _debit The amount of reserves (in DRE terms) that has been debited from the treasury but not yet withdrawn
+     * @notice Sets the credit reserves of the treasury
+     * @param _credit The amount of reserves (in DRE terms) that has been credited to the treasury but not yet deposited
      */
-    function setCreditDebitReserves(uint256 _credit, uint256 _debit) external;
+    function setCreditReserves(uint256 _credit) external;
 
     /**
-     * @notice Sets the credit and debit supply of the treasury
-     * @param _credit The amount of DRE that is in the treasury but not yet minted
-     * @param _debit The amount of DRE that is in the treasury but not yet burnt
+     * @notice Sets the unbacked supply of the treasury
+     * @param _unbacked The amount of DRE that is in the minted but not yet backed
      */
-    function setCreditDebitSupply(uint256 _credit, uint256 _debit) external;
+    function setUnbackedSupply(uint256 _unbacked) external;
 
     /**
      * @notice Credit is amount of reserves (in DRE terms) that has been credited to the treasury but
@@ -86,31 +85,16 @@ interface IDreTreasury {
     function creditReserves() external view returns (uint256 credit_);
 
     /**
-     * @notice Debit is amount of reserves (in DRE terms) that has been debited from the treasury but
-     * not yet withdrawn. This is important in the case that the collateral asset for DRE exists somewhere else
-     * (such as in an RWA for example).
-     * @dev Debit is not included in the total supply of DRE.
-     * @return debit_ The amount of reserves (in DRE terms)
-     */
-    function debitReserves() external view returns (uint256 debit_);
-
-    /**
-     * @notice Returns the actual supply of DRE excluding credit and debit
-     * @return actualSupply_ The actual supply of DRE excluding credit and debit
+     * @notice Returns the actual supply of DRE excluding credit
+     * @return actualSupply_ The actual supply of DRE excluding credit
      */
     function actualSupply() external view returns (uint256 actualSupply_);
 
     /**
-     * @notice Returns the amount of DRE that has been credited to the treasury but not yet minted
-     * @return creditSupply_ The amount of DRE
+     * @notice Returns the amount of DRE that has been minted but not yet backed
+     * @return unbackedSupply_ The amount of DRE
      */
-    function creditSupply() external view returns (uint256 creditSupply_);
-
-    /**
-     * @notice Returns the amount of DRE that has been held in the treasury but not yet burnt
-     * @return debitSupply_ The amount of DRE
-     */
-    function debitSupply() external view returns (uint256 debitSupply_);
+    function unbackedSupply() external view returns (uint256 unbackedSupply_);
 
     /**
      * @notice Returns the excess reserves of the treasury in DRE terms (excluding credit and debit)
@@ -159,9 +143,11 @@ interface IDreTreasury {
     event Deposit(address indexed token, uint256 amount, uint256 value);
     event Withdrawal(address indexed token, uint256 amount, uint256 value);
     event Managed(address indexed token, uint256 amount);
-    event ReservesAudited(uint256 indexed totalReserves);
+    event ReservesAudited(
+        uint256 indexed totalReserves, uint256 indexed creditReserves, uint256 indexed totalReservesWithCredit
+    );
     event Minted(address indexed caller, address indexed recipient, uint256 amount);
     event TokenEnabled(address addr, bool result);
-    event CreditDebitSetReserves(uint256 newCredit, uint256 newDebit, uint256 oldCredit, uint256 oldDebit);
-    event CreditDebitSetSupply(uint256 newCredit, uint256 newDebit, uint256 oldCredit, uint256 oldDebit);
+    event CreditReservesSet(uint256 newCredit, uint256 oldCredit);
+    event UnbackedSupplySet(uint256 newUnbacked, uint256 oldUnbacked);
 }

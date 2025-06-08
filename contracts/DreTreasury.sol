@@ -18,7 +18,7 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     mapping(address => bool) public enabledTokens;
     IDreOracle public dreOracle;
 
-    uint256 public override totalReserves;
+    uint256 private _totalReserves;
 
     string internal notAccepted = "Treasury: not accepted";
     string internal invalidToken = "Treasury: invalid token";
@@ -28,15 +28,9 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     uint256 public override creditReserves;
 
     /// @inheritdoc IDreTreasury
-    uint256 public override debitReserves;
+    uint256 public override unbackedSupply;
 
-    /// @inheritdoc IDreTreasury
-    uint256 public override creditSupply;
-
-    /// @inheritdoc IDreTreasury
-    uint256 public override debitSupply;
-
-    function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(4) {
+    function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(5) {
         require(_dre != address(0), "Zero address: dre");
         require(_dreOracle != address(0), "Zero address: dreOracle");
         dre = IDRE(_dre);
@@ -47,17 +41,18 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     }
 
     /// @inheritdoc IDreTreasury
-    function setCreditDebitReserves(uint256 _credit, uint256 _debit) external onlyPolicy {
-        emit CreditDebitSetReserves(_credit, _debit, creditReserves, debitReserves);
+    function setCreditReserves(uint256 _credit) external onlyPolicy {
+        emit CreditReservesSet(_credit, creditReserves);
         creditReserves = _credit;
-        debitReserves = _debit;
+        _updateReserves();
     }
 
     /// @inheritdoc IDreTreasury
-    function setCreditDebitSupply(uint256 _credit, uint256 _debit) external onlyPolicy {
-        emit CreditDebitSetSupply(_credit, _debit, creditSupply, debitSupply);
-        creditSupply = _credit;
-        debitSupply = _debit;
+    function setUnbackedSupply(uint256 _unbacked) external onlyPolicy {
+        require(_unbacked <= dre.totalSupply(), "Unbacked supply too high");
+        emit UnbackedSupplySet(_unbacked, unbackedSupply);
+        unbackedSupply = _unbacked;
+        _updateReserves();
     }
 
     /// @inheritdoc IDreTreasury
@@ -79,10 +74,10 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         send_ = value - _profit;
         dre.mint(msg.sender, send_);
 
-        totalReserves = totalReserves + value;
+        _totalReserves += value;
 
         // invariant check
-        require(totalReserves >= actualSupply(), "Reserves too low");
+        require(_totalReserves >= actualSupply(), "Reserves too low");
 
         emit Deposit(_token, _amount, value);
     }
@@ -101,19 +96,26 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         dre.transferFrom(msg.sender, address(this), value);
         dre.burn(value);
 
-        totalReserves = totalReserves - value;
+        _totalReserves = _totalReserves - value;
         IERC20(_token).safeTransfer(msg.sender, _amount);
 
         emit Withdrawal(_token, _amount, value);
     }
 
     /// @inheritdoc IDreTreasury
-    function manage(address _token, uint256 _amount) external override nonReentrant whenNotPaused onlyReserveManager {
+    function manage(address _token, uint256 _amount)
+        external
+        override
+        nonReentrant
+        whenNotPaused
+        onlyReserveManager
+        returns (uint256 value_)
+    {
         _updateReserves();
         if (enabledTokens[_token]) {
-            uint256 value = tokenValueE18(_token, _amount);
-            require(value <= excessReserves(), insufficientReserves);
-            totalReserves = totalReserves - value;
+            value_ = tokenValueE18(_token, _amount);
+            require(value_ <= excessReserves(), insufficientReserves);
+            _totalReserves = _totalReserves - value_;
         }
         IERC20(_token).safeTransfer(msg.sender, _amount);
         emit Managed(_token, _amount);
@@ -135,10 +137,20 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     /// @inheritdoc IDreTreasury
     function enable(address _address) external onlyGovernor {
         require(_address != address(0), "Zero address");
+
         // DRE should not be enabled as a reserve; as this creates a circular dependency
         require(_address != address(dre), "DRE address");
 
-        if (!enabledTokens[_address]) tokens.push(_address);
+        // add token into tokens array if not already added
+        bool isAdded = false;
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (tokens[i] == _address) {
+                isAdded = true;
+                break;
+            }
+        }
+        if (!isAdded) tokens.push(_address);
+
         enabledTokens[_address] = true;
 
         // ensure the token has a valid price in dreOracle contract
@@ -154,13 +166,13 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
 
     /// @inheritdoc IDreTreasury
     function backingRatioE18() public view returns (uint256) {
-        return (actualReserves() * 1e18) / actualSupply();
+        return (totalReserves() * 1e18) / totalSupply();
     }
 
     /// @inheritdoc IDreTreasury
     function excessReserves() public view override returns (uint256) {
-        uint256 totalSupply_ = actualSupply();
-        uint256 totalReserves_ = actualReserves();
+        uint256 totalSupply_ = totalSupply();
+        uint256 totalReserves_ = totalReserves();
         if (totalReserves_ <= totalSupply_) return 0;
         return totalReserves_ - totalSupply_;
     }
@@ -172,23 +184,28 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
 
     /// @inheritdoc IDreTreasury
     function actualReserves() public view override returns (uint256) {
-        return totalReserves - creditReserves + debitReserves;
+        return _totalReserves;
     }
 
     /// @inheritdoc IDreTreasury
     function actualSupply() public view override returns (uint256) {
-        return dre.totalSupply() - creditSupply + debitSupply;
+        return dre.totalSupply();
+    }
+
+    /// @inheritdoc IDreTreasury
+    function totalReserves() public view override returns (uint256) {
+        return _totalReserves + creditReserves;
     }
 
     /// @inheritdoc IDreTreasury
     function totalSupply() public view override returns (uint256) {
-        return dre.totalSupply() + creditSupply - debitSupply;
+        return dre.totalSupply() - unbackedSupply;
     }
 
     /// @inheritdoc IDreTreasury
     function calculateReserves() public view override returns (uint256) {
         uint256 reserves = calculateActualReserves();
-        return reserves + creditReserves - debitReserves;
+        return reserves + creditReserves;
     }
 
     /// @inheritdoc IDreTreasury
@@ -203,8 +220,8 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     }
 
     function _updateReserves() internal {
-        totalReserves = calculateReserves();
-        emit ReservesAudited(totalReserves);
+        _totalReserves = calculateActualReserves();
+        emit ReservesAudited(_totalReserves, creditReserves, _totalReserves + creditReserves);
     }
 
     function pause() external onlyGuardian {
