@@ -96,8 +96,8 @@ contract RebaseController is DreAccessControlled, IRebaseController {
 
     // --- View helpers --------------------------------------------------------
     function currentBackingRatio() external view returns (uint256) {
-        uint256 pcv = treasury.totalReserves();
-        uint256 supply = dre.totalSupply();
+        uint256 pcv = treasury.actualReserves();
+        uint256 supply = treasury.actualSupply();
         return (supply == 0) ? 0 : (pcv * 1e18) / supply; // 1e18 == β=1
     }
 
@@ -106,8 +106,8 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         view
         returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner)
     {
-        uint256 pcv = treasury.calculateReserves();
-        uint256 supply = dre.totalSupply();
+        uint256 pcv = treasury.actualReserves();
+        uint256 supply = treasury.actualSupply();
         return projectedEpochRateRaw(pcv, supply, staking.totalStaked());
     }
 

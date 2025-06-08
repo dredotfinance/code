@@ -137,9 +137,9 @@ contract DreStakingTest is BaseTest {
         assertEq(sDre.balanceOf(user1), STAKE_AMOUNT - 50e18);
         assertEq(sDre.balanceOf(owner), 0);
 
-        // no taxes earned but the treasury gets 1% of the declared value
-        assertEq(dre.balanceOf(operationsTreasury), 20e18);
-        assertEq(dre.balanceOf(address(burner)), 40e18);
+        // no taxes earned but the burner gets 1% of the declared value
+        assertEq(dre.balanceOf(operationsTreasury), 10e18);
+        assertEq(dre.balanceOf(address(burner)), 50e18);
 
         vm.stopPrank();
     }
@@ -354,6 +354,9 @@ contract DreStakingTest is BaseTest {
         // Fast forward to accumulate rewards
         vm.warp(block.timestamp + staking.EPOCH_DURATION());
 
+        // Get earned rewards before selling
+        uint256 earnedBefore = staking.earned(tokenId);
+
         // Prepare buyer
         dre.mint(user1, DECLARED_VALUE);
         vm.stopPrank();
@@ -367,12 +370,8 @@ contract DreStakingTest is BaseTest {
         assertEq(staking.ownerOf(tokenId), user1);
         assertEq(sDre.balanceOf(user1), STAKE_AMOUNT - 50e18);
 
-        // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
-
-        // Claim rewards as buyer
-        uint256 reward = staking.claimRewards(tokenId);
-        assertTrue(reward > 0);
+        // Verify rewards were automatically claimed during purchase
+        assertEq(dre.balanceOf(user1), earnedBefore);
 
         // Start unstaking process
         staking.startUnstaking(tokenId);
@@ -611,15 +610,15 @@ contract DreStakingTest is BaseTest {
             dre.balanceOf(owner), expectedSellerAmount, 0.0001e18, "Seller did not receive correct amount"
         );
 
+        // Verify rewards were automatically claimed during purchase
+        assertEq(dre.balanceOf(user1), earnedBefore, "Rewards not automatically claimed during purchase");
+
         // Fast forward past reward cooldown
         vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
 
-        // Verify buyer can claim rewards
+        // Verify no additional rewards to claim
         uint256 earnedAfter = staking.earned(tokenId);
-        assertEq(earnedAfter, earnedBefore, "Rewards not preserved after position transfer");
-
-        uint256 claimed = staking.claimRewards(tokenId);
-        assertEq(claimed, earnedBefore, "Buyer could not claim rewards");
+        assertEq(earnedAfter, 0, "Additional rewards found after automatic claim");
 
         vm.stopPrank();
     }
@@ -660,6 +659,7 @@ contract DreStakingTest is BaseTest {
 
         // Get earned rewards before selling
         uint256 earnedBefore = staking.earned(tokenId);
+        assertGt(earnedBefore, 0, "No rewards earned before purchase");
 
         // Prepare buyer
         dre.mint(user1, declaredValue);
@@ -675,10 +675,7 @@ contract DreStakingTest is BaseTest {
 
         // Verify buyer can claim accumulated rewards
         uint256 earnedAfter = staking.earned(tokenId);
-        assertEq(earnedAfter, earnedBefore, "Rewards not preserved after position transfer");
-
-        uint256 claimed = staking.claimRewards(tokenId);
-        assertEq(claimed, earnedBefore, "Buyer could not claim rewards");
+        assertEq(earnedAfter, 0, "Additional rewards found after automatic claim");
 
         vm.stopPrank();
     }

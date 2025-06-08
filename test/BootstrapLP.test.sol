@@ -29,7 +29,7 @@ contract BootstrapLPTest is BaseTest {
         setUpBaseTest();
 
         vm.startPrank(DEPLOYER);
-        bootstrapLP = new BootstrapLP(DRE_TOKEN, USDC_TOKEN, LP_TOKEN, STAKING, ROUTER, TREASURY, 10000000e6, 1.1e18);
+        bootstrapLP = new BootstrapLP(DRE_TOKEN, USDC_TOKEN, LP_TOKEN, STAKING, ROUTER, TREASURY, 10000000e6, 1.1e18, 0);
 
         IDreAuthority(AUTHORITY).addPolicy(address(bootstrapLP));
         vm.stopPrank();

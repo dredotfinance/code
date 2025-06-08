@@ -104,6 +104,7 @@ contract BaseTest is Test {
         dreAuthority.addPolicy(address(owner));
         dreAuthority.addPolicy(address(burner));
         dreAuthority.addExecutor(address(owner));
+        dreAuthority.addBondManager(address(owner));
         dreAuthority.addExecutor(address(rebaseController));
         dreAuthority.addPolicy(address(dreBondDepository));
         dreAuthority.setOperationsTreasury(operationsTreasury);

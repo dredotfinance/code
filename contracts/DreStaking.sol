@@ -257,7 +257,7 @@ contract DreStaking is
      * @param tokenId The position ID
      */
     function claimRewards(uint256 tokenId) external override nonReentrant returns (uint256 reward) {
-        _claimRewards(tokenId);
+        reward = _claimRewards(tokenId);
     }
 
     /**
@@ -348,7 +348,7 @@ contract DreStaking is
         _updateReward(tokenId);
     }
 
-    function _claimRewards(uint256 tokenId) internal override {
+    function _claimRewards(uint256 tokenId) internal returns (uint256 reward) {
         Position storage position = _positions[tokenId];
         // require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
 

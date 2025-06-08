@@ -105,12 +105,21 @@ contract DreTreasuryTest is BaseTest {
         // Enable token first
         treasury.enable(address(mockQuoteToken));
 
+        assertEq(treasury.actualSupply(), 0, "Actual supply should correctly reflect the initial state");
+
         // First deposit some tokens
         uint256 depositAmount = 1000e18;
         mockQuoteToken.mint(owner, depositAmount);
         mockQuoteToken.approve(address(treasury), depositAmount);
         uint256 profit = 100e18;
         treasury.deposit(depositAmount, address(mockQuoteToken), profit);
+
+        treasury.syncReserves();
+
+        assertEq(treasury.totalReserves(), 1000e18, "Total reserves should be equal to deposit amount");
+        assertEq(treasury.actualReserves(), 1000e18, "Actual reserves should be equal to deposit amount");
+        assertEq(treasury.actualSupply(), 900e18, "Actual supply should be equal to deposit amount");
+        assertEq(treasury.excessReserves(), 100e18, "Excess reserves should be equal to profit");
 
         // Now manage some tokens
         uint256 manageAmount = 20e18;

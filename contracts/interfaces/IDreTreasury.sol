@@ -2,8 +2,20 @@
 pragma solidity ^0.8.15;
 
 interface IDreTreasury {
-    function deposit(uint256 _amount, address _token, uint256 _profit) external returns (uint256 sent_);
+    /**
+     * @notice allow approved address to deposit an asset for dre
+     * @param _amount uint256 amount of token to deposit
+     * @param _token address of token to deposit
+     * @param _profit uint256 amount of profit to mint
+     * @return send_ uint256 amount of dre minted
+     */
+    function deposit(uint256 _amount, address _token, uint256 _profit) external returns (uint256 send_);
 
+    /**
+     * @notice allow approved address to burn dre for reserves
+     * @param _amount amount of dre to burn
+     * @param _token address of the token to burn
+     */
     function withdraw(uint256 _amount, address _token) external;
 
     /**
@@ -14,23 +26,133 @@ interface IDreTreasury {
      */
     function tokenValueE18(address _token, uint256 _amount) external view returns (uint256 value_);
 
+    /**
+     * @notice allow approved address to mint dre
+     * @param _recipient address of the recipient
+     * @param _amount amount of dre to mint
+     */
     function mint(address _recipient, uint256 _amount) external;
 
+    /**
+     * @notice allow approved address to manage the reserves of the treasury
+     * @param _token address of the token to manage
+     * @param _amount amount of the token to manage
+     */
     function manage(address _token, uint256 _amount) external;
 
+    /**
+     * @notice allow approved address to enable a token as a reserve
+     * @param _address address to enable
+     */
     function enable(address _address) external;
 
+    /**
+     * @notice Returns the backing ratio of the treasury in DRE terms (1e18)
+     * @return backingRatio_ The backing ratio (1e18)
+     */
+    function backingRatioE18() external view returns (uint256);
+
+    /**
+     * @notice allow approved address to disable a token as a reserve
+     * @param _address address to disable
+     */
     function disable(address _address) external;
 
+    /**
+     * @notice Sets the credit and debit reserves of the treasury
+     * @param _credit The amount of reserves (in DRE terms) that has been credited to the treasury but not yet minted
+     * @param _debit The amount of reserves (in DRE terms) that has been debited from the treasury but not yet withdrawn
+     */
+    function setCreditDebitReserves(uint256 _credit, uint256 _debit) external;
+
+    /**
+     * @notice Sets the credit and debit supply of the treasury
+     * @param _credit The amount of DRE that is in the treasury but not yet minted
+     * @param _debit The amount of DRE that is in the treasury but not yet burnt
+     */
+    function setCreditDebitSupply(uint256 _credit, uint256 _debit) external;
+
+    /**
+     * @notice Credit is amount of reserves (in DRE terms) that has been credited to the treasury but
+     * not yet deposited in. This is important in the case that the collateral asset for DRE exists somewhere else
+     * (such as in an RWA for example).
+     *
+     * This is particulary important in case of PSM modules where DRE is minted into a lending protocol for example
+     * and DRE is taken out only when it it being borrowed with an over-collateralized position.
+     *
+     * @dev Credit is not included in the total supply of DRE.
+     * @return credit_ The amount of reserves (in DRE terms) that has been credited to the treasury but not yet minted
+     */
+    function creditReserves() external view returns (uint256 credit_);
+
+    /**
+     * @notice Debit is amount of reserves (in DRE terms) that has been debited from the treasury but
+     * not yet withdrawn. This is important in the case that the collateral asset for DRE exists somewhere else
+     * (such as in an RWA for example).
+     * @dev Debit is not included in the total supply of DRE.
+     * @return debit_ The amount of reserves (in DRE terms)
+     */
+    function debitReserves() external view returns (uint256 debit_);
+
+    /**
+     * @notice Returns the actual supply of DRE excluding credit and debit
+     * @return actualSupply_ The actual supply of DRE excluding credit and debit
+     */
+    function actualSupply() external view returns (uint256 actualSupply_);
+
+    /**
+     * @notice Returns the amount of DRE that has been credited to the treasury but not yet minted
+     * @return creditSupply_ The amount of DRE
+     */
+    function creditSupply() external view returns (uint256 creditSupply_);
+
+    /**
+     * @notice Returns the amount of DRE that has been held in the treasury but not yet burnt
+     * @return debitSupply_ The amount of DRE
+     */
+    function debitSupply() external view returns (uint256 debitSupply_);
+
+    /**
+     * @notice Returns the excess reserves of the treasury in DRE terms (excluding credit and debit)
+     * that is not backing the DRE supply
+     * @return excessReserves_ The excess reserves of the treasury in DRE terms
+     */
     function excessReserves() external view returns (uint256);
 
+    /**
+     * @notice Returns the total reserves of the treasury in DRE terms (including credit and debit)
+     * @return totalReserves_ The total reserves of the treasury in DRE terms
+     */
     function totalReserves() external view returns (uint256);
 
+    /**
+     * @notice Returns the total supply of DRE (including credit and debit)
+     * @return totalSupply_ The total supply of DRE
+     */
+    function totalSupply() external view returns (uint256 totalSupply_);
+
+    /**
+     * @notice Returns the actual reserves of the treasury in DRE terms excluding credit and debit
+     * @return actualReserves_ The actual reserves of the treasury in DRE terms
+     */
+    function actualReserves() external view returns (uint256 actualReserves_);
+
+    /**
+     * @notice Syncs the reserves of the treasury
+     */
     function syncReserves() external;
 
-    function calculateReserves() external view returns (uint256);
+    /**
+     * @notice Calculates the total reserves of the treasury in DRE terms (including credit and debit)
+     * @return reserves_ The total reserves of the treasury in DRE terms
+     */
+    function calculateReserves() external view returns (uint256 reserves_);
 
-    function baseSupply() external view returns (uint256);
+    /**
+     * @notice Calculates the actual reserves of the treasury in DRE terms excluding credit and debit
+     * @return actualReserves_ The actual reserves of the treasury in DRE terms
+     */
+    function calculateActualReserves() external view returns (uint256 actualReserves_);
 
     /* ========== EVENTS ========== */
 
@@ -40,4 +162,6 @@ interface IDreTreasury {
     event ReservesAudited(uint256 indexed totalReserves);
     event Minted(address indexed caller, address indexed recipient, uint256 amount);
     event TokenEnabled(address addr, bool result);
+    event CreditDebitSetReserves(uint256 newCredit, uint256 newDebit, uint256 oldCredit, uint256 oldDebit);
+    event CreditDebitSetSupply(uint256 newCredit, uint256 newDebit, uint256 oldCredit, uint256 oldDebit);
 }
