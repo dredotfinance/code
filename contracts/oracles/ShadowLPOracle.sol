@@ -19,10 +19,15 @@ interface IShadowLP {
 contract ShadowLPOracle is IOracle {
     IShadowLP public amm;
     uint256 public decimalOffset;
+    IERC20Metadata public quoteToken;
+    IERC20Metadata public baseToken;
 
     constructor(IShadowLP _amm, address _baseToken) {
         amm = _amm;
-        IERC20Metadata quoteToken = IERC20Metadata(amm.token0() == _baseToken ? amm.token1() : amm.token0());
+
+        baseToken = IERC20Metadata(_baseToken);
+        quoteToken = IERC20Metadata(amm.token0() == _baseToken ? amm.token1() : amm.token0());
+
         decimalOffset = 10 ** (18 - quoteToken.decimals());
     }
 
@@ -31,6 +36,6 @@ contract ShadowLPOracle is IOracle {
      * @return price The price of the token in the shadow LP pair
      */
     function getPrice() external view override returns (uint256) {
-        return amm.current(amm.token0(), 1e18) * decimalOffset;
+        return amm.current(address(baseToken), 1e18) * decimalOffset;
     }
 }

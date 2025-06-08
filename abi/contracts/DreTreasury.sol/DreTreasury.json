@@ -54,17 +54,17 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "credit",
+        "name": "newCredit",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "debit",
+        "name": "oldCredit",
         "type": "uint256"
       }
     ],
-    "name": "CreditDebitSet",
+    "name": "CreditReservesSet",
     "type": "event"
   },
   {
@@ -170,6 +170,18 @@
         "internalType": "uint256",
         "name": "totalReserves",
         "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "creditReserves",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "totalReservesWithCredit",
+        "type": "uint256"
       }
     ],
     "name": "ReservesAudited",
@@ -192,6 +204,25 @@
       }
     ],
     "name": "TokenEnabled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newUnbacked",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldUnbacked",
+        "type": "uint256"
+      }
+    ],
+    "name": "UnbackedSupplySet",
     "type": "event"
   },
   {
@@ -234,6 +265,32 @@
   },
   {
     "inputs": [],
+    "name": "actualReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "actualSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "authority",
     "outputs": [
       {
@@ -260,11 +317,11 @@
   },
   {
     "inputs": [],
-    "name": "baseSupply",
+    "name": "calculateActualReserves",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "reserves",
         "type": "uint256"
       }
     ],
@@ -286,20 +343,7 @@
   },
   {
     "inputs": [],
-    "name": "credit",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "debit",
+    "name": "creditReserves",
     "outputs": [
       {
         "internalType": "uint256",
@@ -460,7 +504,13 @@
       }
     ],
     "name": "manage",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "value_",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -521,14 +571,22 @@
         "internalType": "uint256",
         "name": "_credit",
         "type": "uint256"
-      },
+      }
+    ],
+    "name": "setCreditReserves",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "uint256",
-        "name": "_debit",
+        "name": "_unbacked",
         "type": "uint256"
       }
     ],
-    "name": "setCreditDebit",
+    "name": "setUnbackedSupply",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -586,6 +644,32 @@
   {
     "inputs": [],
     "name": "totalReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unbackedSupply",
     "outputs": [
       {
         "internalType": "uint256",

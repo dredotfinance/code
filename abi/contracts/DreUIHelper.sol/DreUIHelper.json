@@ -35,6 +35,11 @@
         "internalType": "address",
         "name": "_dreOracle",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_shadowLP",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -337,6 +342,11 @@
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "currentSpotPrice",
+        "type": "uint256"
+      },
+      {
         "components": [
           {
             "internalType": "address",
@@ -502,6 +512,19 @@
     "outputs": [
       {
         "internalType": "contract IRebaseController",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "shadowLP",
+    "outputs": [
+      {
+        "internalType": "contract IOracle",
         "name": "",
         "type": "address"
       }

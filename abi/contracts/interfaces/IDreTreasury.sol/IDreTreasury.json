@@ -3,6 +3,25 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newCredit",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldCredit",
+        "type": "uint256"
+      }
+    ],
+    "name": "CreditReservesSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "token",
@@ -76,6 +95,18 @@
         "internalType": "uint256",
         "name": "totalReserves",
         "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "creditReserves",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "totalReservesWithCredit",
+        "type": "uint256"
       }
     ],
     "name": "ReservesAudited",
@@ -98,6 +129,25 @@
       }
     ],
     "name": "TokenEnabled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newUnbacked",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldUnbacked",
+        "type": "uint256"
+      }
+    ],
+    "name": "UnbackedSupplySet",
     "type": "event"
   },
   {
@@ -127,7 +177,33 @@
   },
   {
     "inputs": [],
-    "name": "baseSupply",
+    "name": "actualReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "actualReserves_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "actualSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "actualSupply_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "backingRatioE18",
     "outputs": [
       {
         "internalType": "uint256",
@@ -140,11 +216,37 @@
   },
   {
     "inputs": [],
+    "name": "calculateActualReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "actualReserves_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "calculateReserves",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "reserves_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "creditReserves",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "credit_",
         "type": "uint256"
       }
     ],
@@ -173,7 +275,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "sent_",
+        "name": "send_",
         "type": "uint256"
       }
     ],
@@ -233,7 +335,13 @@
       }
     ],
     "name": "manage",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -251,6 +359,32 @@
       }
     ],
     "name": "mint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_credit",
+        "type": "uint256"
+      }
+    ],
+    "name": "setCreditReserves",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_unbacked",
+        "type": "uint256"
+      }
+    ],
+    "name": "setUnbackedSupply",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -293,6 +427,32 @@
       {
         "internalType": "uint256",
         "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalSupply_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unbackedSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "unbackedSupply_",
         "type": "uint256"
       }
     ],
