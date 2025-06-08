@@ -106,7 +106,7 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         view
         returns (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner)
     {
-        uint256 pcv = treasury.totalReserves();
+        uint256 pcv = treasury.calculateReserves();
         uint256 supply = treasury.totalSupply();
         return projectedEpochRateRaw(pcv, supply, staking.totalStaked());
     }

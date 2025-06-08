@@ -118,11 +118,12 @@ contract DreTreasuryCreditDebitTest is BaseTest {
         treasury.syncReserves();
 
         assertEq(treasury.totalReserves(), 1000e18, "!totalReserves()");
-        assertEq(treasury.totalSupply(), 500e18, "!totalSupply()");
         assertEq(treasury.actualReserves(), 1000e18, "!actualReserves()");
+        assertEq(treasury.totalSupply(), 500e18, "!totalSupply()");
         assertEq(treasury.actualSupply(), 500e18, "!actualSupply()");
         assertEq(treasury.excessReserves(), 500e18, "!excessReserves()");
         assertEq(treasury.backingRatioE18(), 2e18, "!backingRatioE18()");
+        assertEq(treasury.calculateReserves(), treasury.totalReserves(), "!calculateReserves()");
 
         // Get projected epoch rate
         (uint256 aprBefore, uint256 epochRateBefore,,,) = rebaseController.projectedEpochRate();
@@ -135,8 +136,8 @@ contract DreTreasuryCreditDebitTest is BaseTest {
 
         // Verify values are set correctly
         assertEq(treasury.totalReserves(), 1000e18, "!totalReserves()");
-        assertEq(treasury.totalSupply(), 500e18, "!totalSupply()");
         assertEq(treasury.actualReserves(), 1000e18, "!actualReserves()");
+        assertEq(treasury.totalSupply(), 500e18, "!totalSupply()");
         assertEq(treasury.actualSupply(), 10500e18, "!actualSupply()");
         assertEq(treasury.excessReserves(), 500e18, "!excessReserves()");
         assertEq(treasury.backingRatioE18(), 2e18, "!backingRatioE18()");
