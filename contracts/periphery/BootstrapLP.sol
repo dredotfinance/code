@@ -93,7 +93,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
 
     function bootstrap(uint256 usdcAmount) external nonReentrant returns (uint256 dreAmountOfLp) {
         require(usdcAmount > 0, "Amount must be greater than 0");
-        uint256 totalReservesBefore = treasury.calculateReserves();
+        uint256 totalReservesBefore = reserves();
 
         // Transfer USDC from user
         usdcToken.safeTransferFrom(msg.sender, address(this), usdcAmount);
@@ -141,7 +141,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         }
 
         // invariant check - dont' mint DRE if we don't have enough reserves
-        uint256 totalReservesAfter = treasury.calculateReserves();
+        uint256 totalReservesAfter = reserves();
         require(totalReservesAfter > totalReservesBefore, "Reserves invariant violated");
         require(totalReservesAfter >= dreToken.totalSupply(), "Reserves invariant violated");
 
@@ -155,5 +155,9 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
 
     function rescueETH() external onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
+    }
+
+    function reserves() public view returns (uint256) {
+        return treasury.calculateReserves() + dreToken.balanceOf(address(treasury));
     }
 }

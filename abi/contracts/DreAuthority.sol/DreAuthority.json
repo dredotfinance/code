@@ -386,6 +386,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getAllBondManagerCandidates",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "candidates",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes32",
