@@ -10,39 +10,9 @@ import "../interfaces/IDRE.sol";
 import "../interfaces/IDreStaking.sol";
 import "../interfaces/IDreTreasury.sol";
 import "../interfaces/IDRE.sol";
+import "../interfaces/IBootstrapLP.sol";
 
-interface IShadowRouter {
-    struct route {
-        /// @dev token from
-        address from;
-        /// @dev token to
-        address to;
-        /// @dev is stable route
-        bool stable;
-    }
-
-    function addLiquidity(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        uint256 amountADesired,
-        uint256 amountBDesired,
-        uint256 amountAMin,
-        uint256 amountBMin,
-        address to,
-        uint256 deadline
-    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
-
-    function swapExactTokensForTokens(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        route[] calldata routes,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-}
-
-contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
+contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
     IDRE public immutable dreToken;
@@ -91,7 +61,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         bonus = _bonus;
     }
 
-    function bootstrap(uint256 usdcAmount) external nonReentrant returns (uint256 dreAmountOfLp) {
+    function bootstrap(uint256 usdcAmount, address to) external nonReentrant returns (uint256 dreAmountOfLp) {
         require(usdcAmount > 0, "Amount must be greater than 0");
         uint256 totalReservesBefore = reserves();
 
@@ -128,7 +98,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
         // require(dreAmountOfLp == dreAmount, "DRE amount of LP does not match DRE amount");
 
         // Stake into staking contract
-        staking.createPosition(msg.sender, dreAmountOfLp, dreAmountOfLp, 0);
+        staking.createPosition(to, dreAmountOfLp, dreAmountOfLp, 0);
 
         // Burn any pending DRE
         if (dreToken.balanceOf(address(this)) > 0) {
@@ -137,7 +107,7 @@ contract BootstrapLP is Ownable, ReentrancyGuard, Pausable {
 
         // Return back any pending USDC
         if (usdcToken.balanceOf(address(this)) > 0) {
-            usdcToken.safeTransfer(msg.sender, usdcToken.balanceOf(address(this)));
+            usdcToken.safeTransfer(to, usdcToken.balanceOf(address(this)));
         }
 
         // invariant check - dont' mint DRE if we don't have enough reserves

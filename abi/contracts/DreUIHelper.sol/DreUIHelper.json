@@ -40,10 +40,31 @@
         "internalType": "address",
         "name": "_shadowLP",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_bootstrapLP",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_odos",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
   },
   {
     "anonymous": false,
@@ -70,6 +91,19 @@
     "outputs": [
       {
         "internalType": "contract IDreBondDepository",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "bootstrapLP",
+    "outputs": [
+      {
+        "internalType": "contract IBootstrapLP",
         "name": "",
         "type": "address"
       }
@@ -508,6 +542,19 @@
   },
   {
     "inputs": [],
+    "name": "odos",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "rebaseController",
     "outputs": [
       {
@@ -569,6 +616,118 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenAmountIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "tokenIn",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "odosData",
+        "type": "bytes"
+      }
+    ],
+    "name": "zapAndMint",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "dreAmountOfLp",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenAmountIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dreAmountDeclared",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "tokenIn",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "odosData",
+        "type": "bytes"
+      }
+    ],
+    "name": "zapAndStake",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "dreAmountSwapped",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenAmountIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "dreAmountDeclaredAsPercentage",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "tokenIn",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "odosData",
+        "type": "bytes"
+      }
+    ],
+    "name": "zapAndStakeAsPercentage",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "dreAmountSwapped",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
     "type": "function"
   }
 ]

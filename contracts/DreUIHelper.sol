@@ -8,13 +8,16 @@ import "./interfaces/IRebaseController.sol";
 import "./interfaces/IDreTreasury.sol";
 import "./interfaces/IDreOracle.sol";
 import "./interfaces/IOracle.sol";
+import "./interfaces/IBootstrapLP.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title DRE UI Helper
 /// @author DRE Protocol
 contract DreUIHelper {
-    // Structs
+    using SafeERC20 for IERC20;
+
     struct TokenInfo {
         address token;
         string name;
@@ -85,6 +88,8 @@ contract DreUIHelper {
     IDreOracle public dreOracle;
     IRebaseController public rebaseController;
     IOracle public shadowLP;
+    IBootstrapLP public bootstrapLP;
+    address public odos;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
@@ -97,7 +102,9 @@ contract DreUIHelper {
         address _stakingToken,
         address _rebaseController,
         address _dreOracle,
-        address _shadowLP
+        address _shadowLP,
+        address _bootstrapLP,
+        address _odos
     ) {
         staking = IDreStaking(_staking);
         bondDepository = IDreBondDepository(_bondDepository);
@@ -107,6 +114,8 @@ contract DreUIHelper {
         dreOracle = IDreOracle(_dreOracle);
         shadowLP = IOracle(_shadowLP);
         rebaseController = IRebaseController(_rebaseController);
+        bootstrapLP = IBootstrapLP(_bootstrapLP);
+        odos = _odos;
     }
 
     /// @notice Get all protocol information for a user
@@ -298,5 +307,68 @@ contract DreUIHelper {
             bonds[i] = bond;
             currentPrices[i] = bondDepository.currentPrice(bondIds[i]);
         }
+    }
+
+    function zapAndMint(address to, uint256 tokenAmountIn, address tokenIn, bytes memory odosData)
+        external
+        payable
+        returns (uint256 dreAmountOfLp)
+    {
+        if (tokenIn == address(0)) {
+            require(msg.value == tokenAmountIn, "Invalid ETH amount");
+        } else {
+            IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
+            IERC20(tokenIn).approve(odos, tokenAmountIn);
+        }
+
+        (bool success,) = odos.call{value: tokenAmountIn}(odosData);
+        require(success, "Odos call failed");
+
+        IERC20 usdcToken = bootstrapLP.usdcToken();
+        uint256 balance = usdcToken.balanceOf(address(this));
+        dreAmountOfLp = bootstrapLP.bootstrap(balance, to);
+    }
+
+    function zapAndStake(
+        address to,
+        uint256 tokenAmountIn,
+        uint256 dreAmountDeclared,
+        address tokenIn,
+        bytes memory odosData
+    ) external payable returns (uint256 dreAmountSwapped) {
+        if (tokenIn == address(0)) {
+            require(msg.value == tokenAmountIn, "Invalid ETH amount");
+        } else {
+            IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
+            IERC20(tokenIn).approve(odos, tokenAmountIn);
+        }
+
+        (bool success,) = odos.call{value: tokenAmountIn}(odosData);
+        require(success, "Odos call failed");
+
+        dreAmountSwapped = dreToken.balanceOf(address(this));
+        staking.createPosition(to, dreAmountSwapped, dreAmountDeclared, 0);
+    }
+
+    function zapAndStakeAsPercentage(
+        address to,
+        uint256 tokenAmountIn,
+        uint256 dreAmountDeclaredAsPercentage,
+        address tokenIn,
+        bytes memory odosData
+    ) external payable returns (uint256 dreAmountSwapped) {
+        if (tokenIn == address(0)) {
+            require(msg.value == tokenAmountIn, "Invalid ETH amount");
+        } else {
+            IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
+            IERC20(tokenIn).approve(odos, tokenAmountIn);
+        }
+
+        (bool success,) = odos.call{value: tokenAmountIn}(odosData);
+        require(success, "Odos call failed");
+
+        dreAmountSwapped = dreToken.balanceOf(address(this));
+        uint256 dreAmountDeclared = (dreAmountSwapped * dreAmountDeclaredAsPercentage) / 1e18;
+        staking.createPosition(to, dreAmountSwapped, dreAmountDeclared, 0);
     }
 }

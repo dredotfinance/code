@@ -162,6 +162,11 @@
         "internalType": "uint256",
         "name": "usdcAmount",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
       }
     ],
     "name": "bootstrap",
