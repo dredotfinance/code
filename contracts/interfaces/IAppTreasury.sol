@@ -19,10 +19,10 @@ interface IAppTreasury {
     function withdraw(uint256 _amount, address _token) external;
 
     /**
-     * @notice Returns the value of a token in App, 18 decimals
+     * @notice Returns the value of a token in RZR, 18 decimals
      * @param _token The address of the token
      * @param _amount The amount of the token
-     * @return value_ The value of the token in App
+     * @return value_ The value of the token in RZR
      */
     function tokenValueE18(address _token, uint256 _amount) external view returns (uint256 value_);
 
@@ -48,7 +48,7 @@ interface IAppTreasury {
     function enable(address _address) external;
 
     /**
-     * @notice Returns the backing ratio of the treasury in App terms (1e18)
+     * @notice Returns the backing ratio of the treasury in RZR terms (1e18)
      * @return backingRatio_ The backing ratio (1e18)
      */
     function backingRatioE18() external view returns (uint256);
@@ -61,63 +61,63 @@ interface IAppTreasury {
 
     /**
      * @notice Sets the credit reserves of the treasury
-     * @param _credit The amount of reserves (in App terms) that has been credited to the treasury but not yet deposited
+     * @param _credit The amount of reserves (in RZR terms) that has been credited to the treasury but not yet deposited
      */
     function setCreditReserves(uint256 _credit) external;
 
     /**
      * @notice Sets the unbacked supply of the treasury
-     * @param _unbacked The amount of App that is in the minted but not yet backed
+     * @param _unbacked The amount of RZR that is in the minted but not yet backed
      */
     function setUnbackedSupply(uint256 _unbacked) external;
 
     /**
-     * @notice Credit is amount of reserves (in App terms) that has been credited to the treasury but
-     * not yet deposited in. This is important in the case that the collateral asset for App exists somewhere else
+     * @notice Credit is amount of reserves (in RZR terms) that has been credited to the treasury but
+     * not yet deposited in. This is important in the case that the collateral asset for RZR exists somewhere else
      * (such as in an RWA for example).
      *
-     * This is particulary important in case of PSM modules where App is minted into a lending protocol for example
-     * and App is taken out only when it it being borrowed with an over-collateralized position.
+     * This is particulary important in case of PSM modules where RZR is minted into a lending protocol for example
+     * and RZR is taken out only when it it being borrowed with an over-collateralized position.
      *
-     * @dev Credit is not included in the total supply of App.
-     * @return credit_ The amount of reserves (in App terms) that has been credited to the treasury but not yet minted
+     * @dev Credit is not included in the total supply of RZR.
+     * @return credit_ The amount of reserves (in RZR terms) that has been credited to the treasury but not yet minted
      */
     function creditReserves() external view returns (uint256 credit_);
 
     /**
-     * @notice Returns the actual supply of App excluding credit
-     * @return actualSupply_ The actual supply of App excluding credit
+     * @notice Returns the actual supply of RZR excluding credit
+     * @return actualSupply_ The actual supply of RZR excluding credit
      */
     function actualSupply() external view returns (uint256 actualSupply_);
 
     /**
-     * @notice Returns the amount of App that has been minted but not yet backed
-     * @return unbackedSupply_ The amount of App
+     * @notice Returns the amount of RZR that has been minted but not yet backed
+     * @return unbackedSupply_ The amount of RZR
      */
     function unbackedSupply() external view returns (uint256 unbackedSupply_);
 
     /**
-     * @notice Returns the excess reserves of the treasury in App terms (excluding credit and debit)
-     * that is not backing the App supply
-     * @return excessReserves_ The excess reserves of the treasury in App terms
+     * @notice Returns the excess reserves of the treasury in RZR terms (excluding credit and debit)
+     * that is not backing the RZR supply
+     * @return excessReserves_ The excess reserves of the treasury in RZR terms
      */
     function excessReserves() external view returns (uint256);
 
     /**
-     * @notice Returns the total reserves of the treasury in App terms (including credit and debit)
-     * @return totalReserves_ The total reserves of the treasury in App terms
+     * @notice Returns the total reserves of the treasury in RZR terms (including credit and debit)
+     * @return totalReserves_ The total reserves of the treasury in RZR terms
      */
     function totalReserves() external view returns (uint256);
 
     /**
-     * @notice Returns the total supply of App (including credit and debit)
-     * @return totalSupply_ The total supply of App
+     * @notice Returns the total supply of RZR (including credit and debit)
+     * @return totalSupply_ The total supply of RZR
      */
     function totalSupply() external view returns (uint256 totalSupply_);
 
     /**
-     * @notice Returns the actual reserves of the treasury in App terms excluding credit and debit
-     * @return actualReserves_ The actual reserves of the treasury in App terms
+     * @notice Returns the actual reserves of the treasury in RZR terms excluding credit and debit
+     * @return actualReserves_ The actual reserves of the treasury in RZR terms
      */
     function actualReserves() external view returns (uint256 actualReserves_);
 
@@ -127,14 +127,14 @@ interface IAppTreasury {
     function syncReserves() external;
 
     /**
-     * @notice Calculates the total reserves of the treasury in App terms (including credit and debit)
-     * @return reserves_ The total reserves of the treasury in App terms
+     * @notice Calculates the total reserves of the treasury in RZR terms (including credit and debit)
+     * @return reserves_ The total reserves of the treasury in RZR terms
      */
     function calculateReserves() external view returns (uint256 reserves_);
 
     /**
-     * @notice Calculates the actual reserves of the treasury in App terms excluding credit and debit
-     * @return actualReserves_ The actual reserves of the treasury in App terms
+     * @notice Calculates the actual reserves of the treasury in RZR terms excluding credit and debit
+     * @return actualReserves_ The actual reserves of the treasury in RZR terms
      */
     function calculateActualReserves() external view returns (uint256 actualReserves_);
 

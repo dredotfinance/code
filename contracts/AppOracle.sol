@@ -22,7 +22,7 @@ contract AppOracle is IAppOracle, AppAccessControlled {
     function initialize(address _authority, address _dre) external initializer {
         __AppAccessControlled_init(_authority);
         app = IERC20Metadata(_dre);
-        require(app.decimals() == 18, "App must have 18 decimals");
+        require(app.decimals() == 18, "RZR must have 18 decimals");
         if (_floorPrice == 0) _floorPrice = 1e18; // Start at 1 USD
     }
 
@@ -58,7 +58,7 @@ contract AppOracle is IAppOracle, AppAccessControlled {
 
         uint256 tokenAmountE18 = amount * 10 ** (18 - tokenMetadata.decimals()); // amount in E18
         uint256 tokenPriceE18 = getPrice(token); // TOKEN/USD
-        uint256 drePriceE18 = _floorPrice; // App/USD
+        uint256 drePriceE18 = _floorPrice; // RZR/USD
 
         price = (tokenPriceE18 * tokenAmountE18) / drePriceE18;
     }

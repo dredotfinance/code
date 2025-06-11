@@ -59,10 +59,10 @@ contract AppStaking is
     {
         if (lastId == 0) lastId = 1;
 
-        __ERC721_init("App Staking Position", "App-POS");
+        __ERC721_init("RZR Staking Position", "RZR-POS");
         __ReentrancyGuard_init();
 
-        require(_dreToken != address(0), "Invalid App token address");
+        require(_dreToken != address(0), "Invalid RZR token address");
         require(_trackingToken != address(0), "Invalid tracking token address");
 
         dreToken = IERC20(_dreToken);
@@ -127,7 +127,7 @@ contract AppStaking is
     /**
      * @notice Create a new position
      * @param to The address to mint the position to
-     * @param amount The amount of App to stake
+     * @param amount The amount of RZR to stake
      * @param declaredValue The declared value of the position
      * @param minLockDuration The minimum time tokens must be locked (0 for no minimum)
      * @return tokenId The token ID of the new position
@@ -142,7 +142,7 @@ contract AppStaking is
         require(amount > 0, "Amount must be greater than 0");
         require(declaredValue > 0, "Declared value must be greater than 0");
 
-        // Transfer App tokens from user
+        // Transfer RZR tokens from user
         dreToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // Calculate and collect harberger tax
@@ -205,7 +205,7 @@ contract AppStaking is
         // Burn tracking tokens for the unstaked amount
         trackingToken.burn(msg.sender, amount);
 
-        // Transfer App tokens back to user
+        // Transfer RZR tokens back to user
         dreToken.safeTransfer(msg.sender, amount);
 
         // Burn the NFT
@@ -231,7 +231,7 @@ contract AppStaking is
         uint256 resellFee = (price * TEAM_TREASURY_SHARE) / BASIS_POINTS;
         uint256 sellerAmount = price - resellFee;
 
-        // Transfer App tokens from buyer
+        // Transfer RZR tokens from buyer
         dreToken.safeTransferFrom(msg.sender, address(this), price);
 
         // Distribute payment
@@ -293,7 +293,7 @@ contract AppStaking is
         Position storage position = _positions[tokenId];
         address owner = ownerOf(tokenId);
 
-        // Transfer App tokens from user
+        // Transfer RZR tokens from user
         if (additionalAmount > 0) {
             dreToken.safeTransferFrom(msg.sender, address(this), additionalAmount);
         }
@@ -373,7 +373,7 @@ contract AppStaking is
 
     /**
      * @notice Distribute the tax to the operations treasury and protocol treasury
-     * @param amount The amount of App to distribute
+     * @param amount The amount of RZR to distribute
      */
     function _distributeTax(uint256 amount) internal returns (uint256 taxPaid) {
         uint256 taxPaidTreasury = (amount * HARBERGER_TAX_RATE) / BASIS_POINTS;

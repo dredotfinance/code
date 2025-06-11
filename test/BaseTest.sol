@@ -4,8 +4,8 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "../contracts/RebaseController.sol";
-import "../contracts/App.sol";
-import "../contracts/sApp.sol";
+import "../contracts/RZR.sol";
+import "../contracts/sRZR.sol";
 import "../contracts/AppTreasury.sol";
 import "../contracts/AppStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
@@ -18,8 +18,8 @@ import "../contracts/AppBurner.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
-    App public app;
-    sApp public sapp;
+    RZR public app;
+    sRZR public sapp;
     AppTreasury public treasury;
     AppStaking public staking;
     MockERC20 public mockQuoteToken;
@@ -55,12 +55,12 @@ contract BaseTest is Test {
         mockOracle2 = new MockOracle(2e18); // 2:1 price
         mockOracle3 = new MockOracle(0.5e18); // 0.5:1 price
 
-        // Deploy App token
+        // Deploy RZR token
         MockEndpoint lz = new MockEndpoint();
-        app = new App(address(lz), address(dreAuthority));
+        app = new RZR(address(lz), address(dreAuthority));
 
-        // Deploy sApp token
-        sapp = new sApp(address(dreAuthority));
+        // Deploy sRZR token
+        sapp = new sRZR(address(dreAuthority));
 
         dreOracle = new AppOracle();
         dreOracle.initialize(address(dreAuthority), address(app));
@@ -111,8 +111,8 @@ contract BaseTest is Test {
         dreAuthority.setTreasury(address(treasury));
         dreAuthority.addReserveDepositor(address(dreBondDepository));
 
-        vm.label(address(app), "App");
-        vm.label(address(sapp), "sApp");
+        vm.label(address(app), "RZR");
+        vm.label(address(sapp), "sRZR");
         vm.label(address(treasury), "Treasury");
         vm.label(address(staking), "Staking");
         vm.label(address(rebaseController), "RebaseController");
@@ -123,7 +123,7 @@ contract BaseTest is Test {
         vm.label(address(mockQuoteToken2), "Mock Quote Token 2");
         vm.label(address(mockQuoteToken3), "Mock Quote Token 3");
 
-        vm.label(address(dreOracle), "App Oracle");
+        vm.label(address(dreOracle), "RZR Oracle");
         vm.label(address(mockOracle), "Mock Oracle");
         vm.label(address(mockOracle2), "Mock Oracle 2");
         vm.label(address(mockOracle3), "Mock Oracle 3");

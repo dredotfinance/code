@@ -70,10 +70,10 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         usdcAquired += usdcAmount;
         require(usdcAquired <= maxUsdcCapacity, "Max USDC capacity reached");
 
-        // Calculate App amount to mint (1:1 ratio)
+        // Calculate RZR amount to mint (1:1 ratio)
         uint256 dreAmountToMint = treasury.tokenValueE18(address(usdcToken), usdcAmount);
 
-        // Mint App tokens with the half the USDC
+        // Mint RZR tokens with the half the USDC
         dreToken.mint(address(this), dreAmountToMint / 2);
         usdcToken.safeTransfer(address(treasury), usdcAmount / 2);
 
@@ -95,12 +95,12 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         lpToken.safeTransfer(address(treasury), lpReceived);
         dreToken.mint(address(this), dreAmountOfLp);
 
-        // require(dreAmountOfLp == dreAmount, "App amount of LP does not match App amount");
+        // require(dreAmountOfLp == dreAmount, "RZR amount of LP does not match RZR amount");
 
         // Stake into staking contract
         staking.createPosition(to, dreAmountOfLp, dreAmountOfLp, 0);
 
-        // Burn any pending App
+        // Burn any pending RZR
         if (dreToken.balanceOf(address(this)) > 0) {
             dreToken.burn(dreToken.balanceOf(address(this)));
         }
@@ -110,7 +110,7 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
             usdcToken.safeTransfer(to, usdcToken.balanceOf(address(this)));
         }
 
-        // invariant check - dont' mint App if we don't have enough reserves
+        // invariant check - dont' mint RZR if we don't have enough reserves
         uint256 totalReservesAfter = reserves();
         require(totalReservesAfter > totalReservesBefore, "Reserves invariant violated");
         require(totalReservesAfter >= dreToken.totalSupply(), "Reserves invariant violated");

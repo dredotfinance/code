@@ -5,8 +5,8 @@ import "./BaseTest.sol";
 
 contract AppBondDepositoryTest is BaseTest {
     uint256 public constant BOND_AMOUNT = 1000e18;
-    uint256 public constant INITIAL_PRICE = 1.1e18; // 1.1 App per quote token
-    uint256 public constant FINAL_PRICE = 0.9e18; // 0.9 App per quote token
+    uint256 public constant INITIAL_PRICE = 1.1e18; // 1.1 RZR per quote token
+    uint256 public constant FINAL_PRICE = 0.9e18; // 0.9 RZR per quote token
     uint256 public constant BOND_DURATION = 7 days;
 
     function setUp() public {
@@ -323,7 +323,7 @@ contract AppBondDepositoryTest is BaseTest {
     {
         // Bound the inputs to reasonable ranges
         bondAmount = bound(bondAmount, 1e18, 1000000e18);
-        initialPrice = bound(initialPrice, 1e18, 2e18); // 1-2 App per quote token
+        initialPrice = bound(initialPrice, 1e18, 2e18); // 1-2 RZR per quote token
         finalPrice = bound(finalPrice, 0.5e18, initialPrice); // Final price must be lower than initial
         depositAmount = bound(depositAmount, 1e18, bondAmount);
 
@@ -589,13 +589,13 @@ contract AppBondDepositoryTest is BaseTest {
         treasury.enable(address(usdc));
 
         // Calculate bond parameters
-        // uint256 dreAmount = 10000e18; // 10000 App
-        uint256 initialPrice = 2e6; // 1 App = 1 USDC
+        // uint256 dreAmount = 10000e18; // 10000 RZR
+        uint256 initialPrice = 2e6; // 1 RZR = 1 USDC
         uint256 finalPrice = 1.9e6; // 10% discount (0.9 * 1 = 0.9 USDC)
         uint256 duration = 7 days;
 
-        // Calculate App capacity (15000 App for 10000 App at $1.50)
-        uint256 dreCapacity = 15000e18; // 15000 App (6 decimals)
+        // Calculate RZR capacity (15000 RZR for 10000 RZR at $1.50)
+        uint256 dreCapacity = 15000e18; // 15000 RZR (6 decimals)
 
         // Create bond
         uint256 bondId = dreBondDepository.create(usdc, dreCapacity, initialPrice, finalPrice, duration);
@@ -617,15 +617,15 @@ contract AppBondDepositoryTest is BaseTest {
         usdc.mint(user1, depositAmount);
         usdc.approve(address(dreBondDepository), depositAmount);
 
-        // Calculate expected App payout at initial price
-        uint256 expectedPayout = (depositAmount * 1e18) / initialPrice; // Should be 10000 App
+        // Calculate expected RZR payout at initial price
+        uint256 expectedPayout = (depositAmount * 1e18) / initialPrice; // Should be 10000 RZR
 
         // Deposit to bond
         (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, depositAmount, initialPrice, 0, user1);
 
-        // Verify payout is correct (1500 USDC / 1.5 = 1000 App)
+        // Verify payout is correct (1500 USDC / 1.5 = 1000 RZR)
         assertEq(payout, expectedPayout);
-        assertEq(payout, 5000e18); // Should receive 1000 App
+        assertEq(payout, 5000e18); // Should receive 1000 RZR
 
         // Verify bond position
         IAppBondDepository.BondPosition memory position = dreBondDepository.positions(tokenId);

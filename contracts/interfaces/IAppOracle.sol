@@ -28,29 +28,29 @@ interface IAppOracle {
     function getPrice(address token) external view returns (uint256);
 
     /**
-     * @notice Get the price for a token in App
+     * @notice Get the price for a token in RZR
      * @param token The token address
-     * @return price The token price in App
+     * @return price The token price in RZR
      */
     function getPriceInApp(address token) external view returns (uint256 price);
 
     /**
-     * @notice Get the price for a token in App for an amount
+     * @notice Get the price for a token in RZR for an amount
      * @param token The token address
      * @param amount The amount of the token
-     * @return price The token price in App for the amount
+     * @return price The token price in RZR for the amount
      */
     function getPriceInAppForAmount(address token, uint256 amount) external view returns (uint256 price);
 
     /**
-     * @notice Get the price for App
-     * @return price The App price
+     * @notice Get the price for RZR
+     * @return price The RZR price
      */
     function getAppPrice() external view returns (uint256);
 
     /**
-     * @notice Set the price for App
-     * @param newFloorPrice The new App price
+     * @notice Set the price for RZR
+     * @param newFloorPrice The new RZR price
      */
     function setAppPrice(uint256 newFloorPrice) external;
 }

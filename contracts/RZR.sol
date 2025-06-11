@@ -8,10 +8,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
-contract App is OFT, ERC20Permit, Pausable, AppAccessControlled, IApp {
+contract RZR is OFT, ERC20Permit, Pausable, AppAccessControlled, IApp {
     constructor(address _lzEndpoint, address _authority)
-        OFT("App.finance", "App", _lzEndpoint, msg.sender)
-        ERC20Permit("AppFinance")
+        OFT("Rezerve.money", "RZR", _lzEndpoint, msg.sender)
+        ERC20Permit("Rezerve")
         Ownable(msg.sender)
     {
         __AppAccessControlled_init(_authority);

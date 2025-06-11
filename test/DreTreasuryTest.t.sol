@@ -59,9 +59,9 @@ contract AppTreasuryTest is BaseTest {
         uint256 profit = 100e18;
         uint256 dreMinted = treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
-        // Verify App was minted correctly
-        assertEq(app.balanceOf(owner), dreMinted, "App balance of owner should be equal to App minted");
-        assertEq(dreMinted, depositAmount - profit, "App minted should be equal to deposit amount minus profit");
+        // Verify RZR was minted correctly
+        assertEq(app.balanceOf(owner), dreMinted, "RZR balance of owner should be equal to RZR minted");
+        assertEq(dreMinted, depositAmount - profit, "RZR minted should be equal to deposit amount minus profit");
 
         // Verify reserves were updated
         assertEq(treasury.totalReserves(), depositAmount, "Total reserves should be equal to deposit amount");
@@ -87,7 +87,7 @@ contract AppTreasuryTest is BaseTest {
         app.approve(address(treasury), type(uint256).max);
         treasury.withdraw(withdrawAmount, address(mockQuoteToken));
 
-        // Verify App was burned
+        // Verify RZR was burned
         assertEq(app.balanceOf(owner), 500e18);
 
         treasury.syncReserves();
@@ -145,11 +145,11 @@ contract AppTreasuryTest is BaseTest {
         uint256 profit = 100e18;
         treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
-        // Now mint some App
+        // Now mint some RZR
         uint256 mintAmount = 20e18;
         treasury.mint(user1, mintAmount);
 
-        // Verify App was minted to user1
+        // Verify RZR was minted to user1
         assertEq(app.balanceOf(user1), mintAmount);
 
         vm.stopPrank();

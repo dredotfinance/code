@@ -24,7 +24,7 @@ interface IAppBondDepository is IERC721Enumerable {
         IERC20 quoteToken; // token to accept as payment
         uint256 totalDebt; // total debt from bond
         uint256 maxPayout; // max tokens in/out
-        uint256 sold; // App tokens out
+        uint256 sold; // RZR tokens out
         uint256 purchased; // quote tokens in
         uint256 startTime; // when the bond starts
         uint256 endTime; // when the bond ends
@@ -34,7 +34,7 @@ interface IAppBondDepository is IERC721Enumerable {
 
     struct BondPosition {
         uint256 bondId;
-        uint256 amount; // amount of App tokens
+        uint256 amount; // amount of RZR tokens
         uint256 quoteAmount; // amount of quote tokens paid
         uint256 startTime; // when the bond was purchased
         uint256 lastClaimTime; // last time tokens were claimed

@@ -5,8 +5,8 @@ pragma abicoder v2;
 import "forge-std/Test.sol";
 import "./BaseTest.sol";
 import "../contracts/RebaseController.sol";
-import "../contracts/App.sol";
-import "../contracts/sApp.sol";
+import "../contracts/RZR.sol";
+import "../contracts/sRZR.sol";
 import "../contracts/AppTreasury.sol";
 import "../contracts/AppStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
@@ -41,7 +41,7 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_BackingRatioWithSupply() public {
-        // Mint some App tokens to simulate supply
+        // Mint some RZR tokens to simulate supply
         app.mint(owner, 1_000_000e18);
 
         // Treasury has 1M quote tokens (1:1 price)
@@ -59,7 +59,7 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_ProjectedMintWithBacking() public {
-        // Mint App tokens to create supply
+        // Mint RZR tokens to create supply
         app.mint(owner, 1_000_000e18);
 
         // Test with 1:1 backing (100%)
@@ -88,7 +88,7 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_ExecuteEpochSuccess() public {
-        // Mint App tokens to create supply
+        // Mint RZR tokens to create supply
         app.mint(owner, 1_000_000e18);
         app.mint(user1, 1_000e18);
 
@@ -125,7 +125,7 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_ExecuteEpochInsufficientReserves() public {
-        // Mint App tokens to create supply
+        // Mint RZR tokens to create supply
         app.mint(owner, 1_000_000e18);
 
         // Don't add any PCV to treasury

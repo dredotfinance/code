@@ -138,8 +138,8 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     function enable(address _address) external onlyGovernor {
         require(_address != address(0), "Zero address");
 
-        // App should not be enabled as a reserve; as this creates a circular dependency
-        require(_address != address(app), "App address");
+        // RZR should not be enabled as a reserve; as this creates a circular dependency
+        require(_address != address(app), "RZR address");
 
         // add token into tokens array if not already added
         bool isAdded = false;

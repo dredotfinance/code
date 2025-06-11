@@ -24,7 +24,7 @@ contract AppStakingTest is BaseTest {
     function test_CreatePosition() public {
         vm.startPrank(owner);
 
-        // Mint App tokens to owner
+        // Mint RZR tokens to owner
         app.mint(owner, STAKE_AMOUNT);
         app.approve(address(staking), STAKE_AMOUNT);
 

@@ -36,7 +36,7 @@ contract BootstrapLPTest is BaseTest {
 
         // dreOracle.setAppPrice(1e18);
 
-        vm.label(DRE_TOKEN, "App");
+        vm.label(DRE_TOKEN, "RZR");
         vm.label(USDC_TOKEN, "USDC");
         vm.label(LP_TOKEN, "LP");
         vm.label(STAKING, "STAKING");
@@ -79,8 +79,8 @@ contract BootstrapLPTest is BaseTest {
     //         "USDC balance should decrease by bootstrap amount"
     //     );
 
-    //     // Verify App total supply increased
-    //     assertGt(app.totalSupply(), initialAppTotalSupply, "App total supply should increase");
+    //     // Verify RZR total supply increased
+    //     assertGt(app.totalSupply(), initialAppTotalSupply, "RZR total supply should increase");
 
     //     // Verify LP tokens were sent to treasury
     //     assertGt(lp.balanceOf(TREASURY), initialLpTreasuryBalance, "LP tokens should be sent to treasury");
@@ -88,8 +88,8 @@ contract BootstrapLPTest is BaseTest {
     //     // Verify staked balance increased
     //     assertGt(dreStaking.balanceOf(usdcWhale), initialStakedBalance, "Staked balance should increase");
 
-    //     // Verify LP token has App and USDC balances
-    //     assertGt(app.balanceOf(LP_TOKEN), initialAppLpBalance, "LP should have more App tokens");
+    //     // Verify LP token has RZR and USDC balances
+    //     assertGt(app.balanceOf(LP_TOKEN), initialAppLpBalance, "LP should have more RZR tokens");
     //     assertGt(usdc.balanceOf(LP_TOKEN), initialUsdcLpBalance, "LP should have more USDC tokens");
     // }
 
@@ -109,7 +109,7 @@ contract BootstrapLPTest is BaseTest {
 
     //     vm.startPrank(usdcWhale);
 
-    //     // Do a swap to shift the price of App
+    //     // Do a swap to shift the price of RZR
     //     usdc.approve(address(ROUTER), type(uint256).max);
     //     IShadowRouter router = IShadowRouter(ROUTER);
     //     IShadowRouter.route[] memory routes = new IShadowRouter.route[](1);

@@ -1,6 +1,6 @@
-# App Finance Protocol
+# RZR Finance Protocol
 
-Welcome to the App Finance. Here you’ll find everything you need to know about App, our dynamic currency, and DrApp, its governance and insurance token.
+Welcome to the RZR Finance. Here you’ll find everything you need to know about RZR, our dynamic currency, and DrApp, its governance and insurance token.
 
 To learn more about the protocol, deep dive into the
 

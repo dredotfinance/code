@@ -13,8 +13,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-/// @title App UI Helper
-/// @author App Protocol
+/// @title RZR UI Helper
+/// @author RZR Protocol
 contract AppUIHelper {
     using SafeERC20 for IERC20;
 
@@ -45,7 +45,7 @@ contract AppUIHelper {
     struct BondPositionInfo {
         uint256 id;
         uint256 bondId;
-        uint256 amount; // amount of App tokens
+        uint256 amount; // amount of RZR tokens
         uint256 quoteAmount; // amount of quote tokens paid
         uint256 startTime; // when the bond was purchased
         uint256 lastClaimTime; // last time tokens were claimed
@@ -59,7 +59,7 @@ contract AppUIHelper {
         IERC20 quoteToken; // token to accept as payment
         uint256 totalDebt; // total debt from bond
         uint256 maxPayout; // max tokens in/out
-        uint256 sold; // App tokens out
+        uint256 sold; // RZR tokens out
         uint256 purchased; // quote tokens in
         uint256 startTime; // when the bond starts
         uint256 endTime; // when the bond ends
@@ -153,13 +153,13 @@ contract AppUIHelper {
         view
         returns (TokenInfo[] memory tokenInfos)
     {
-        tokenInfos = new TokenInfo[](bondTokens.length + 2); // +1 for App token, +1 for staking token
+        tokenInfos = new TokenInfo[](bondTokens.length + 2); // +1 for RZR token, +1 for staking token
 
-        // Add App token info
+        // Add RZR token info
         tokenInfos[0] = TokenInfo({
             token: address(dreToken),
-            name: "App",
-            symbol: "App",
+            name: "RZR",
+            symbol: "RZR",
             balance: dreToken.balanceOf(user),
             allowance: dreToken.allowance(user, address(staking)),
             treasuryBalance: dreToken.balanceOf(address(treasury)),
@@ -172,8 +172,8 @@ contract AppUIHelper {
         // Add staking token info
         tokenInfos[1] = TokenInfo({
             token: address(stakingToken),
-            name: "Staked App",
-            symbol: "sApp",
+            name: "Staked RZR",
+            symbol: "sRZR",
             balance: stakingToken.balanceOf(user),
             allowance: stakingToken.allowance(user, address(staking)),
             treasuryBalance: 0,

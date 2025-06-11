@@ -11,8 +11,8 @@ import "./interfaces/IApp.sol";
 import "./interfaces/IAppBondDepository.sol";
 import "./interfaces/IAppTreasury.sol";
 
-/// @title App Bond Depository
-/// @author App Protocol
+/// @title RZR Bond Depository
+/// @author RZR Protocol
 contract AppBondDepository is
     AppAccessControlled,
     ERC721EnumerableUpgradeable,
@@ -40,7 +40,7 @@ contract AppBondDepository is
         override
         reinitializer(3)
     {
-        __ERC721_init("App Bond Position", "App-BOND");
+        __ERC721_init("RZR Bond Position", "RZR-BOND");
         __ReentrancyGuard_init();
         __AppAccessControlled_init(_authority);
         staking = IAppStaking(_staking);
@@ -108,7 +108,7 @@ contract AppBondDepository is
      * @param _maxPrice maximum price willing to pay
      * @param _minPayout minimum payout required
      * @param _user recipient of the bond
-     * @return payout_ amount of App tokens
+     * @return payout_ amount of RZR tokens
      * @return tokenId_ ID of the bond position NFT
      */
     function deposit(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, address _user)
@@ -145,7 +145,7 @@ contract AppBondDepository is
         bond.quoteToken.safeTransferFrom(msg.sender, address(this), _amount);
         bond.quoteToken.safeTransfer(authority.operationsTreasury(), teamFee);
 
-        // Deposit to treasury and mint App tokens
+        // Deposit to treasury and mint RZR tokens
         bond.quoteToken.safeTransfer(address(treasury), protocolAmount);
         uint256 mintedAmount = treasury.tokenValueE18(address(bond.quoteToken), protocolAmount);
         app.mint(address(this), mintedAmount);

@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 interface IAppStaking is IERC721Enumerable {
     // Structs
     struct Position {
-        uint256 amount; // Amount of App staked
-        uint256 declaredValue; // Self-declared value in App
+        uint256 amount; // Amount of RZR staked
+        uint256 declaredValue; // Self-declared value in RZR
         uint256 rewardPerTokenPaid; // Reward per token paid
         uint256 rewards; // Accumulated rewards
         uint256 cooldownEnd; // When cooldown period ends; if 0, position is not in cooldown

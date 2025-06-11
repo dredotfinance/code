@@ -13,14 +13,14 @@ import "./AppAccessControlled.sol";
 
 /**
  * @title BondController
- * @dev Minimal reference implementation of App's bonding-curve logic.
+ * @dev Minimal reference implementation of RZR's bonding-curve logic.
  *      ─ Calculates backing ratio β = PCV / supply
  *      ─ Determines epochic rebase rate r_t using piece-wise curve
- *      ─ Mints App supply for stakers each epoch once called by a keeper
+ *      ─ Mints RZR supply for stakers each epoch once called by a keeper
  *      ─ Exposes view helpers for front-end gauges
  */
 contract RebaseController is AppAccessControlled, IRebaseController {
-    IApp public app; // App token (decimals = 18)
+    IApp public app; // RZR token (decimals = 18)
     IAppTreasury public treasury;
     IAppStaking public staking; // staking contract or escrow
     IAppOracle public oracle; // price oracle

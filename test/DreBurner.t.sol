@@ -49,7 +49,7 @@ contract AppBurnerTest is BaseTest {
     }
 
     function testBurn() public {
-        // Setup: Mint App tokens to burner
+        // Setup: Mint RZR tokens to burner
         vm.startPrank(owner);
 
         app.mint(address(owner), 1000e18);
@@ -62,8 +62,8 @@ contract AppBurnerTest is BaseTest {
         uint256 newFloorPrice = dreOracle.getAppPrice();
         assertApproxEqRel(newFloorPrice, 2e18, 0.001e18, "Floor price should update correctly after burn");
 
-        // Verify App balance is zero after burn
-        assertEq(app.balanceOf(address(burner)), 0, "All App tokens should be burned");
+        // Verify RZR balance is zero after burn
+        assertEq(app.balanceOf(address(burner)), 0, "All RZR tokens should be burned");
         vm.stopPrank();
     }
 
@@ -101,8 +101,8 @@ contract AppBurnerTest is BaseTest {
         // uint256 newFloorPrice = dreOracle.getAppPrice();
         // assertEq(newFloorPrice, 1e22, "Floor price should update correctly with large burn amount");
 
-        // // Verify App balance is zero after burn
-        // assertEq(app.balanceOf(address(burner)), 0, "All App tokens should be burned");
+        // // Verify RZR balance is zero after burn
+        // assertEq(app.balanceOf(address(burner)), 0, "All RZR tokens should be burned");
         // vm.stopPrank();
     }
 }
