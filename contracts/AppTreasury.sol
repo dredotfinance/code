@@ -13,16 +13,11 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     using SafeERC20 for IERC20;
 
     IApp public app;
+    uint256 private _totalReserves;
 
     address[] public tokens;
     mapping(address => bool) public enabledTokens;
     IAppOracle public dreOracle;
-
-    uint256 private _totalReserves;
-
-    string internal notAccepted = "Treasury: not accepted";
-    string internal invalidToken = "Treasury: invalid token";
-    string internal insufficientReserves = "Treasury: insufficient reserves";
 
     /// @inheritdoc IAppTreasury
     uint256 public override creditReserves;
@@ -64,7 +59,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         onlyReserveDepositor
         returns (uint256 send_)
     {
-        require(enabledTokens[_token], invalidToken);
+        require(enabledTokens[_token], "Treasury: invalid token");
 
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -90,7 +85,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         whenNotPaused
         onlyReserveManager
     {
-        require(enabledTokens[_token], notAccepted);
+        require(enabledTokens[_token], "Treasury: not accepted");
 
         uint256 value = tokenValueE18(_token, _amount);
         app.transferFrom(msg.sender, address(this), value);
@@ -114,7 +109,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         _updateReserves();
         if (enabledTokens[_token]) {
             value_ = tokenValueE18(_token, _amount);
-            require(value_ <= excessReserves(), insufficientReserves);
+            require(value_ <= excessReserves(), "Treasury: insufficient reserves");
             _totalReserves = _totalReserves - value_;
         }
         IERC20(_token).safeTransfer(msg.sender, _amount);
@@ -124,7 +119,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     /// @inheritdoc IAppTreasury
     function mint(address _recipient, uint256 _amount) external override nonReentrant whenNotPaused onlyRewardManager {
         _updateReserves();
-        require(_amount <= excessReserves(), insufficientReserves);
+        require(_amount <= excessReserves(), "Treasury: insufficient reserves");
         app.mint(_recipient, _amount);
         emit Minted(msg.sender, _recipient, _amount);
     }
