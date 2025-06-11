@@ -1,7 +1,7 @@
 {
   "name": "drefinance-code",
   "version": "1.0.0",
-  "description": "Smart Contracts for Dre Finance",
+  "description": "Smart Contracts for App Finance",
   "directories": {
     "test": "test",
     "contracts": "contracts"
