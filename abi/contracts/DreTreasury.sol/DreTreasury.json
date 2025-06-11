@@ -40,7 +40,7 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "authority",
         "type": "address"
       }
@@ -294,7 +294,7 @@
     "name": "authority",
     "outputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "",
         "type": "address"
       }
@@ -398,10 +398,10 @@
   },
   {
     "inputs": [],
-    "name": "dre",
+    "name": "app",
     "outputs": [
       {
-        "internalType": "contract IDRE",
+        "internalType": "contract IApp",
         "name": "",
         "type": "address"
       }
@@ -414,7 +414,7 @@
     "name": "dreOracle",
     "outputs": [
       {
-        "internalType": "contract IDreOracle",
+        "internalType": "contract IAppOracle",
         "name": "",
         "type": "address"
       }
@@ -555,7 +555,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "_newAuthority",
         "type": "address"
       }

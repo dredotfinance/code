@@ -7,8 +7,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "./interfaces/IDreStaking.sol";
-import "./DreAccessControlled.sol";
+import "./interfaces/IAppStaking.sol";
+import "./AppAccessControlled.sol";
 
 // Permissioned ERC20 for tracking events
 interface IPermissionedERC20 {
@@ -17,9 +17,9 @@ interface IPermissionedERC20 {
     function burn(address from, uint256 amount) external;
 }
 
-contract DreStaking is
-    IDreStaking,
-    DreAccessControlled,
+contract AppStaking is
+    IAppStaking,
+    AppAccessControlled,
     ERC721EnumerableUpgradeable,
     ReentrancyGuardUpgradeable,
     MulticallUpgradeable
@@ -59,15 +59,15 @@ contract DreStaking is
     {
         if (lastId == 0) lastId = 1;
 
-        __ERC721_init("DRE Staking Position", "DRE-POS");
+        __ERC721_init("App Staking Position", "App-POS");
         __ReentrancyGuard_init();
 
-        require(_dreToken != address(0), "Invalid DRE token address");
+        require(_dreToken != address(0), "Invalid App token address");
         require(_trackingToken != address(0), "Invalid tracking token address");
 
         dreToken = IERC20(_dreToken);
         trackingToken = IPermissionedERC20(_trackingToken);
-        __DreAccessControlled_init(_authority);
+        __AppAccessControlled_init(_authority);
 
         burner = _burner;
     }
@@ -127,7 +127,7 @@ contract DreStaking is
     /**
      * @notice Create a new position
      * @param to The address to mint the position to
-     * @param amount The amount of DRE to stake
+     * @param amount The amount of App to stake
      * @param declaredValue The declared value of the position
      * @param minLockDuration The minimum time tokens must be locked (0 for no minimum)
      * @return tokenId The token ID of the new position
@@ -142,7 +142,7 @@ contract DreStaking is
         require(amount > 0, "Amount must be greater than 0");
         require(declaredValue > 0, "Declared value must be greater than 0");
 
-        // Transfer DRE tokens from user
+        // Transfer App tokens from user
         dreToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // Calculate and collect harberger tax
@@ -205,7 +205,7 @@ contract DreStaking is
         // Burn tracking tokens for the unstaked amount
         trackingToken.burn(msg.sender, amount);
 
-        // Transfer DRE tokens back to user
+        // Transfer App tokens back to user
         dreToken.safeTransfer(msg.sender, amount);
 
         // Burn the NFT
@@ -231,7 +231,7 @@ contract DreStaking is
         uint256 resellFee = (price * TEAM_TREASURY_SHARE) / BASIS_POINTS;
         uint256 sellerAmount = price - resellFee;
 
-        // Transfer DRE tokens from buyer
+        // Transfer App tokens from buyer
         dreToken.safeTransferFrom(msg.sender, address(this), price);
 
         // Distribute payment
@@ -293,7 +293,7 @@ contract DreStaking is
         Position storage position = _positions[tokenId];
         address owner = ownerOf(tokenId);
 
-        // Transfer DRE tokens from user
+        // Transfer App tokens from user
         if (additionalAmount > 0) {
             dreToken.safeTransferFrom(msg.sender, address(this), additionalAmount);
         }
@@ -373,7 +373,7 @@ contract DreStaking is
 
     /**
      * @notice Distribute the tax to the operations treasury and protocol treasury
-     * @param amount The amount of DRE to distribute
+     * @param amount The amount of App to distribute
      */
     function _distributeTax(uint256 amount) internal returns (uint256 taxPaid) {
         uint256 taxPaidTreasury = (amount * HARBERGER_TAX_RATE) / BASIS_POINTS;
@@ -401,6 +401,6 @@ contract DreStaking is
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
-        return "https://uri.dre.finance/staking/";
+        return "https://uri.app.finance/staking/";
     }
 }

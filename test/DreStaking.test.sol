@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
 
-contract DreStakingTest is BaseTest {
+contract AppStakingTest is BaseTest {
     uint256 public constant STAKE_AMOUNT = 1000e18;
     uint256 public constant DECLARED_VALUE = 1000e18;
     uint256 public constant REWARD_AMOUNT = 100e18;
@@ -16,29 +16,29 @@ contract DreStakingTest is BaseTest {
     }
 
     function test_Initialize() public view {
-        assertEq(address(staking.dreToken()), address(dre));
-        assertEq(address(staking.trackingToken()), address(sDre));
+        assertEq(address(staking.dreToken()), address(app));
+        assertEq(address(staking.trackingToken()), address(sapp));
         assertEq(staking.totalStaked(), 0);
     }
 
     function test_CreatePosition() public {
         vm.startPrank(owner);
 
-        // Mint DRE tokens to owner
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        // Mint App tokens to owner
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
 
         // Create position
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Verify position details
-        IDreStaking.Position memory position = staking.positions(tokenId);
+        IAppStaking.Position memory position = staking.positions(tokenId);
 
         assertEq(position.amount, STAKE_AMOUNT - 50e18);
         assertEq(position.declaredValue, DECLARED_VALUE);
         assertEq(position.cooldownEnd, 0);
         assertEq(staking.totalStaked(), STAKE_AMOUNT - 50e18);
-        assertEq(sDre.balanceOf(owner), STAKE_AMOUNT - 50e18);
+        assertEq(sapp.balanceOf(owner), STAKE_AMOUNT - 50e18);
 
         vm.stopPrank();
     }
@@ -47,15 +47,15 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position first
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Start unstaking
         staking.startUnstaking(tokenId);
 
         // Verify cooldown state
-        IDreStaking.Position memory position = staking.positions(tokenId);
+        IAppStaking.Position memory position = staking.positions(tokenId);
         assertTrue(position.cooldownEnd > 0);
         assertEq(position.cooldownEnd, block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD());
 
@@ -66,8 +66,8 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position first
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId, uint256 taxPaid) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Start and complete unstaking
@@ -76,13 +76,13 @@ contract DreStakingTest is BaseTest {
         // Fast forward past cooldown period
         vm.warp(block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD() + 1);
 
-        uint256 balanceBefore = dre.balanceOf(owner);
+        uint256 balanceBefore = app.balanceOf(owner);
         staking.completeUnstaking(tokenId);
 
         // Verify tokens returned and position burned
-        assertEq(dre.balanceOf(owner), balanceBefore + STAKE_AMOUNT - taxPaid);
+        assertEq(app.balanceOf(owner), balanceBefore + STAKE_AMOUNT - taxPaid);
         assertEq(staking.totalStaked(), 0);
-        assertEq(sDre.balanceOf(owner), 0);
+        assertEq(sapp.balanceOf(owner), 0);
 
         vm.stopPrank();
     }
@@ -91,13 +91,13 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Add rewards
-        dre.mint(owner, REWARD_AMOUNT);
-        dre.approve(address(staking), REWARD_AMOUNT);
+        app.mint(owner, REWARD_AMOUNT);
+        app.approve(address(staking), REWARD_AMOUNT);
         staking.notifyRewardAmount(REWARD_AMOUNT);
 
         // Fast forward past reward cooldown
@@ -114,32 +114,32 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // taxes would've been paid
-        assertEq(dre.balanceOf(operationsTreasury), 10e18);
-        assertEq(dre.balanceOf(address(burner)), 40e18);
+        assertEq(app.balanceOf(operationsTreasury), 10e18);
+        assertEq(app.balanceOf(address(burner)), 40e18);
 
-        dre.mint(user1, DECLARED_VALUE);
+        app.mint(user1, DECLARED_VALUE);
 
         // Switch to buyer
         vm.stopPrank();
         vm.startPrank(user1);
 
         // Buy position
-        dre.approve(address(staking), DECLARED_VALUE);
+        app.approve(address(staking), DECLARED_VALUE);
         staking.buyPosition(tokenId);
 
         // Verify ownership transfer
         assertEq(staking.ownerOf(tokenId), user1);
-        assertEq(sDre.balanceOf(user1), STAKE_AMOUNT - 50e18);
-        assertEq(sDre.balanceOf(owner), 0);
+        assertEq(sapp.balanceOf(user1), STAKE_AMOUNT - 50e18);
+        assertEq(sapp.balanceOf(owner), 0);
 
         // no taxes earned but the burner gets 1% of the declared value
-        assertEq(dre.balanceOf(operationsTreasury), 10e18);
-        assertEq(dre.balanceOf(address(burner)), 50e18);
+        assertEq(app.balanceOf(operationsTreasury), 10e18);
+        assertEq(app.balanceOf(address(burner)), 50e18);
 
         vm.stopPrank();
     }
@@ -148,11 +148,11 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create initial position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
-        IDreStaking.Position memory initialPosition = staking.positions(tokenId);
+        IAppStaking.Position memory initialPosition = staking.positions(tokenId);
         assertEq(initialPosition.amount, STAKE_AMOUNT - 50e18);
         assertEq(initialPosition.declaredValue, DECLARED_VALUE);
         assertEq(staking.totalStaked(), STAKE_AMOUNT - 50e18);
@@ -160,12 +160,12 @@ contract DreStakingTest is BaseTest {
         // Increase amount
         uint256 additionalAmount = 500e18;
         uint256 additionalDeclaredValue = 50e18;
-        dre.mint(owner, additionalAmount);
-        dre.approve(address(staking), additionalAmount);
+        app.mint(owner, additionalAmount);
+        app.approve(address(staking), additionalAmount);
         staking.increaseAmount(tokenId, additionalAmount, additionalDeclaredValue);
 
         // Verify position updated
-        IDreStaking.Position memory finalPosition = staking.positions(tokenId);
+        IAppStaking.Position memory finalPosition = staking.positions(tokenId);
         assertEq(finalPosition.amount, STAKE_AMOUNT + additionalAmount - 50e18 - 2.5e18);
         assertEq(finalPosition.declaredValue, DECLARED_VALUE + additionalDeclaredValue);
         assertEq(staking.totalStaked(), STAKE_AMOUNT + additionalAmount - 50e18 - 2.5e18);
@@ -177,8 +177,8 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Start unstaking
@@ -188,7 +188,7 @@ contract DreStakingTest is BaseTest {
         staking.cancelUnstaking(tokenId);
 
         // Verify cooldown cancelled
-        IDreStaking.Position memory position = staking.positions(tokenId);
+        IAppStaking.Position memory position = staking.positions(tokenId);
         assertEq(position.cooldownEnd, 0);
 
         vm.stopPrank();
@@ -202,8 +202,8 @@ contract DreStakingTest is BaseTest {
 
     function testFail_CreatePositionWithZeroValue() public {
         vm.startPrank(owner);
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         staking.createPosition(owner, STAKE_AMOUNT, 0, 0);
         vm.stopPrank();
     }
@@ -212,8 +212,8 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         vm.stopPrank();
@@ -228,8 +228,8 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Start unstaking
@@ -245,13 +245,13 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Add rewards
-        dre.mint(address(this), REWARD_AMOUNT);
-        dre.approve(address(staking), REWARD_AMOUNT);
+        app.mint(address(this), REWARD_AMOUNT);
+        app.approve(address(staking), REWARD_AMOUNT);
         staking.notifyRewardAmount(REWARD_AMOUNT);
 
         // Try to claim before cooldown
@@ -264,13 +264,13 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Try to buy own position
-        dre.mint(owner, DECLARED_VALUE);
-        dre.approve(address(staking), DECLARED_VALUE);
+        app.mint(owner, DECLARED_VALUE);
+        app.approve(address(staking), DECLARED_VALUE);
         staking.buyPosition(tokenId);
 
         vm.stopPrank();
@@ -280,22 +280,22 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create two positions
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId1,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
-        dre.mint(user1, STAKE_AMOUNT);
+        app.mint(user1, STAKE_AMOUNT);
 
         vm.stopPrank();
         vm.startPrank(user1);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId2,) = staking.createPosition(user1, STAKE_AMOUNT, DECLARED_VALUE, 0);
         vm.stopPrank();
 
         // Add rewards
         vm.startPrank(owner);
-        dre.mint(owner, REWARD_AMOUNT);
-        dre.approve(address(staking), REWARD_AMOUNT);
+        app.mint(owner, REWARD_AMOUNT);
+        app.approve(address(staking), REWARD_AMOUNT);
         staking.notifyRewardAmount(REWARD_AMOUNT);
 
         // Fast forward to distribute rewards
@@ -323,8 +323,8 @@ contract DreStakingTest is BaseTest {
 
         // Create position with high declared value to test tax
         uint256 highValue = 10000e18;
-        dre.mint(owner, STAKE_AMOUNT + highValue);
-        dre.approve(address(staking), STAKE_AMOUNT + highValue);
+        app.mint(owner, STAKE_AMOUNT + highValue);
+        app.approve(address(staking), STAKE_AMOUNT + highValue);
         staking.createPosition(owner, STAKE_AMOUNT, highValue, 0);
 
         // Calculate expected tax distribution
@@ -332,8 +332,8 @@ contract DreStakingTest is BaseTest {
         uint256 treasuryShare = (highValue * staking.HARBERGER_TAX_RATE()) / staking.BASIS_POINTS();
 
         // Verify tax distribution
-        assertEq(dre.balanceOf(dreAuthority.operationsTreasury()), operationsShare);
-        assertEq(dre.balanceOf(address(burner)), treasuryShare);
+        assertEq(app.balanceOf(dreAuthority.operationsTreasury()), operationsShare);
+        assertEq(app.balanceOf(address(burner)), treasuryShare);
 
         vm.stopPrank();
     }
@@ -342,13 +342,13 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create initial position
-        dre.mint(owner, STAKE_AMOUNT);
-        dre.approve(address(staking), STAKE_AMOUNT);
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // Add rewards before selling
-        dre.mint(owner, REWARD_AMOUNT);
-        dre.approve(address(staking), REWARD_AMOUNT);
+        app.mint(owner, REWARD_AMOUNT);
+        app.approve(address(staking), REWARD_AMOUNT);
         staking.notifyRewardAmount(REWARD_AMOUNT);
 
         // Fast forward to accumulate rewards
@@ -358,20 +358,20 @@ contract DreStakingTest is BaseTest {
         uint256 earnedBefore = staking.earned(tokenId);
 
         // Prepare buyer
-        dre.mint(user1, DECLARED_VALUE);
+        app.mint(user1, DECLARED_VALUE);
         vm.stopPrank();
 
         // Buyer purchases the position
         vm.startPrank(user1);
-        dre.approve(address(staking), DECLARED_VALUE);
+        app.approve(address(staking), DECLARED_VALUE);
         staking.buyPosition(tokenId);
 
         // Verify buyer owns the position
         assertEq(staking.ownerOf(tokenId), user1);
-        assertEq(sDre.balanceOf(user1), STAKE_AMOUNT - 50e18);
+        assertEq(sapp.balanceOf(user1), STAKE_AMOUNT - 50e18);
 
         // Verify rewards were automatically claimed during purchase
-        assertEq(dre.balanceOf(user1), earnedBefore);
+        assertEq(app.balanceOf(user1), earnedBefore);
 
         // Start unstaking process
         staking.startUnstaking(tokenId);
@@ -380,13 +380,13 @@ contract DreStakingTest is BaseTest {
         vm.warp(block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD() + 1);
 
         // Complete unstaking
-        uint256 balanceBefore = dre.balanceOf(user1);
+        uint256 balanceBefore = app.balanceOf(user1);
         staking.completeUnstaking(tokenId);
 
         // Verify tokens returned to buyer
-        assertEq(dre.balanceOf(user1), balanceBefore + STAKE_AMOUNT - 50e18);
+        assertEq(app.balanceOf(user1), balanceBefore + STAKE_AMOUNT - 50e18);
         assertEq(staking.totalStaked(), 0);
-        assertEq(sDre.balanceOf(user1), 0);
+        assertEq(sapp.balanceOf(user1), 0);
 
         vm.stopPrank();
     }
@@ -401,22 +401,22 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create two positions with different amounts
-        dre.mint(owner, stakeAmount1);
-        dre.approve(address(staking), stakeAmount1);
+        app.mint(owner, stakeAmount1);
+        app.approve(address(staking), stakeAmount1);
         (uint256 tokenId1,) = staking.createPosition(owner, stakeAmount1, stakeAmount1, 0);
 
-        dre.mint(user1, stakeAmount2);
+        app.mint(user1, stakeAmount2);
         vm.stopPrank();
 
         vm.startPrank(user1);
-        dre.approve(address(staking), stakeAmount2);
+        app.approve(address(staking), stakeAmount2);
         (uint256 tokenId2,) = staking.createPosition(user1, stakeAmount2, stakeAmount2, 0);
         vm.stopPrank();
 
         // Add rewards
         vm.startPrank(owner);
-        dre.mint(owner, rewardAmount);
-        dre.approve(address(staking), rewardAmount);
+        app.mint(owner, rewardAmount);
+        app.approve(address(staking), rewardAmount);
         staking.notifyRewardAmount(rewardAmount);
 
         // Fast forward by random time
@@ -468,18 +468,18 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create initial position
-        dre.mint(owner, stakeAmount + additionalAmount);
-        dre.approve(address(staking), stakeAmount + additionalAmount);
+        app.mint(owner, stakeAmount + additionalAmount);
+        app.approve(address(staking), stakeAmount + additionalAmount);
         (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
 
         // Get initial position details
-        IDreStaking.Position memory initialPosition = staking.positions(tokenId);
+        IAppStaking.Position memory initialPosition = staking.positions(tokenId);
 
         // Increase position
         staking.increaseAmount(tokenId, additionalAmount, additionalValue);
 
         // Get updated position details
-        IDreStaking.Position memory finalPosition = staking.positions(tokenId);
+        IAppStaking.Position memory finalPosition = staking.positions(tokenId);
 
         // Verify position was updated correctly
         uint256 totalTax = staking.HARBERGER_TAX_RATE() + staking.TEAM_TREASURY_SHARE();
@@ -500,14 +500,14 @@ contract DreStakingTest is BaseTest {
         staking.startUnstaking(tokenId);
 
         // Verify cooldown started
-        IDreStaking.Position memory position = staking.positions(tokenId);
+        IAppStaking.Position memory position = staking.positions(tokenId);
         assertTrue(position.cooldownEnd > 0, "Cooldown not started");
 
         // Cancel unstaking
         staking.cancelUnstaking(tokenId);
 
         // Verify cooldown cancelled
-        IDreStaking.Position memory cooldownPosition = staking.positions(tokenId);
+        IAppStaking.Position memory cooldownPosition = staking.positions(tokenId);
         assertEq(cooldownPosition.cooldownEnd, 0, "Cooldown not cancelled");
 
         vm.stopPrank();
@@ -524,21 +524,21 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create position
-        dre.mint(owner, stakeAmount);
-        dre.approve(address(staking), stakeAmount);
+        app.mint(owner, stakeAmount);
+        app.approve(address(staking), stakeAmount);
         (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, stakeAmount, 0);
 
         // Add first reward
-        dre.mint(owner, rewardAmount);
-        dre.approve(address(staking), rewardAmount);
+        app.mint(owner, rewardAmount);
+        app.approve(address(staking), rewardAmount);
         staking.notifyRewardAmount(rewardAmount);
 
         // Fast forward
         vm.warp(block.timestamp + timeBetweenRewards);
 
         // Add second reward
-        dre.mint(owner, rewardAmount);
-        dre.approve(address(staking), rewardAmount);
+        app.mint(owner, rewardAmount);
+        app.approve(address(staking), rewardAmount);
         staking.notifyRewardAmount(rewardAmount);
 
         // Fast forward past reward cooldown
@@ -568,13 +568,13 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create initial position
-        dre.mint(owner, stakeAmount);
-        dre.approve(address(staking), stakeAmount);
+        app.mint(owner, stakeAmount);
+        app.approve(address(staking), stakeAmount);
         (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
 
         // Add rewards before selling
-        dre.mint(owner, rewardAmount);
-        dre.approve(address(staking), rewardAmount);
+        app.mint(owner, rewardAmount);
+        app.approve(address(staking), rewardAmount);
         staking.notifyRewardAmount(rewardAmount);
 
         // Fast forward to accumulate rewards
@@ -584,12 +584,12 @@ contract DreStakingTest is BaseTest {
         uint256 earnedBefore = staking.earned(tokenId);
 
         // Prepare buyer
-        dre.mint(user1, declaredValue);
+        app.mint(user1, declaredValue);
         vm.stopPrank();
 
         // Buyer purchases the position
         vm.startPrank(user1);
-        dre.approve(address(staking), declaredValue);
+        app.approve(address(staking), declaredValue);
         staking.buyPosition(tokenId);
 
         uint256 totalTax = staking.HARBERGER_TAX_RATE() + staking.TEAM_TREASURY_SHARE();
@@ -597,7 +597,7 @@ contract DreStakingTest is BaseTest {
         // Verify buyer owns the position
         assertEq(staking.ownerOf(tokenId), user1, "Position ownership not transferred");
         assertApproxEqRel(
-            sDre.balanceOf(user1),
+            sapp.balanceOf(user1),
             stakeAmount - ((declaredValue * totalTax) / staking.BASIS_POINTS()),
             0.0001e18,
             "Tracking tokens not transferred correctly"
@@ -607,11 +607,11 @@ contract DreStakingTest is BaseTest {
         uint256 expectedSellerAmount =
             declaredValue - ((declaredValue * staking.TEAM_TREASURY_SHARE()) / staking.BASIS_POINTS());
         assertApproxEqRel(
-            dre.balanceOf(owner), expectedSellerAmount, 0.0001e18, "Seller did not receive correct amount"
+            app.balanceOf(owner), expectedSellerAmount, 0.0001e18, "Seller did not receive correct amount"
         );
 
         // Verify rewards were automatically claimed during purchase
-        assertEq(dre.balanceOf(user1), earnedBefore, "Rewards not automatically claimed during purchase");
+        assertEq(app.balanceOf(user1), earnedBefore, "Rewards not automatically claimed during purchase");
 
         // Fast forward past reward cooldown
         vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
@@ -638,21 +638,21 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create initial position
-        dre.mint(owner, stakeAmount);
-        dre.approve(address(staking), stakeAmount);
+        app.mint(owner, stakeAmount);
+        app.approve(address(staking), stakeAmount);
         (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
 
         // Add first reward
-        dre.mint(owner, rewardAmount1);
-        dre.approve(address(staking), rewardAmount1);
+        app.mint(owner, rewardAmount1);
+        app.approve(address(staking), rewardAmount1);
         staking.notifyRewardAmount(rewardAmount1);
 
         // Fast forward half the epoch
         vm.warp(block.timestamp + staking.EPOCH_DURATION() / 2);
 
         // Add second reward
-        dre.mint(owner, rewardAmount2);
-        dre.approve(address(staking), rewardAmount2);
+        app.mint(owner, rewardAmount2);
+        app.approve(address(staking), rewardAmount2);
         staking.notifyRewardAmount(rewardAmount2);
 
         vm.warp(block.timestamp + staking.EPOCH_DURATION());
@@ -662,12 +662,12 @@ contract DreStakingTest is BaseTest {
         assertGt(earnedBefore, 0, "No rewards earned before purchase");
 
         // Prepare buyer
-        dre.mint(user1, declaredValue);
+        app.mint(user1, declaredValue);
         vm.stopPrank();
 
         // Buyer purchases the position
         vm.startPrank(user1);
-        dre.approve(address(staking), declaredValue);
+        app.approve(address(staking), declaredValue);
         staking.buyPosition(tokenId);
 
         // Fast forward past reward cooldown
@@ -691,29 +691,29 @@ contract DreStakingTest is BaseTest {
         vm.startPrank(owner);
 
         // Create initial position
-        dre.mint(owner, stakeAmount);
-        dre.approve(address(staking), stakeAmount);
+        app.mint(owner, stakeAmount);
+        app.approve(address(staking), stakeAmount);
         (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
 
         // Add rewards
-        dre.mint(owner, rewardAmount);
-        dre.approve(address(staking), rewardAmount);
+        app.mint(owner, rewardAmount);
+        app.approve(address(staking), rewardAmount);
         staking.notifyRewardAmount(rewardAmount);
 
         // Start unstaking
         staking.startUnstaking(tokenId);
 
         // Prepare buyer
-        dre.mint(user1, declaredValue);
+        app.mint(user1, declaredValue);
         vm.stopPrank();
 
         // Buyer purchases the position
         vm.startPrank(user1);
-        dre.approve(address(staking), declaredValue);
+        app.approve(address(staking), declaredValue);
         staking.buyPosition(tokenId);
 
         // Verify unstaking was cancelled
-        IDreStaking.Position memory position = staking.positions(tokenId);
+        IAppStaking.Position memory position = staking.positions(tokenId);
         assertEq(position.cooldownEnd, 0, "Unstaking not cancelled after position transfer");
 
         // Fast forward past reward cooldown

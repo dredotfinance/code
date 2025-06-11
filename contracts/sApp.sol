@@ -2,9 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import "./DreAccessControlled.sol";
+import "./AppAccessControlled.sol";
 
-contract sDRE is ERC20Permit, DreAccessControlled {
+contract sApp is ERC20Permit, AppAccessControlled {
     event StakingContractUpdated(address stakingContract);
 
     modifier onlyStakingContract() {
@@ -16,8 +16,8 @@ contract sDRE is ERC20Permit, DreAccessControlled {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(address _authority) ERC20("Staked DRE", "sDRE") ERC20Permit("Staked DRE") {
-        __DreAccessControlled_init(_authority);
+    constructor(address _authority) ERC20("Staked App", "sDRE") ERC20Permit("Staked App") {
+        __AppAccessControlled_init(_authority);
     }
 
     /* ========== INITIALIZATION ========== */

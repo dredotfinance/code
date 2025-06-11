@@ -3,11 +3,11 @@ pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
 import "./BaseTest.sol";
-import "../contracts/DreOracle.sol";
+import "../contracts/AppOracle.sol";
 import "../contracts/mocks/MockOracle.sol";
 import "../contracts/mocks/MockERC20.sol";
 
-contract DreOracleTest is BaseTest {
+contract AppOracleTest is BaseTest {
     MockERC20 public usdc;
     MockOracle public usdcPriceOracle;
 
@@ -24,12 +24,12 @@ contract DreOracleTest is BaseTest {
         usdcPriceOracle = new MockOracle(1e18); // 1 USDC = $1
 
         // Set up oracles
-        dreOracle.setDrePrice(1e18);
+        dreOracle.setAppPrice(1e18);
         dreOracle.updateOracle(address(usdc), address(usdcPriceOracle));
     }
 
     function test_Initialization() public view {
-        assertEq(address(dreOracle.dre()), address(dre), "DRE token address should be set");
+        assertEq(address(dreOracle.app()), address(app), "App token address should be set");
     }
 
     function test_UpdateOracle() public {
@@ -37,10 +37,10 @@ contract DreOracleTest is BaseTest {
         MockOracle newOracle = new MockOracle(2e18);
 
         // Update oracle as governor
-        dreOracle.updateOracle(address(dre), address(newOracle));
+        dreOracle.updateOracle(address(app), address(newOracle));
 
         // Verify oracle was updated
-        assertEq(address(dreOracle.oracles(dre)), address(newOracle), "Oracle should be updated");
+        assertEq(address(dreOracle.oracles(app)), address(newOracle), "Oracle should be updated");
     }
 
     function test_UpdateOracleReverts() public {
@@ -49,17 +49,17 @@ contract DreOracleTest is BaseTest {
         // Try to update oracle as non-governor
         vm.prank(user1);
         vm.expectRevert("UNAUTHORIZED");
-        dreOracle.updateOracle(address(dre), address(mockOracle));
+        dreOracle.updateOracle(address(app), address(mockOracle));
 
         // Try to update with zero address token
         vm.prank(owner);
-        vm.expectRevert(IDreOracle.InvalidTokenAddress.selector);
+        vm.expectRevert(IAppOracle.InvalidTokenAddress.selector);
         dreOracle.updateOracle(address(0), address(mockOracle));
 
         // Try to update with zero address oracle
         vm.prank(owner);
-        vm.expectRevert(IDreOracle.InvalidOracleAddress.selector);
-        dreOracle.updateOracle(address(dre), address(0));
+        vm.expectRevert(IAppOracle.InvalidOracleAddress.selector);
+        dreOracle.updateOracle(address(app), address(0));
     }
 
     function test_GetPrice() public {
@@ -77,30 +77,30 @@ contract DreOracleTest is BaseTest {
         // Try to get price for non-existent oracle
         MockERC20 newToken = new MockERC20("NEW", "NEW");
         newToken.setDecimals(18);
-        vm.expectRevert(abi.encodeWithSelector(IDreOracle.OracleNotFound.selector, address(newToken)));
+        vm.expectRevert(abi.encodeWithSelector(IAppOracle.OracleNotFound.selector, address(newToken)));
         dreOracle.getPrice(address(newToken));
     }
 
-    function test_GetPriceInDre() public {
-        // Get USDC price in DRE
-        uint256 usdcPriceInDre = dreOracle.getPriceInDre(address(usdc));
-        assertEq(usdcPriceInDre, 1e18, "USDC price in DRE should be 1 DRE");
+    function test_GetPriceInApp() public {
+        // Get USDC price in App
+        uint256 usdcPriceInApp = dreOracle.getPriceInApp(address(usdc));
+        assertEq(usdcPriceInApp, 1e18, "USDC price in App should be 1 App");
 
-        // Update DRE price to $2
-        dreOracle.setDrePrice(2e18);
-        usdcPriceInDre = dreOracle.getPriceInDre(address(usdc));
-        assertEq(usdcPriceInDre, 5e17, "USDC price in DRE should be 0.5 DRE");
+        // Update App price to $2
+        dreOracle.setAppPrice(2e18);
+        usdcPriceInApp = dreOracle.getPriceInApp(address(usdc));
+        assertEq(usdcPriceInApp, 5e17, "USDC price in App should be 0.5 App");
     }
 
-    function test_GetPriceInDreForAmount() public {
+    function test_GetPriceInAppForAmount() public {
         uint256 amount = 1000 * 1e6; // 1000 USDC
-        uint256 price = dreOracle.getPriceInDreForAmount(address(usdc), amount);
-        assertEq(price, 1000 * 1e18, "1000 USDC should be worth 1000 DRE");
+        uint256 price = dreOracle.getPriceInAppForAmount(address(usdc), amount);
+        assertEq(price, 1000 * 1e18, "1000 USDC should be worth 1000 App");
 
-        // Update DRE price to $2
-        dreOracle.setDrePrice(2e18);
-        price = dreOracle.getPriceInDreForAmount(address(usdc), amount);
-        assertEq(price, 500 * 1e18, "1000 USDC should be worth 500 DRE");
+        // Update App price to $2
+        dreOracle.setAppPrice(2e18);
+        price = dreOracle.getPriceInAppForAmount(address(usdc), amount);
+        assertEq(price, 500 * 1e18, "1000 USDC should be worth 500 App");
     }
 
     function test_GetPriceForAmount() public {
@@ -128,25 +128,25 @@ contract DreOracleTest is BaseTest {
         uint256 price = dreOracle.getPriceForAmount(address(token8), amount);
         assertEq(price, 1000 * 1e18, "Price should be correctly scaled");
 
-        uint256 priceInDre = dreOracle.getPriceInDreForAmount(address(token8), amount);
-        assertEq(priceInDre, 1000 * 1e18, "Price in DRE should be correctly scaled");
+        uint256 priceInApp = dreOracle.getPriceInAppForAmount(address(token8), amount);
+        assertEq(priceInApp, 1000 * 1e18, "Price in App should be correctly scaled");
     }
 
     function test_PriceUpdates() public {
         // Initial prices
-        assertEq(dreOracle.getPrice(address(dre)), 1e18, "Initial DRE price should be 1 USD");
+        assertEq(dreOracle.getPrice(address(app)), 1e18, "Initial App price should be 1 USD");
         assertEq(dreOracle.getPrice(address(usdc)), 1e18, "Initial USDC price should be 1 USD");
 
         // Update prices
-        dreOracle.setDrePrice(2e18); // DRE = $2
+        dreOracle.setAppPrice(2e18); // App = $2
         usdcPriceOracle.setPrice(1.5e18); // USDC = $1.5
 
         // Verify updated prices
-        assertEq(dreOracle.getPrice(address(dre)), 2e18, "Updated DRE price should be 2 USD");
+        assertEq(dreOracle.getPrice(address(app)), 2e18, "Updated App price should be 2 USD");
         assertEq(dreOracle.getPrice(address(usdc)), 1.5e18, "Updated USDC price should be 1.5 USD");
 
-        // Verify price in DRE
-        uint256 usdcPriceInDre = dreOracle.getPriceInDre(address(usdc));
-        assertEq(usdcPriceInDre, 0.75e18, "USDC price in DRE should be 0.75 DRE");
+        // Verify price in App
+        uint256 usdcPriceInApp = dreOracle.getPriceInApp(address(usdc));
+        assertEq(usdcPriceInApp, 0.75e18, "USDC price in App should be 0.75 App");
     }
 }

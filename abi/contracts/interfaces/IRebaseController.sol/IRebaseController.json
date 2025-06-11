@@ -89,10 +89,10 @@
   },
   {
     "inputs": [],
-    "name": "dre",
+    "name": "app",
     "outputs": [
       {
-        "internalType": "contract IDRE",
+        "internalType": "contract IApp",
         "name": "",
         "type": "address"
       }
@@ -245,7 +245,7 @@
     "name": "staking",
     "outputs": [
       {
-        "internalType": "contract IDreStaking",
+        "internalType": "contract IAppStaking",
         "name": "",
         "type": "address"
       }
@@ -258,7 +258,7 @@
     "name": "treasury",
     "outputs": [
       {
-        "internalType": "contract IDreTreasury",
+        "internalType": "contract IAppTreasury",
         "name": "",
         "type": "address"
       }

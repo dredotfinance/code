@@ -3,20 +3,20 @@ pragma solidity ^0.8.15;
 
 /**
  * @notice Library‐style contract that, given one epoch's inputs, returns:
- *         - how many DRE tokens to mint to stakers
+ *         - how many App tokens to mint to stakers
  *         - how much of the inflow (in USD-units) goes to the oracle floor
  *         - how much goes to the ops wallet
  *         - the bumped floor price (if the 5 % surplus rule is met)
  *
  * @dev All dollar values use 18-decimals fixed-point (1e18 == 1 USD).
- *      The caller must pass in `supply` (current circulating DRE) so the
+ *      The caller must pass in `supply` (current circulating App) so the
  *      function can test whether the floor should ratchet.
  *
  *  Inputs
  *  ──────
  *  • yieldTokens   – fresh tokens created by the rebase engine this epoch
  *  • totalSupply   – circulating supply *before* mint
- *  • stakedSupply  – amount of DRE already locked in the staking vault
+ *  • stakedSupply  – amount of App already locked in the staking vault
  *
  *  Outputs
  *  ───────

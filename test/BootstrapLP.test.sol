@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
 import "../contracts/periphery/BootstrapLP.sol";
-import "../contracts/interfaces/IDreStaking.sol";
+import "../contracts/interfaces/IAppStaking.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract BootstrapLPTest is BaseTest {
@@ -31,12 +31,12 @@ contract BootstrapLPTest is BaseTest {
         vm.startPrank(DEPLOYER);
         bootstrapLP = new BootstrapLP(DRE_TOKEN, USDC_TOKEN, LP_TOKEN, STAKING, ROUTER, TREASURY, 10000000e6, 1.1e18, 0);
 
-        IDreAuthority(AUTHORITY).addPolicy(address(bootstrapLP));
+        IAppAuthority(AUTHORITY).addPolicy(address(bootstrapLP));
         vm.stopPrank();
 
-        // dreOracle.setDrePrice(1e18);
+        // dreOracle.setAppPrice(1e18);
 
-        vm.label(DRE_TOKEN, "DRE");
+        vm.label(DRE_TOKEN, "App");
         vm.label(USDC_TOKEN, "USDC");
         vm.label(LP_TOKEN, "LP");
         vm.label(STAKING, "STAKING");
@@ -55,15 +55,15 @@ contract BootstrapLPTest is BaseTest {
     //     vm.startPrank(usdcWhale);
 
     //     IERC20 usdc = IERC20(USDC_TOKEN);
-    //     IERC20 dre = IERC20(DRE_TOKEN);
+    //     IERC20 app = IERC20(DRE_TOKEN);
     //     IERC20 lp = IERC20(LP_TOKEN);
     //     IERC20 dreStaking = IERC20(sDRE_TOKEN);
 
     //     // Store initial balances
     //     uint256 initialUsdcBalance = usdc.balanceOf(usdcWhale);
-    //     // uint256 initialDreBalance = dre.balanceOf(usdcWhale);
-    //     uint256 initialDreTotalSupply = dre.totalSupply();
-    //     uint256 initialDreLpBalance = dre.balanceOf(LP_TOKEN);
+    //     // uint256 initialAppBalance = app.balanceOf(usdcWhale);
+    //     uint256 initialAppTotalSupply = app.totalSupply();
+    //     uint256 initialAppLpBalance = app.balanceOf(LP_TOKEN);
     //     uint256 initialUsdcLpBalance = usdc.balanceOf(LP_TOKEN);
     //     uint256 initialLpTreasuryBalance = lp.balanceOf(TREASURY);
     //     uint256 initialStakedBalance = dreStaking.balanceOf(usdcWhale);
@@ -79,8 +79,8 @@ contract BootstrapLPTest is BaseTest {
     //         "USDC balance should decrease by bootstrap amount"
     //     );
 
-    //     // Verify DRE total supply increased
-    //     assertGt(dre.totalSupply(), initialDreTotalSupply, "DRE total supply should increase");
+    //     // Verify App total supply increased
+    //     assertGt(app.totalSupply(), initialAppTotalSupply, "App total supply should increase");
 
     //     // Verify LP tokens were sent to treasury
     //     assertGt(lp.balanceOf(TREASURY), initialLpTreasuryBalance, "LP tokens should be sent to treasury");
@@ -88,8 +88,8 @@ contract BootstrapLPTest is BaseTest {
     //     // Verify staked balance increased
     //     assertGt(dreStaking.balanceOf(usdcWhale), initialStakedBalance, "Staked balance should increase");
 
-    //     // Verify LP token has DRE and USDC balances
-    //     assertGt(dre.balanceOf(LP_TOKEN), initialDreLpBalance, "LP should have more DRE tokens");
+    //     // Verify LP token has App and USDC balances
+    //     assertGt(app.balanceOf(LP_TOKEN), initialAppLpBalance, "LP should have more App tokens");
     //     assertGt(usdc.balanceOf(LP_TOKEN), initialUsdcLpBalance, "LP should have more USDC tokens");
     // }
 
@@ -109,7 +109,7 @@ contract BootstrapLPTest is BaseTest {
 
     //     vm.startPrank(usdcWhale);
 
-    //     // Do a swap to shift the price of DRE
+    //     // Do a swap to shift the price of App
     //     usdc.approve(address(ROUTER), type(uint256).max);
     //     IShadowRouter router = IShadowRouter(ROUTER);
     //     IShadowRouter.route[] memory routes = new IShadowRouter.route[](1);

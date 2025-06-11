@@ -2,17 +2,17 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./interfaces/IDreAuthority.sol";
+import "./interfaces/IAppAuthority.sol";
 
-abstract contract DreAccessControlled is Initializable {
-    event AuthorityUpdated(IDreAuthority indexed authority);
+abstract contract AppAccessControlled is Initializable {
+    event AuthorityUpdated(IAppAuthority indexed authority);
 
     string UNAUTHORIZED = "UNAUTHORIZED"; // save gas
 
-    IDreAuthority public authority;
+    IAppAuthority public authority;
 
-    function __DreAccessControlled_init(address _authority) internal {
-        _setAuthority(IDreAuthority(_authority));
+    function __AppAccessControlled_init(address _authority) internal {
+        _setAuthority(IAppAuthority(_authority));
     }
 
     modifier onlyGovernor() {
@@ -72,11 +72,11 @@ abstract contract DreAccessControlled is Initializable {
 
     /* ========== GOV ONLY ========== */
 
-    function setAuthority(IDreAuthority _newAuthority) external onlyGovernor {
+    function setAuthority(IAppAuthority _newAuthority) external onlyGovernor {
         _setAuthority(_newAuthority);
     }
 
-    function _setAuthority(IDreAuthority _newAuthority) internal {
+    function _setAuthority(IAppAuthority _newAuthority) internal {
         authority = _newAuthority;
         emit AuthorityUpdated(_newAuthority);
     }

@@ -220,7 +220,7 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "authority",
         "type": "address"
       }
@@ -612,7 +612,7 @@
     "name": "authority",
     "outputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "",
         "type": "address"
       }
@@ -1034,7 +1034,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct IDreStaking.Position",
+        "internalType": "struct IAppStaking.Position",
         "name": "",
         "type": "tuple"
       }
@@ -1153,7 +1153,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "_newAuthority",
         "type": "address"
       }

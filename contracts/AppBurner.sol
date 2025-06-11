@@ -1,37 +1,37 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.15;
 
-import "./DreAccessControlled.sol";
-import "./interfaces/IDreOracle.sol";
-import "./interfaces/IDRE.sol";
+import "./AppAccessControlled.sol";
+import "./interfaces/IAppOracle.sol";
+import "./interfaces/IApp.sol";
 
 import "forge-std/console.sol";
 
-contract DreBurner is DreAccessControlled {
+contract AppBurner is AppAccessControlled {
     uint256 private immutable ONE = 1e18; // 100 %
-    IDreOracle public dreOracle;
-    IDRE public dre;
+    IAppOracle public dreOracle;
+    IApp public app;
 
     event Burned(uint256 amount, uint256 newFloorPrice);
 
     function initialize(address _dreOracle, address _dre, address _authority) external reinitializer(1) {
-        __DreAccessControlled_init(_authority);
-        dreOracle = IDreOracle(_dreOracle);
-        dre = IDRE(_dre);
-        dre.approve(address(this), type(uint256).max);
+        __AppAccessControlled_init(_authority);
+        dreOracle = IAppOracle(_dreOracle);
+        app = IApp(_dre);
+        app.approve(address(this), type(uint256).max);
     }
 
     function burn() external onlyExecutor {
-        uint256 balance = dre.balanceOf(address(this));
-        uint256 floorPrice = dreOracle.getDrePrice();
-        uint256 totalSupply = dre.totalSupply();
+        uint256 balance = app.balanceOf(address(this));
+        uint256 floorPrice = dreOracle.getAppPrice();
+        uint256 totalSupply = app.totalSupply();
         uint256 newFloorPrice = calculateFloorUpdate(balance, totalSupply, floorPrice);
 
         require(newFloorPrice >= floorPrice, "New floor price must be greater than current floor price");
         require(newFloorPrice <= floorPrice * 2, "New floor price must be less than 2x current floor price");
 
-        dre.burn(balance);
-        dreOracle.setDrePrice(newFloorPrice);
+        app.burn(balance);
+        dreOracle.setAppPrice(newFloorPrice);
         emit Burned(balance, newFloorPrice);
     }
 

@@ -12,7 +12,7 @@
         "type": "address"
       },
       {
-        "internalType": "contract IDreOracle",
+        "internalType": "contract IAppOracle",
         "name": "_dreOracle",
         "type": "address"
       }
@@ -35,7 +35,7 @@
   },
   {
     "inputs": [],
-    "name": "dre",
+    "name": "app",
     "outputs": [
       {
         "internalType": "address",
@@ -51,7 +51,7 @@
     "name": "dreOracle",
     "outputs": [
       {
-        "internalType": "contract IDreOracle",
+        "internalType": "contract IAppOracle",
         "name": "",
         "type": "address"
       }

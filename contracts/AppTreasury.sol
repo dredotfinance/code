@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
-import "./DreAccessControlled.sol";
-import "./interfaces/IDreOracle.sol";
-import "./interfaces/IDRE.sol";
-import "./interfaces/IDreTreasury.sol";
+import "./AppAccessControlled.sol";
+import "./interfaces/IAppOracle.sol";
+import "./interfaces/IApp.sol";
+import "./interfaces/IAppTreasury.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
-    IDRE public dre;
+    IApp public app;
 
     address[] public tokens;
     mapping(address => bool) public enabledTokens;
-    IDreOracle public dreOracle;
+    IAppOracle public dreOracle;
 
     uint256 private _totalReserves;
 
@@ -24,38 +24,38 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
     string internal invalidToken = "Treasury: invalid token";
     string internal insufficientReserves = "Treasury: insufficient reserves";
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     uint256 public override creditReserves;
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     uint256 public override unbackedSupply;
 
     function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(5) {
-        require(_dre != address(0), "Zero address: dre");
+        require(_dre != address(0), "Zero address: app");
         require(_dreOracle != address(0), "Zero address: dreOracle");
-        dre = IDRE(_dre);
-        dreOracle = IDreOracle(_dreOracle);
+        app = IApp(_dre);
+        dreOracle = IAppOracle(_dreOracle);
         __Pausable_init();
-        __DreAccessControlled_init(_authority);
+        __AppAccessControlled_init(_authority);
         _updateReserves();
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function setCreditReserves(uint256 _credit) external onlyPolicy {
         emit CreditReservesSet(_credit, creditReserves);
         creditReserves = _credit;
         _updateReserves();
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function setUnbackedSupply(uint256 _unbacked) external onlyPolicy {
-        require(_unbacked <= dre.totalSupply(), "Unbacked supply too high");
+        require(_unbacked <= app.totalSupply(), "Unbacked supply too high");
         emit UnbackedSupplySet(_unbacked, unbackedSupply);
         unbackedSupply = _unbacked;
         _updateReserves();
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function deposit(uint256 _amount, address _token, uint256 _profit)
         external
         override
@@ -70,9 +70,9 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
 
         uint256 value = tokenValueE18(_token, _amount);
 
-        // mint dre needed and store amount of rewards for distribution
+        // mint app needed and store amount of rewards for distribution
         send_ = value - _profit;
-        dre.mint(msg.sender, send_);
+        app.mint(msg.sender, send_);
 
         _totalReserves += value;
 
@@ -82,7 +82,7 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         emit Deposit(_token, _amount, value);
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function withdraw(uint256 _amount, address _token)
         external
         override
@@ -93,8 +93,8 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         require(enabledTokens[_token], notAccepted);
 
         uint256 value = tokenValueE18(_token, _amount);
-        dre.transferFrom(msg.sender, address(this), value);
-        dre.burn(value);
+        app.transferFrom(msg.sender, address(this), value);
+        app.burn(value);
 
         _totalReserves = _totalReserves - value;
         IERC20(_token).safeTransfer(msg.sender, _amount);
@@ -102,7 +102,7 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         emit Withdrawal(_token, _amount, value);
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function manage(address _token, uint256 _amount)
         external
         override
@@ -121,25 +121,25 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         emit Managed(_token, _amount);
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function mint(address _recipient, uint256 _amount) external override nonReentrant whenNotPaused onlyRewardManager {
         _updateReserves();
         require(_amount <= excessReserves(), insufficientReserves);
-        dre.mint(_recipient, _amount);
+        app.mint(_recipient, _amount);
         emit Minted(msg.sender, _recipient, _amount);
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function syncReserves() external onlyExecutor {
         _updateReserves();
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function enable(address _address) external onlyGovernor {
         require(_address != address(0), "Zero address");
 
-        // DRE should not be enabled as a reserve; as this creates a circular dependency
-        require(_address != address(dre), "DRE address");
+        // App should not be enabled as a reserve; as this creates a circular dependency
+        require(_address != address(app), "App address");
 
         // add token into tokens array if not already added
         bool isAdded = false;
@@ -154,22 +154,22 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         enabledTokens[_address] = true;
 
         // ensure the token has a valid price in dreOracle contract
-        require(dreOracle.getPriceInDre(_address) > 0, "Invalid price");
+        require(dreOracle.getPriceInApp(_address) > 0, "Invalid price");
         emit TokenEnabled(_address, true);
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function disable(address _toDisable) external onlyGuardianOrGovernor {
         enabledTokens[_toDisable] = false;
         emit TokenEnabled(_toDisable, false);
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function backingRatioE18() public view returns (uint256) {
         return (totalReserves() * 1e18) / totalSupply();
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function excessReserves() public view override returns (uint256) {
         uint256 totalSupply_ = totalSupply();
         uint256 totalReserves_ = totalReserves();
@@ -177,38 +177,38 @@ contract DreTreasury is DreAccessControlled, IDreTreasury, PausableUpgradeable, 
         return totalReserves_ - totalSupply_;
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function tokenValueE18(address _token, uint256 _amount) public view override returns (uint256 value_) {
-        value_ = dreOracle.getPriceInDreForAmount(_token, _amount);
+        value_ = dreOracle.getPriceInAppForAmount(_token, _amount);
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function actualReserves() public view override returns (uint256) {
         return _totalReserves;
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function actualSupply() public view override returns (uint256) {
-        return dre.totalSupply();
+        return app.totalSupply();
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function totalReserves() public view override returns (uint256) {
         return _totalReserves + creditReserves;
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function totalSupply() public view override returns (uint256) {
-        return dre.totalSupply() - unbackedSupply;
+        return app.totalSupply() - unbackedSupply;
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function calculateReserves() public view override returns (uint256) {
         uint256 reserves = calculateActualReserves();
         return reserves + creditReserves;
     }
 
-    /// @inheritdoc IDreTreasury
+    /// @inheritdoc IAppTreasury
     function calculateActualReserves() public view override returns (uint256 reserves) {
         for (uint256 i = 0; i < tokens.length; i++) {
             if (enabledTokens[tokens[i]]) {

@@ -364,7 +364,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct IDreBondDepository.Bond",
+        "internalType": "struct IAppBondDepository.Bond",
         "name": "bond",
         "type": "tuple"
       }
@@ -508,10 +508,10 @@
   },
   {
     "inputs": [],
-    "name": "dre",
+    "name": "app",
     "outputs": [
       {
-        "internalType": "contract IDRE",
+        "internalType": "contract IApp",
         "name": "",
         "type": "address"
       }
@@ -606,7 +606,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct IDreBondDepository.Bond",
+        "internalType": "struct IAppBondDepository.Bond",
         "name": "",
         "type": "tuple"
       }
@@ -765,7 +765,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IDreBondDepository.BondPosition",
+        "internalType": "struct IAppBondDepository.BondPosition",
         "name": "position",
         "type": "tuple"
       }
@@ -865,7 +865,7 @@
     "name": "staking",
     "outputs": [
       {
-        "internalType": "contract IDreStaking",
+        "internalType": "contract IAppStaking",
         "name": "",
         "type": "address"
       }
@@ -976,7 +976,7 @@
     "name": "treasury",
     "outputs": [
       {
-        "internalType": "contract IDreTreasury",
+        "internalType": "contract IAppTreasury",
         "name": "",
         "type": "address"
       }

@@ -204,7 +204,7 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "authority",
         "type": "address"
       }
@@ -445,7 +445,7 @@
     "name": "authority",
     "outputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "",
         "type": "address"
       }
@@ -553,7 +553,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct IDreBondDepository.Bond",
+        "internalType": "struct IAppBondDepository.Bond",
         "name": "bond",
         "type": "tuple"
       }
@@ -710,10 +710,10 @@
   },
   {
     "inputs": [],
-    "name": "dre",
+    "name": "app",
     "outputs": [
       {
-        "internalType": "contract IDRE",
+        "internalType": "contract IApp",
         "name": "",
         "type": "address"
       }
@@ -808,7 +808,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct IDreBondDepository.Bond",
+        "internalType": "struct IAppBondDepository.Bond",
         "name": "",
         "type": "tuple"
       }
@@ -980,7 +980,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct IDreBondDepository.BondPosition",
+        "internalType": "struct IAppBondDepository.BondPosition",
         "name": "position",
         "type": "tuple"
       }
@@ -1060,7 +1060,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "_newAuthority",
         "type": "address"
       }
@@ -1093,7 +1093,7 @@
     "name": "staking",
     "outputs": [
       {
-        "internalType": "contract IDreStaking",
+        "internalType": "contract IAppStaking",
         "name": "",
         "type": "address"
       }
@@ -1236,7 +1236,7 @@
     "name": "treasury",
     "outputs": [
       {
-        "internalType": "contract IDreTreasury",
+        "internalType": "contract IAppTreasury",
         "name": "",
         "type": "address"
       }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-interface IDreOracle {
+interface IAppOracle {
     event OracleUpdated(address indexed token, address indexed oracle);
 
     // Errors
@@ -28,29 +28,29 @@ interface IDreOracle {
     function getPrice(address token) external view returns (uint256);
 
     /**
-     * @notice Get the price for a token in DRE
+     * @notice Get the price for a token in App
      * @param token The token address
-     * @return price The token price in DRE
+     * @return price The token price in App
      */
-    function getPriceInDre(address token) external view returns (uint256 price);
+    function getPriceInApp(address token) external view returns (uint256 price);
 
     /**
-     * @notice Get the price for a token in DRE for an amount
+     * @notice Get the price for a token in App for an amount
      * @param token The token address
      * @param amount The amount of the token
-     * @return price The token price in DRE for the amount
+     * @return price The token price in App for the amount
      */
-    function getPriceInDreForAmount(address token, uint256 amount) external view returns (uint256 price);
+    function getPriceInAppForAmount(address token, uint256 amount) external view returns (uint256 price);
 
     /**
-     * @notice Get the price for DRE
-     * @return price The DRE price
+     * @notice Get the price for App
+     * @return price The App price
      */
-    function getDrePrice() external view returns (uint256);
+    function getAppPrice() external view returns (uint256);
 
     /**
-     * @notice Set the price for DRE
-     * @param newFloorPrice The new DRE price
+     * @notice Set the price for App
+     * @param newFloorPrice The new App price
      */
-    function setDrePrice(uint256 newFloorPrice) external;
+    function setAppPrice(uint256 newFloorPrice) external;
 }

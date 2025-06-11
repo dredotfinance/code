@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
-import "./interfaces/IDreAuthority.sol";
+import "./interfaces/IAppAuthority.sol";
 import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 
-contract DreAuthority is IDreAuthority, AccessControlEnumerable {
+contract AppAuthority is IAppAuthority, AccessControlEnumerable {
     /* ========== STATE VARIABLES ========== */
 
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
@@ -18,7 +18,7 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
     bytes32 public constant BOND_MANAGER_ROLE = keccak256("BOND_MANAGER_ROLE");
 
     address public override operationsTreasury;
-    IDreTreasury public override treasury;
+    IAppTreasury public override treasury;
 
     /* ========== Constructor ========== */
 
@@ -50,7 +50,7 @@ contract DreAuthority is IDreAuthority, AccessControlEnumerable {
 
     function setTreasury(address _newTreasury) external onlyGovernor {
         address oldTreasury = address(treasury);
-        treasury = IDreTreasury(_newTreasury);
+        treasury = IAppTreasury(_newTreasury);
         emit TreasuryUpdated(_newTreasury, oldTreasury);
     }
 

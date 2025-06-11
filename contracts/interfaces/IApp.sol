@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-interface IDRE is IERC20 {
+interface IApp is IERC20 {
     function mint(address account_, uint256 amount_) external;
 
     function burn(uint256 amount) external;

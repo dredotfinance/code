@@ -5,19 +5,19 @@ pragma abicoder v2;
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./DreAccessControlled.sol";
-import "./interfaces/IDreStaking.sol";
-import "./interfaces/IDRE.sol";
-import "./interfaces/IDreBondDepository.sol";
-import "./interfaces/IDreTreasury.sol";
+import "./AppAccessControlled.sol";
+import "./interfaces/IAppStaking.sol";
+import "./interfaces/IApp.sol";
+import "./interfaces/IAppBondDepository.sol";
+import "./interfaces/IAppTreasury.sol";
 
-/// @title DRE Bond Depository
-/// @author DRE Protocol
-contract DreBondDepository is
-    DreAccessControlled,
+/// @title App Bond Depository
+/// @author App Protocol
+contract AppBondDepository is
+    AppAccessControlled,
     ERC721EnumerableUpgradeable,
     ReentrancyGuardUpgradeable,
-    IDreBondDepository
+    IAppBondDepository
 {
     using SafeERC20 for IERC20;
 
@@ -29,9 +29,9 @@ contract DreBondDepository is
 
     // Storage
     Bond[] private _bonds;
-    IDreStaking public override staking;
-    IDRE public override dre;
-    IDreTreasury public override treasury;
+    IAppStaking public override staking;
+    IApp public override app;
+    IAppTreasury public override treasury;
     mapping(uint256 => BondPosition) private _positions;
     uint256 public override lastId = 1;
 
@@ -40,12 +40,12 @@ contract DreBondDepository is
         override
         reinitializer(3)
     {
-        __ERC721_init("DRE Bond Position", "DRE-BOND");
+        __ERC721_init("App Bond Position", "App-BOND");
         __ReentrancyGuard_init();
-        __DreAccessControlled_init(_authority);
-        staking = IDreStaking(_staking);
-        treasury = IDreTreasury(_treasury);
-        dre = IDRE(_dre);
+        __AppAccessControlled_init(_authority);
+        staking = IAppStaking(_staking);
+        treasury = IAppTreasury(_treasury);
+        app = IApp(_dre);
         if (lastId == 0) lastId = 1;
     }
 
@@ -108,7 +108,7 @@ contract DreBondDepository is
      * @param _maxPrice maximum price willing to pay
      * @param _minPayout minimum payout required
      * @param _user recipient of the bond
-     * @return payout_ amount of DRE tokens
+     * @return payout_ amount of App tokens
      * @return tokenId_ ID of the bond position NFT
      */
     function deposit(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, address _user)
@@ -145,10 +145,10 @@ contract DreBondDepository is
         bond.quoteToken.safeTransferFrom(msg.sender, address(this), _amount);
         bond.quoteToken.safeTransfer(authority.operationsTreasury(), teamFee);
 
-        // Deposit to treasury and mint DRE tokens
+        // Deposit to treasury and mint App tokens
         bond.quoteToken.safeTransfer(address(treasury), protocolAmount);
         uint256 mintedAmount = treasury.tokenValueE18(address(bond.quoteToken), protocolAmount);
-        dre.mint(address(this), mintedAmount);
+        app.mint(address(this), mintedAmount);
 
         // Create bond position NFT
         tokenId_ = lastId++;
@@ -182,7 +182,7 @@ contract DreBondDepository is
         position.claimedAmount += claimable;
         position.lastClaimTime = block.timestamp;
 
-        dre.transfer(msg.sender, claimable);
+        app.transfer(msg.sender, claimable);
 
         emit Claimed(_tokenId, claimable);
     }
@@ -204,7 +204,7 @@ contract DreBondDepository is
         position.claimedAmount += claimable;
 
         // Approve and stake tokens with 30 day minimum lock
-        dre.approve(address(staking), claimable);
+        app.approve(address(staking), claimable);
         staking.createPosition(msg.sender, claimable, _declaredValue, block.timestamp + STAKING_LOCK_PERIOD);
 
         emit Staked(_tokenId, claimable);

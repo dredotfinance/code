@@ -8,7 +8,7 @@ import {
 
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
-contract DreTimelock is AccessControlEnumerable, TimelockController {
+contract AppTimelock is AccessControlEnumerable, TimelockController {
     constructor(uint256 minDelay, address admin, address[] memory proposers)
         TimelockController(minDelay, proposers, proposers, admin)
     {}

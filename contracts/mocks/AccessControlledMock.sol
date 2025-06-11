@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.15;
 
-import "../DreAccessControlled.sol";
+import "../AppAccessControlled.sol";
 
-contract AccessControlledMock is DreAccessControlled {
+contract AccessControlledMock is AppAccessControlled {
     constructor(address _auth) {
-        _setAuthority(IDreAuthority(_auth));
+        _setAuthority(IAppAuthority(_auth));
     }
 
     bool public governorOnlyTest;

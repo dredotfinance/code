@@ -2,13 +2,13 @@
 pragma solidity ^0.8.15;
 pragma abicoder v2;
 
-import "./IDRE.sol";
-import "./IDreStaking.sol";
-import "./IDreTreasury.sol";
+import "./IApp.sol";
+import "./IAppStaking.sol";
+import "./IAppTreasury.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
-interface IDreBondDepository is IERC721Enumerable {
+interface IAppBondDepository is IERC721Enumerable {
     /* ======== EVENTS ======== */
     event CreateBond(uint256 indexed id, address indexed quoteToken, uint256 initialPrice, uint256 capacity);
     event CloseBond(uint256 indexed id);
@@ -24,7 +24,7 @@ interface IDreBondDepository is IERC721Enumerable {
         IERC20 quoteToken; // token to accept as payment
         uint256 totalDebt; // total debt from bond
         uint256 maxPayout; // max tokens in/out
-        uint256 sold; // DRE tokens out
+        uint256 sold; // App tokens out
         uint256 purchased; // quote tokens in
         uint256 startTime; // when the bond starts
         uint256 endTime; // when the bond ends
@@ -34,7 +34,7 @@ interface IDreBondDepository is IERC721Enumerable {
 
     struct BondPosition {
         uint256 bondId;
-        uint256 amount; // amount of DRE tokens
+        uint256 amount; // amount of App tokens
         uint256 quoteAmount; // amount of quote tokens paid
         uint256 startTime; // when the bond was purchased
         uint256 lastClaimTime; // last time tokens were claimed
@@ -79,8 +79,8 @@ interface IDreBondDepository is IERC721Enumerable {
     function STAKING_LOCK_PERIOD() external view returns (uint256);
     function BASIS_POINTS() external view returns (uint256);
     function TEAM_SHARE() external view returns (uint256);
-    function staking() external view returns (IDreStaking);
-    function dre() external view returns (IDRE);
-    function treasury() external view returns (IDreTreasury);
+    function staking() external view returns (IAppStaking);
+    function app() external view returns (IApp);
+    function treasury() external view returns (IAppTreasury);
     function lastId() external view returns (uint256);
 }

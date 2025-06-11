@@ -5,13 +5,13 @@ pragma abicoder v2;
 import "forge-std/Test.sol";
 import "./BaseTest.sol";
 import "../contracts/RebaseController.sol";
-import "../contracts/Dre.sol";
-import "../contracts/sDRE.sol";
-import "../contracts/DreTreasury.sol";
-import "../contracts/DreStaking.sol";
+import "../contracts/App.sol";
+import "../contracts/sApp.sol";
+import "../contracts/AppTreasury.sol";
+import "../contracts/AppStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockOracle.sol";
-import "../contracts/interfaces/IDreOracle.sol";
+import "../contracts/interfaces/IAppOracle.sol";
 import "forge-std/console.sol";
 
 contract RebaseControllerTest is BaseTest {
@@ -29,7 +29,7 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_Initialization() public view {
-        assertEq(address(rebaseController.dre()), address(dre));
+        assertEq(address(rebaseController.app()), address(app));
         assertEq(address(rebaseController.treasury()), address(treasury));
         assertEq(address(rebaseController.staking()), address(staking));
         assertEq(address(rebaseController.oracle()), address(dreOracle));
@@ -41,8 +41,8 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_BackingRatioWithSupply() public {
-        // Mint some DRE tokens to simulate supply
-        dre.mint(owner, 1_000_000e18);
+        // Mint some App tokens to simulate supply
+        app.mint(owner, 1_000_000e18);
 
         // Treasury has 1M quote tokens (1:1 price)
         uint256 backingRatio = rebaseController.currentBackingRatio();
@@ -59,8 +59,8 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_ProjectedMintWithBacking() public {
-        // Mint DRE tokens to create supply
-        dre.mint(owner, 1_000_000e18);
+        // Mint App tokens to create supply
+        app.mint(owner, 1_000_000e18);
 
         // Test with 1:1 backing (100%)
         (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) =
@@ -88,16 +88,16 @@ contract RebaseControllerTest is BaseTest {
     }
 
     function test_ExecuteEpochSuccess() public {
-        // Mint DRE tokens to create supply
-        dre.mint(owner, 1_000_000e18);
-        dre.mint(user1, 1_000e18);
+        // Mint App tokens to create supply
+        app.mint(owner, 1_000_000e18);
+        app.mint(user1, 1_000e18);
 
         // Add PCV to treasury to ensure positive rebase
         mockQuoteToken.mint(address(treasury), 2_000_000e18);
         treasury.syncReserves();
 
         // stake some tokens so that rewards can accumulate
-        dre.approve(address(staking), 100e18);
+        app.approve(address(staking), 100e18);
         staking.createPosition(user1, 100e18, 100e18, 0);
 
         // Fast forward to next epoch
@@ -108,25 +108,25 @@ contract RebaseControllerTest is BaseTest {
         (, uint256 epochMint, uint256 toStakers, uint256 toOps, uint256 toBurner) =
             rebaseController.projectedEpochRate();
 
-        uint256 stakingBalanceBefore = dre.balanceOf(address(staking));
-        uint256 opsBalanceBefore = dre.balanceOf(address(dreAuthority.operationsTreasury()));
+        uint256 stakingBalanceBefore = app.balanceOf(address(staking));
+        uint256 opsBalanceBefore = app.balanceOf(address(dreAuthority.operationsTreasury()));
 
         vm.expectEmit(true, true, true, true);
         emit Rebased(epochMint, toStakers, toOps, toBurner);
         rebaseController.executeEpoch();
 
         // Verify rewards were minted and sent to staking
-        uint256 stakingBalance = dre.balanceOf(address(staking));
+        uint256 stakingBalance = app.balanceOf(address(staking));
         assertApproxEqRel(stakingBalance, toStakers + stakingBalanceBefore, 0.001e18);
 
         // Verify ops treasury received tokens
-        uint256 opsBalance = dre.balanceOf(address(dreAuthority.operationsTreasury()));
+        uint256 opsBalance = app.balanceOf(address(dreAuthority.operationsTreasury()));
         assertApproxEqRel(opsBalance, toOps + opsBalanceBefore, 0.001e18);
     }
 
     function test_ExecuteEpochInsufficientReserves() public {
-        // Mint DRE tokens to create supply
-        dre.mint(owner, 1_000_000e18);
+        // Mint App tokens to create supply
+        app.mint(owner, 1_000_000e18);
 
         // Don't add any PCV to treasury
 
@@ -143,7 +143,7 @@ contract RebaseControllerTest is BaseTest {
         rebaseController.executeEpoch();
 
         // Verify no rewards were minted
-        uint256 stakingBalance = dre.balanceOf(address(staking));
+        uint256 stakingBalance = app.balanceOf(address(staking));
         assertEq(stakingBalance, 0);
     }
 

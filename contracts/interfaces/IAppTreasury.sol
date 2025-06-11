@@ -1,35 +1,35 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.15;
 
-interface IDreTreasury {
+interface IAppTreasury {
     /**
-     * @notice allow approved address to deposit an asset for dre
+     * @notice allow approved address to deposit an asset for app
      * @param _amount uint256 amount of token to deposit
      * @param _token address of token to deposit
      * @param _profit uint256 amount of profit to mint
-     * @return send_ uint256 amount of dre minted
+     * @return send_ uint256 amount of app minted
      */
     function deposit(uint256 _amount, address _token, uint256 _profit) external returns (uint256 send_);
 
     /**
-     * @notice allow approved address to burn dre for reserves
-     * @param _amount amount of dre to burn
+     * @notice allow approved address to burn app for reserves
+     * @param _amount amount of app to burn
      * @param _token address of the token to burn
      */
     function withdraw(uint256 _amount, address _token) external;
 
     /**
-     * @notice Returns the value of a token in DRE, 18 decimals
+     * @notice Returns the value of a token in App, 18 decimals
      * @param _token The address of the token
      * @param _amount The amount of the token
-     * @return value_ The value of the token in DRE
+     * @return value_ The value of the token in App
      */
     function tokenValueE18(address _token, uint256 _amount) external view returns (uint256 value_);
 
     /**
-     * @notice allow approved address to mint dre
+     * @notice allow approved address to mint app
      * @param _recipient address of the recipient
-     * @param _amount amount of dre to mint
+     * @param _amount amount of app to mint
      */
     function mint(address _recipient, uint256 _amount) external;
 
@@ -37,7 +37,7 @@ interface IDreTreasury {
      * @notice allow approved address to manage the reserves of the treasury
      * @param _token address of the token to manage
      * @param _amount amount of the token to manage
-     * @return value amount of dre that was managed
+     * @return value amount of app that was managed
      */
     function manage(address _token, uint256 _amount) external returns (uint256 value);
 
@@ -48,7 +48,7 @@ interface IDreTreasury {
     function enable(address _address) external;
 
     /**
-     * @notice Returns the backing ratio of the treasury in DRE terms (1e18)
+     * @notice Returns the backing ratio of the treasury in App terms (1e18)
      * @return backingRatio_ The backing ratio (1e18)
      */
     function backingRatioE18() external view returns (uint256);
@@ -61,63 +61,63 @@ interface IDreTreasury {
 
     /**
      * @notice Sets the credit reserves of the treasury
-     * @param _credit The amount of reserves (in DRE terms) that has been credited to the treasury but not yet deposited
+     * @param _credit The amount of reserves (in App terms) that has been credited to the treasury but not yet deposited
      */
     function setCreditReserves(uint256 _credit) external;
 
     /**
      * @notice Sets the unbacked supply of the treasury
-     * @param _unbacked The amount of DRE that is in the minted but not yet backed
+     * @param _unbacked The amount of App that is in the minted but not yet backed
      */
     function setUnbackedSupply(uint256 _unbacked) external;
 
     /**
-     * @notice Credit is amount of reserves (in DRE terms) that has been credited to the treasury but
-     * not yet deposited in. This is important in the case that the collateral asset for DRE exists somewhere else
+     * @notice Credit is amount of reserves (in App terms) that has been credited to the treasury but
+     * not yet deposited in. This is important in the case that the collateral asset for App exists somewhere else
      * (such as in an RWA for example).
      *
-     * This is particulary important in case of PSM modules where DRE is minted into a lending protocol for example
-     * and DRE is taken out only when it it being borrowed with an over-collateralized position.
+     * This is particulary important in case of PSM modules where App is minted into a lending protocol for example
+     * and App is taken out only when it it being borrowed with an over-collateralized position.
      *
-     * @dev Credit is not included in the total supply of DRE.
-     * @return credit_ The amount of reserves (in DRE terms) that has been credited to the treasury but not yet minted
+     * @dev Credit is not included in the total supply of App.
+     * @return credit_ The amount of reserves (in App terms) that has been credited to the treasury but not yet minted
      */
     function creditReserves() external view returns (uint256 credit_);
 
     /**
-     * @notice Returns the actual supply of DRE excluding credit
-     * @return actualSupply_ The actual supply of DRE excluding credit
+     * @notice Returns the actual supply of App excluding credit
+     * @return actualSupply_ The actual supply of App excluding credit
      */
     function actualSupply() external view returns (uint256 actualSupply_);
 
     /**
-     * @notice Returns the amount of DRE that has been minted but not yet backed
-     * @return unbackedSupply_ The amount of DRE
+     * @notice Returns the amount of App that has been minted but not yet backed
+     * @return unbackedSupply_ The amount of App
      */
     function unbackedSupply() external view returns (uint256 unbackedSupply_);
 
     /**
-     * @notice Returns the excess reserves of the treasury in DRE terms (excluding credit and debit)
-     * that is not backing the DRE supply
-     * @return excessReserves_ The excess reserves of the treasury in DRE terms
+     * @notice Returns the excess reserves of the treasury in App terms (excluding credit and debit)
+     * that is not backing the App supply
+     * @return excessReserves_ The excess reserves of the treasury in App terms
      */
     function excessReserves() external view returns (uint256);
 
     /**
-     * @notice Returns the total reserves of the treasury in DRE terms (including credit and debit)
-     * @return totalReserves_ The total reserves of the treasury in DRE terms
+     * @notice Returns the total reserves of the treasury in App terms (including credit and debit)
+     * @return totalReserves_ The total reserves of the treasury in App terms
      */
     function totalReserves() external view returns (uint256);
 
     /**
-     * @notice Returns the total supply of DRE (including credit and debit)
-     * @return totalSupply_ The total supply of DRE
+     * @notice Returns the total supply of App (including credit and debit)
+     * @return totalSupply_ The total supply of App
      */
     function totalSupply() external view returns (uint256 totalSupply_);
 
     /**
-     * @notice Returns the actual reserves of the treasury in DRE terms excluding credit and debit
-     * @return actualReserves_ The actual reserves of the treasury in DRE terms
+     * @notice Returns the actual reserves of the treasury in App terms excluding credit and debit
+     * @return actualReserves_ The actual reserves of the treasury in App terms
      */
     function actualReserves() external view returns (uint256 actualReserves_);
 
@@ -127,14 +127,14 @@ interface IDreTreasury {
     function syncReserves() external;
 
     /**
-     * @notice Calculates the total reserves of the treasury in DRE terms (including credit and debit)
-     * @return reserves_ The total reserves of the treasury in DRE terms
+     * @notice Calculates the total reserves of the treasury in App terms (including credit and debit)
+     * @return reserves_ The total reserves of the treasury in App terms
      */
     function calculateReserves() external view returns (uint256 reserves_);
 
     /**
-     * @notice Calculates the actual reserves of the treasury in DRE terms excluding credit and debit
-     * @return actualReserves_ The actual reserves of the treasury in DRE terms
+     * @notice Calculates the actual reserves of the treasury in App terms excluding credit and debit
+     * @return actualReserves_ The actual reserves of the treasury in App terms
      */
     function calculateActualReserves() external view returns (uint256 actualReserves_);
 

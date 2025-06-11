@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 /**
  * @title YieldLogic
- * @notice Pure‐math helper for DRE's "capped-inflation" policy.
+ * @notice Pure‐math helper for App's "capped-inflation" policy.
  *
  *  • Calculates the current APR band from collateral backing.
  *  • Converts the APR into the exact number of tokens to mint
@@ -12,7 +12,7 @@ pragma solidity ^0.8.15;
  *  INPUTS
  *  ──────────────────────────────────────────────────────────────
  *    pcv   – USD-value (18-dec) of risk-free assets in PCV
- *    totalSupply        – Circulating DRE before this epoch (18-dec)
+ *    totalSupply        – Circulating App before this epoch (18-dec)
  *    floorPrice         – Oracle floor price (USD, 18-dec) *not* needed
  *                         for APR, but kept here in case callers want
  *                         to price stake-mint from inflow in one call.

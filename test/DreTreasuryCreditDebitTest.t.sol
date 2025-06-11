@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
 
-contract DreTreasuryCreditDebitTest is BaseTest {
+contract AppTreasuryCreditDebitTest is BaseTest {
     function setUp() public {
         setUpBaseTest();
         vm.startPrank(owner);
@@ -36,7 +36,7 @@ contract DreTreasuryCreditDebitTest is BaseTest {
     }
 
     function test_SetUnbackedSupply() public {
-        dre.mint(owner, 500e18);
+        app.mint(owner, 500e18);
 
         // Set unbacked supply
         treasury.setUnbackedSupply(200e18);
@@ -45,7 +45,7 @@ contract DreTreasuryCreditDebitTest is BaseTest {
         assertEq(treasury.unbackedSupply(), 200e18);
 
         // Verify actual supply calculation
-        uint256 expectedActualSupply = dre.totalSupply() - 200e18;
+        uint256 expectedActualSupply = app.totalSupply() - 200e18;
         assertEq(treasury.totalSupply(), expectedActualSupply);
     }
 
@@ -62,7 +62,7 @@ contract DreTreasuryCreditDebitTest is BaseTest {
 
         // Calculate expected backing ratio
         uint256 totalReserves = treasury.totalReserves();
-        uint256 totalSupply = dre.totalSupply() - 200e18;
+        uint256 totalSupply = app.totalSupply() - 200e18;
         uint256 expectedRatio = (totalReserves * 1e18) / totalSupply;
 
         // Verify backing ratio calculation
@@ -89,7 +89,7 @@ contract DreTreasuryCreditDebitTest is BaseTest {
     }
 
     function test_UnbackedSupplyCustomCase1() public {
-        dre.mint(address(treasury), 500e18);
+        app.mint(address(treasury), 500e18);
         mockQuoteToken.mint(address(treasury), 1000e18);
         treasury.syncReserves();
 
@@ -113,7 +113,7 @@ contract DreTreasuryCreditDebitTest is BaseTest {
     }
 
     function test_UnbackedSupplyCustomCase2() public {
-        dre.mint(address(treasury), 500e18);
+        app.mint(address(treasury), 500e18);
         mockQuoteToken.mint(address(treasury), 1000e18);
         treasury.syncReserves();
 
@@ -131,7 +131,7 @@ contract DreTreasuryCreditDebitTest is BaseTest {
         assertGt(epochRateBefore, 5e18, "!epochRateBefore");
 
         // Set unbacked supply
-        dre.mint(address(treasury), 10000e18);
+        app.mint(address(treasury), 10000e18);
         treasury.setUnbackedSupply(10000e18);
 
         // Verify values are set correctly
@@ -142,7 +142,7 @@ contract DreTreasuryCreditDebitTest is BaseTest {
         assertEq(treasury.excessReserves(), 500e18, "!excessReserves()");
         assertEq(treasury.backingRatioE18(), 2e18, "!backingRatioE18()");
 
-        // minting large amount of dre and setting unbacked supply as the same should not change the apr
+        // minting large amount of app and setting unbacked supply as the same should not change the apr
         (uint256 aprAfter, uint256 epochRateAfter,,,) = rebaseController.projectedEpochRate();
         assertEq(aprAfter, aprBefore, "!aprAfter");
         assertEq(epochRateAfter, epochRateBefore, "!epochRateAfter");
@@ -198,7 +198,7 @@ contract DreTreasuryCreditDebitTest is BaseTest {
     //     assertEq(treasury.actualReserves(), expectedActualReserves);
 
     //     // Verify actual supply calculation
-    //     uint256 expectedActualSupply = dre.totalSupply() - creditSupply + debitSupply;
+    //     uint256 expectedActualSupply = app.totalSupply() - creditSupply + debitSupply;
     //     assertEq(treasury.actualSupply(), expectedActualSupply);
 
     //     // Verify backing ratio calculation
@@ -242,22 +242,22 @@ contract DreTreasuryCreditDebitTest is BaseTest {
 
         assertEq(treasury.totalReserves(), depositAmount, "!totalReserves() - 0");
         assertEq(treasury.actualReserves(), depositAmount, "!actualReserves() - 0");
-        assertEq(treasury.totalSupply(), dre.totalSupply(), "!totalSupply() - 0");
-        assertEq(treasury.actualSupply(), dre.totalSupply(), "!actualSupply() - 0");
+        assertEq(treasury.totalSupply(), app.totalSupply(), "!totalSupply() - 0");
+        assertEq(treasury.actualSupply(), app.totalSupply(), "!actualSupply() - 0");
         assertEq(treasury.excessReserves(), 0, "!excessReserves() - 0");
         assertEq(treasury.backingRatioE18(), 1e18, "!backingRatioE18() - 0");
 
         // Set credit reserves
         treasury.setCreditReserves(100e18); // 100e18 credit
-        // treasury.setUnbackedSupply(200e18); // 200e18 credit, 100e18 debit on dre
+        // treasury.setUnbackedSupply(200e18); // 200e18 credit, 100e18 debit on app
 
         // Calculate excess reserves
         uint256 excess = treasury.excessReserves();
 
         assertEq(treasury.totalReserves(), depositAmount + 100e18, "!totalReserves()");
         assertEq(treasury.actualReserves(), depositAmount, "!actualReserves()");
-        assertEq(treasury.totalSupply(), dre.totalSupply(), "!totalSupply()");
-        assertEq(treasury.actualSupply(), dre.totalSupply(), "!actualSupply()");
+        assertEq(treasury.totalSupply(), app.totalSupply(), "!totalSupply()");
+        assertEq(treasury.actualSupply(), app.totalSupply(), "!actualSupply()");
         assertEq(treasury.excessReserves(), 100e18, "!excessReserves()");
         assertEq(treasury.backingRatioE18(), 1.1e18, "!backingRatioE18()");
         assertGt(treasury.excessReserves(), 0, "!excessReserves()");
@@ -271,8 +271,8 @@ contract DreTreasuryCreditDebitTest is BaseTest {
         // Verify reserves were updated correctly
         assertEq(treasury.totalReserves(), depositAmount - manageAmount + 100e18, "!totalReserves() - 2");
         assertEq(treasury.actualReserves(), depositAmount - manageAmount, "!actualReserves() - 2");
-        assertEq(treasury.totalSupply(), dre.totalSupply(), "!totalSupply() - 2");
-        assertEq(treasury.actualSupply(), dre.totalSupply(), "!actualSupply() - 2");
+        assertEq(treasury.totalSupply(), app.totalSupply(), "!totalSupply() - 2");
+        assertEq(treasury.actualSupply(), app.totalSupply(), "!actualSupply() - 2");
         assertEq(treasury.excessReserves(), 50e18, "!excessReserves() - 2");
         assertEq(treasury.backingRatioE18(), 1.05e18, "!backingRatioE18() - 2");
     }
@@ -286,14 +286,14 @@ contract DreTreasuryCreditDebitTest is BaseTest {
 
         // Set credit reserves
         treasury.setUnbackedSupply(100e18);
-        uint256 supplyBefore = dre.totalSupply();
+        uint256 supplyBefore = app.totalSupply();
 
         // Mint some tokens
         uint256 mintAmount = 100e18 / 2;
         treasury.mint(user1, mintAmount);
 
         // Verify tokens were minted
-        assertEq(dre.balanceOf(user1), mintAmount, "!balanceOf()");
+        assertEq(app.balanceOf(user1), mintAmount, "!balanceOf()");
 
         // Verify actual supply was updated correctly
         uint256 expectedActualSupply = supplyBefore - 50e18;

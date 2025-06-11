@@ -2,20 +2,20 @@
 pragma solidity ^0.8.15;
 pragma abicoder v2;
 
-import "./interfaces/IDreStaking.sol";
-import "./interfaces/IDreBondDepository.sol";
+import "./interfaces/IAppStaking.sol";
+import "./interfaces/IAppBondDepository.sol";
 import "./interfaces/IRebaseController.sol";
-import "./interfaces/IDreTreasury.sol";
-import "./interfaces/IDreOracle.sol";
+import "./interfaces/IAppTreasury.sol";
+import "./interfaces/IAppOracle.sol";
 import "./interfaces/IOracle.sol";
 import "./interfaces/IBootstrapLP.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-/// @title DRE UI Helper
-/// @author DRE Protocol
-contract DreUIHelper {
+/// @title App UI Helper
+/// @author App Protocol
+contract AppUIHelper {
     using SafeERC20 for IERC20;
 
     struct TokenInfo {
@@ -25,10 +25,10 @@ contract DreUIHelper {
         uint256 balance;
         uint256 allowance;
         uint256 treasuryBalance;
-        uint256 treasuryValueDre;
+        uint256 treasuryValueApp;
         uint8 decimals;
         uint256 oraclePrice;
-        uint256 oraclePriceInDre;
+        uint256 oraclePriceInApp;
     }
 
     struct StakingPositionInfo {
@@ -45,7 +45,7 @@ contract DreUIHelper {
     struct BondPositionInfo {
         uint256 id;
         uint256 bondId;
-        uint256 amount; // amount of DRE tokens
+        uint256 amount; // amount of App tokens
         uint256 quoteAmount; // amount of quote tokens paid
         uint256 startTime; // when the bond was purchased
         uint256 lastClaimTime; // last time tokens were claimed
@@ -59,7 +59,7 @@ contract DreUIHelper {
         IERC20 quoteToken; // token to accept as payment
         uint256 totalDebt; // total debt from bond
         uint256 maxPayout; // max tokens in/out
-        uint256 sold; // DRE tokens out
+        uint256 sold; // App tokens out
         uint256 purchased; // quote tokens in
         uint256 startTime; // when the bond starts
         uint256 endTime; // when the bond ends
@@ -80,12 +80,12 @@ contract DreUIHelper {
     }
 
     // State variables
-    IDreStaking public staking;
-    IDreBondDepository public bondDepository;
-    IDreTreasury public treasury;
+    IAppStaking public staking;
+    IAppBondDepository public bondDepository;
+    IAppTreasury public treasury;
     IERC20 public dreToken;
     IERC20 public stakingToken;
-    IDreOracle public dreOracle;
+    IAppOracle public dreOracle;
     IRebaseController public rebaseController;
     IOracle public shadowLP;
     IBootstrapLP public bootstrapLP;
@@ -106,12 +106,12 @@ contract DreUIHelper {
         address _bootstrapLP,
         address _odos
     ) {
-        staking = IDreStaking(_staking);
-        bondDepository = IDreBondDepository(_bondDepository);
-        treasury = IDreTreasury(_treasury);
+        staking = IAppStaking(_staking);
+        bondDepository = IAppBondDepository(_bondDepository);
+        treasury = IAppTreasury(_treasury);
         dreToken = IERC20(_dreToken);
         stakingToken = IERC20(_stakingToken);
-        dreOracle = IDreOracle(_dreOracle);
+        dreOracle = IAppOracle(_dreOracle);
         shadowLP = IOracle(_shadowLP);
         rebaseController = IRebaseController(_rebaseController);
         bootstrapLP = IBootstrapLP(_bootstrapLP);
@@ -153,34 +153,34 @@ contract DreUIHelper {
         view
         returns (TokenInfo[] memory tokenInfos)
     {
-        tokenInfos = new TokenInfo[](bondTokens.length + 2); // +1 for DRE token, +1 for staking token
+        tokenInfos = new TokenInfo[](bondTokens.length + 2); // +1 for App token, +1 for staking token
 
-        // Add DRE token info
+        // Add App token info
         tokenInfos[0] = TokenInfo({
             token: address(dreToken),
-            name: "DRE",
-            symbol: "DRE",
+            name: "App",
+            symbol: "App",
             balance: dreToken.balanceOf(user),
             allowance: dreToken.allowance(user, address(staking)),
             treasuryBalance: dreToken.balanceOf(address(treasury)),
-            treasuryValueDre: dreToken.balanceOf(address(treasury)),
+            treasuryValueApp: dreToken.balanceOf(address(treasury)),
             decimals: 18,
-            oraclePrice: dreOracle.getDrePrice(),
-            oraclePriceInDre: dreOracle.getDrePrice()
+            oraclePrice: dreOracle.getAppPrice(),
+            oraclePriceInApp: dreOracle.getAppPrice()
         });
 
         // Add staking token info
         tokenInfos[1] = TokenInfo({
             token: address(stakingToken),
-            name: "Staked DRE",
-            symbol: "sDRE",
+            name: "Staked App",
+            symbol: "sApp",
             balance: stakingToken.balanceOf(user),
             allowance: stakingToken.allowance(user, address(staking)),
             treasuryBalance: 0,
-            treasuryValueDre: 0,
+            treasuryValueApp: 0,
             decimals: 18,
             oraclePrice: 0,
-            oraclePriceInDre: 0
+            oraclePriceInApp: 0
         });
 
         // Add bond token info
@@ -193,9 +193,9 @@ contract DreUIHelper {
                 name: token.name(),
                 symbol: token.symbol(),
                 treasuryBalance: token.balanceOf(address(treasury)),
-                treasuryValueDre: treasury.tokenValueE18(address(token), token.balanceOf(address(treasury))),
+                treasuryValueApp: treasury.tokenValueE18(address(token), token.balanceOf(address(treasury))),
                 token: address(token),
-                oraclePriceInDre: dreOracle.getPriceInDre(address(token)),
+                oraclePriceInApp: dreOracle.getPriceInApp(address(token)),
                 oraclePrice: dreOracle.getPrice(address(token))
             });
         }
@@ -208,7 +208,7 @@ contract DreUIHelper {
         for (uint256 i = 0; i < stakingBalance; i++) {
             uint256 tokenId = staking.tokenOfOwnerByIndex(user, i);
             if (tokenId == 0) continue;
-            IDreStaking.Position memory position = staking.positions(tokenId);
+            IAppStaking.Position memory position = staking.positions(tokenId);
 
             stakingPositions[i] = StakingPositionInfo({
                 owner: user,
@@ -229,7 +229,7 @@ contract DreUIHelper {
 
         for (uint256 i = 0; i < bondBalance; i++) {
             uint256 tokenId = bondDepository.tokenOfOwnerByIndex(user, i);
-            IDreBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
+            IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
 
             bondPositions[i] = BondPositionInfo({
                 id: tokenId,
@@ -252,7 +252,7 @@ contract DreUIHelper {
         for (uint256 i = 0; i < balance; i++) {
             uint256 tokenId = staking.tokenOfOwnerByIndex(user, i);
             if (tokenId == 0) continue;
-            // IDreStaking.Position memory position = staking.positions(tokenId);
+            // IAppStaking.Position memory position = staking.positions(tokenId);
             // if (position.cooldownEnd > block.timestamp) continue;
             amount += staking.claimRewards(tokenId);
         }
@@ -277,7 +277,7 @@ contract DreUIHelper {
         StakingPositionInfo[] memory positions = new StakingPositionInfo[](endingIndex - startingIndex);
 
         for (uint256 i = startingIndex; i < endingIndex; i++) {
-            IDreStaking.Position memory position = staking.positions(i);
+            IAppStaking.Position memory position = staking.positions(i);
 
             positions[i - startingIndex] = StakingPositionInfo({
                 id: i,
@@ -297,13 +297,13 @@ contract DreUIHelper {
     function getBondVariables(uint256[] memory bondIds)
         external
         view
-        returns (IDreBondDepository.Bond[] memory bonds, uint256[] memory currentPrices)
+        returns (IAppBondDepository.Bond[] memory bonds, uint256[] memory currentPrices)
     {
-        bonds = new IDreBondDepository.Bond[](bondIds.length);
+        bonds = new IAppBondDepository.Bond[](bondIds.length);
         currentPrices = new uint256[](bondIds.length);
 
         for (uint256 i = 0; i < bondIds.length; i++) {
-            IDreBondDepository.Bond memory bond = bondDepository.bonds(bondIds[i]);
+            IAppBondDepository.Bond memory bond = bondDepository.bonds(bondIds[i]);
             bonds[i] = bond;
             currentPrices[i] = bondDepository.currentPrice(bondIds[i]);
         }

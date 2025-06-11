@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "../interfaces/IDreOracle.sol";
+import "../interfaces/IAppOracle.sol";
 import "../interfaces/IOracle.sol";
 import "../interfaces/IUniswapV2Pair.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -17,13 +17,13 @@ contract UniV2LPOracle is IOracle {
     uint256 public token1Decimals;
     uint256 internal constant HALF_UNIT = 1e9;
     uint256 internal constant UNIT = 1e18;
-    address public dre;
+    address public app;
 
-    IDreOracle public dreOracle;
+    IAppOracle public dreOracle;
 
-    constructor(address _uniV2LP, address _dre, IDreOracle _dreOracle) {
+    constructor(address _uniV2LP, address _dre, IAppOracle _dreOracle) {
         amm = IUniswapV2Pair(_uniV2LP);
-        dre = _dre;
+        app = _dre;
         dreOracle = _dreOracle;
 
         token0Decimals = IERC20Metadata(amm.token0()).decimals();
@@ -59,10 +59,10 @@ contract UniV2LPOracle is IOracle {
     function markdown() external view returns (uint256) {
         (uint256 reserve0, uint256 reserve1,) = amm.getReserves();
         uint256 reserve;
-        if (amm.token0() == address(dre)) {
+        if (amm.token0() == address(app)) {
             reserve = reserve1;
         } else {
-            require(amm.token1() == address(dre), "Invalid pair");
+            require(amm.token1() == address(app), "Invalid pair");
             reserve = reserve0;
         }
         return reserve * 2 * 1e18 / getKValue();

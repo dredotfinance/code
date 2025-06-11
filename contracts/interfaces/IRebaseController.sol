@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
-import "./IDRE.sol";
-import "./IDreTreasury.sol";
-import "./IDreStaking.sol";
+import "./IApp.sol";
+import "./IAppTreasury.sol";
+import "./IAppStaking.sol";
 
 interface IRebaseController {
     // --- State Variables -----------------------------------------------------
-    function dre() external view returns (IDRE);
-    function treasury() external view returns (IDreTreasury);
-    function staking() external view returns (IDreStaking);
+    function app() external view returns (IApp);
+    function treasury() external view returns (IAppTreasury);
+    function staking() external view returns (IAppStaking);
     function EPOCH() external view returns (uint256);
     function lastEpochTime() external view returns (uint256);
 

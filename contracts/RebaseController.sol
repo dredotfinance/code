@@ -2,28 +2,28 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./interfaces/IDRE.sol";
-import "./interfaces/IDreTreasury.sol";
-import "./interfaces/IDreStaking.sol";
-import "./interfaces/IDreOracle.sol";
+import "./interfaces/IApp.sol";
+import "./interfaces/IAppTreasury.sol";
+import "./interfaces/IAppStaking.sol";
+import "./interfaces/IAppOracle.sol";
 import "./interfaces/IRebaseController.sol";
 import "./libraries/StakingDistributionLogic.sol";
 import "./libraries/YieldLogic.sol";
-import "./DreAccessControlled.sol";
+import "./AppAccessControlled.sol";
 
 /**
  * @title BondController
- * @dev Minimal reference implementation of DRE's bonding-curve logic.
+ * @dev Minimal reference implementation of App's bonding-curve logic.
  *      ─ Calculates backing ratio β = PCV / supply
  *      ─ Determines epochic rebase rate r_t using piece-wise curve
- *      ─ Mints DRE supply for stakers each epoch once called by a keeper
+ *      ─ Mints App supply for stakers each epoch once called by a keeper
  *      ─ Exposes view helpers for front-end gauges
  */
-contract RebaseController is DreAccessControlled, IRebaseController {
-    IDRE public dre; // DRE token (decimals = 18)
-    IDreTreasury public treasury;
-    IDreStaking public staking; // staking contract or escrow
-    IDreOracle public oracle; // price oracle
+contract RebaseController is AppAccessControlled, IRebaseController {
+    IApp public app; // App token (decimals = 18)
+    IAppTreasury public treasury;
+    IAppStaking public staking; // staking contract or escrow
+    IAppOracle public oracle; // price oracle
     address public burner; // burner contract
 
     // --- Epoch params --------------------------------------------------------
@@ -43,14 +43,14 @@ contract RebaseController is DreAccessControlled, IRebaseController {
         address _authority,
         address _burner
     ) public initializer {
-        dre = IDRE(_dre);
-        treasury = IDreTreasury(_treasury);
-        staking = IDreStaking(_staking);
-        oracle = IDreOracle(_oracle);
+        app = IApp(_dre);
+        treasury = IAppTreasury(_treasury);
+        staking = IAppStaking(_staking);
+        oracle = IAppOracle(_oracle);
         burner = _burner;
-        __DreAccessControlled_init(_authority);
+        __AppAccessControlled_init(_authority);
 
-        dre.approve(address(staking), type(uint256).max);
+        app.approve(address(staking), type(uint256).max);
     }
 
     function setTargetPcts(uint256 _targetOpsPct, uint256 _minFloorPct, uint256 _maxFloorPct, uint256 _floorSlope)
@@ -78,16 +78,16 @@ contract RebaseController is DreAccessControlled, IRebaseController {
 
         if (epochMint > 0) {
             // Mint tokens
-            dre.mint(address(this), epochMint);
+            app.mint(address(this), epochMint);
 
             // Distribute to stakers
             staking.notifyRewardAmount(toStakers);
 
             // Send to ops treasury
-            dre.transfer(address(authority.operationsTreasury()), toOps);
+            app.transfer(address(authority.operationsTreasury()), toOps);
 
             // Send to burner
-            dre.transfer(burner, toBurner);
+            app.transfer(burner, toBurner);
         }
 
         lastEpochTime = block.timestamp;

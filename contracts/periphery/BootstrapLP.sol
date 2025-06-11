@@ -6,22 +6,22 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IDRE.sol";
-import "../interfaces/IDreStaking.sol";
-import "../interfaces/IDreTreasury.sol";
-import "../interfaces/IDRE.sol";
+import "../interfaces/IApp.sol";
+import "../interfaces/IAppStaking.sol";
+import "../interfaces/IAppTreasury.sol";
+import "../interfaces/IApp.sol";
 import "../interfaces/IBootstrapLP.sol";
 
 contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
-    IDRE public immutable dreToken;
+    IApp public immutable dreToken;
     IERC20 public immutable usdcToken;
     IERC20 public immutable lpToken;
 
-    IDreStaking public immutable staking;
+    IAppStaking public immutable staking;
     IShadowRouter public immutable router;
-    IDreTreasury public immutable treasury;
+    IAppTreasury public immutable treasury;
 
     uint256 public maxUsdcCapacity;
     uint256 public bonus;
@@ -38,12 +38,12 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         uint256 _bonus,
         uint256 _filled
     ) Ownable(msg.sender) {
-        dreToken = IDRE(_dreToken);
+        dreToken = IApp(_dreToken);
         usdcToken = IERC20(_usdcToken);
         lpToken = IERC20(_lpToken);
-        staking = IDreStaking(_staking);
+        staking = IAppStaking(_staking);
         router = IShadowRouter(_router);
-        treasury = IDreTreasury(_treasury);
+        treasury = IAppTreasury(_treasury);
         maxUsdcCapacity = _maxUsdcCapacity;
         bonus = _bonus;
         usdcAquired = _filled;
@@ -70,10 +70,10 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         usdcAquired += usdcAmount;
         require(usdcAquired <= maxUsdcCapacity, "Max USDC capacity reached");
 
-        // Calculate DRE amount to mint (1:1 ratio)
+        // Calculate App amount to mint (1:1 ratio)
         uint256 dreAmountToMint = treasury.tokenValueE18(address(usdcToken), usdcAmount);
 
-        // Mint DRE tokens with the half the USDC
+        // Mint App tokens with the half the USDC
         dreToken.mint(address(this), dreAmountToMint / 2);
         usdcToken.safeTransfer(address(treasury), usdcAmount / 2);
 
@@ -95,12 +95,12 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         lpToken.safeTransfer(address(treasury), lpReceived);
         dreToken.mint(address(this), dreAmountOfLp);
 
-        // require(dreAmountOfLp == dreAmount, "DRE amount of LP does not match DRE amount");
+        // require(dreAmountOfLp == dreAmount, "App amount of LP does not match App amount");
 
         // Stake into staking contract
         staking.createPosition(to, dreAmountOfLp, dreAmountOfLp, 0);
 
-        // Burn any pending DRE
+        // Burn any pending App
         if (dreToken.balanceOf(address(this)) > 0) {
             dreToken.burn(dreToken.balanceOf(address(this)));
         }
@@ -110,7 +110,7 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
             usdcToken.safeTransfer(to, usdcToken.balanceOf(address(this)));
         }
 
-        // invariant check - dont' mint DRE if we don't have enough reserves
+        // invariant check - dont' mint App if we don't have enough reserves
         uint256 totalReservesAfter = reserves();
         require(totalReservesAfter > totalReservesBefore, "Reserves invariant violated");
         require(totalReservesAfter >= dreToken.totalSupply(), "Reserves invariant violated");

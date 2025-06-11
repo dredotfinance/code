@@ -3,14 +3,14 @@ pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
 
-contract DreBurnerTest is BaseTest {
+contract AppBurnerTest is BaseTest {
     function setUp() public {
         setUpBaseTest();
     }
 
     function testInitialize() public view {
         assertEq(address(burner.dreOracle()), address(dreOracle));
-        assertEq(address(burner.dre()), address(dre));
+        assertEq(address(burner.app()), address(app));
     }
 
     function testCalculateFloorUpdate_ZeroAmount() public view {
@@ -49,33 +49,33 @@ contract DreBurnerTest is BaseTest {
     }
 
     function testBurn() public {
-        // Setup: Mint DRE tokens to burner
+        // Setup: Mint App tokens to burner
         vm.startPrank(owner);
 
-        dre.mint(address(owner), 1000e18);
-        dre.mint(address(burner), 1000e18);
+        app.mint(address(owner), 1000e18);
+        app.mint(address(burner), 1000e18);
 
         // Execute burn
         burner.burn();
 
         // Verify floor price update
-        uint256 newFloorPrice = dreOracle.getDrePrice();
+        uint256 newFloorPrice = dreOracle.getAppPrice();
         assertApproxEqRel(newFloorPrice, 2e18, 0.001e18, "Floor price should update correctly after burn");
 
-        // Verify DRE balance is zero after burn
-        assertEq(dre.balanceOf(address(burner)), 0, "All DRE tokens should be burned");
+        // Verify App balance is zero after burn
+        assertEq(app.balanceOf(address(burner)), 0, "All App tokens should be burned");
         vm.stopPrank();
     }
 
     function testBurn_NoTokens() public {
         vm.startPrank(owner);
-        uint256 initialFloorPrice = dreOracle.getDrePrice();
+        uint256 initialFloorPrice = dreOracle.getAppPrice();
 
         // Execute burn with no tokens
         burner.burn();
 
         // Verify floor price remains unchanged
-        uint256 newFloorPrice = dreOracle.getDrePrice();
+        uint256 newFloorPrice = dreOracle.getAppPrice();
         assertEq(newFloorPrice, initialFloorPrice, "Floor price should remain unchanged with no tokens to burn");
         vm.stopPrank();
     }
@@ -90,19 +90,19 @@ contract DreBurnerTest is BaseTest {
     function testBurn_WithLargeAmount() public {
         vm.startPrank(owner);
         // Mint a large amount to test precision with big numbers
-        dre.mint(address(owner), 1);
-        dre.mint(address(burner), 1_000_000e18);
+        app.mint(address(owner), 1);
+        app.mint(address(burner), 1_000_000e18);
 
         // Execute burn
         vm.expectRevert();
         burner.burn();
 
         // // Verify floor price update
-        // uint256 newFloorPrice = dreOracle.getDrePrice();
+        // uint256 newFloorPrice = dreOracle.getAppPrice();
         // assertEq(newFloorPrice, 1e22, "Floor price should update correctly with large burn amount");
 
-        // // Verify DRE balance is zero after burn
-        // assertEq(dre.balanceOf(address(burner)), 0, "All DRE tokens should be burned");
+        // // Verify App balance is zero after burn
+        // assertEq(app.balanceOf(address(burner)), 0, "All App tokens should be burned");
         // vm.stopPrank();
     }
 }

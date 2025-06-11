@@ -4,37 +4,37 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "../contracts/RebaseController.sol";
-import "../contracts/Dre.sol";
-import "../contracts/sDRE.sol";
-import "../contracts/DreTreasury.sol";
-import "../contracts/DreStaking.sol";
+import "../contracts/App.sol";
+import "../contracts/sApp.sol";
+import "../contracts/AppTreasury.sol";
+import "../contracts/AppStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockOracle.sol";
 import "../contracts/mocks/MockEndpoint.sol";
-import "../contracts/DreAuthority.sol";
-import "../contracts/DreBondDepository.sol";
-import "../contracts/DreOracle.sol";
-import "../contracts/DreBurner.sol";
+import "../contracts/AppAuthority.sol";
+import "../contracts/AppBondDepository.sol";
+import "../contracts/AppOracle.sol";
+import "../contracts/AppBurner.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
-    DRE public dre;
-    sDRE public sDre;
-    DreTreasury public treasury;
-    DreStaking public staking;
+    App public app;
+    sApp public sapp;
+    AppTreasury public treasury;
+    AppStaking public staking;
     MockERC20 public mockQuoteToken;
     MockERC20 public mockQuoteToken2;
     MockERC20 public mockQuoteToken3;
 
-    DreOracle public dreOracle;
+    AppOracle public dreOracle;
 
     MockOracle public mockOracle;
     MockOracle public mockOracle2;
     MockOracle public mockOracle3;
 
-    DreAuthority public dreAuthority;
-    DreBondDepository public dreBondDepository;
-    DreBurner public burner;
+    AppAuthority public dreAuthority;
+    AppBondDepository public dreBondDepository;
+    AppBurner public burner;
 
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
@@ -43,7 +43,7 @@ contract BaseTest is Test {
 
     function setUpBaseTest() public {
         vm.startPrank(owner);
-        dreAuthority = new DreAuthority();
+        dreAuthority = new AppAuthority();
 
         // Deploy mock quote token
         mockQuoteToken = new MockERC20("Mock Token", "MTK");
@@ -55,42 +55,42 @@ contract BaseTest is Test {
         mockOracle2 = new MockOracle(2e18); // 2:1 price
         mockOracle3 = new MockOracle(0.5e18); // 0.5:1 price
 
-        // Deploy DRE token
+        // Deploy App token
         MockEndpoint lz = new MockEndpoint();
-        dre = new DRE(address(lz), address(dreAuthority));
+        app = new App(address(lz), address(dreAuthority));
 
-        // Deploy sDRE token
-        sDre = new sDRE(address(dreAuthority));
+        // Deploy sApp token
+        sapp = new sApp(address(dreAuthority));
 
-        dreOracle = new DreOracle();
-        dreOracle.initialize(address(dreAuthority), address(dre));
+        dreOracle = new AppOracle();
+        dreOracle.initialize(address(dreAuthority), address(app));
         dreOracle.updateOracle(address(mockQuoteToken), address(mockOracle));
         dreOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2));
         dreOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
 
         // Deploy Burner
-        burner = new DreBurner();
-        burner.initialize(address(dreOracle), address(dre), address(dreAuthority));
+        burner = new AppBurner();
+        burner.initialize(address(dreOracle), address(app), address(dreAuthority));
 
         // Deploy Treasury
-        treasury = new DreTreasury();
-        treasury.initialize(address(dre), address(dreOracle), address(dreAuthority));
+        treasury = new AppTreasury();
+        treasury.initialize(address(app), address(dreOracle), address(dreAuthority));
         treasury.enable(address(mockQuoteToken));
 
         // Deploy Staking
-        staking = new DreStaking();
-        staking.initialize(address(dre), address(sDre), address(dreAuthority), address(burner));
+        staking = new AppStaking();
+        staking.initialize(address(app), address(sapp), address(dreAuthority), address(burner));
 
-        // Deploy DreBondDepository
-        dreBondDepository = new DreBondDepository();
-        dreBondDepository.initialize(address(dre), address(staking), address(treasury), address(dreAuthority));
+        // Deploy AppBondDepository
+        dreBondDepository = new AppBondDepository();
+        dreBondDepository.initialize(address(app), address(staking), address(treasury), address(dreAuthority));
 
-        sDre.setStakingContract(address(staking));
+        sapp.setStakingContract(address(staking));
 
         // Deploy RebaseController
         rebaseController = new RebaseController();
         rebaseController.initialize(
-            address(dre),
+            address(app),
             address(treasury),
             address(staking),
             address(dreOracle),
@@ -111,19 +111,19 @@ contract BaseTest is Test {
         dreAuthority.setTreasury(address(treasury));
         dreAuthority.addReserveDepositor(address(dreBondDepository));
 
-        vm.label(address(dre), "DRE");
-        vm.label(address(sDre), "sDRE");
+        vm.label(address(app), "App");
+        vm.label(address(sapp), "sApp");
         vm.label(address(treasury), "Treasury");
         vm.label(address(staking), "Staking");
         vm.label(address(rebaseController), "RebaseController");
-        vm.label(address(dreBondDepository), "DreBondDepository");
+        vm.label(address(dreBondDepository), "AppBondDepository");
         vm.label(address(burner), "Burner");
         vm.label(address(dreAuthority), "Authority");
         vm.label(address(mockQuoteToken), "Mock Quote Token");
         vm.label(address(mockQuoteToken2), "Mock Quote Token 2");
         vm.label(address(mockQuoteToken3), "Mock Quote Token 3");
 
-        vm.label(address(dreOracle), "Dre Oracle");
+        vm.label(address(dreOracle), "App Oracle");
         vm.label(address(mockOracle), "Mock Oracle");
         vm.label(address(mockOracle2), "Mock Oracle 2");
         vm.label(address(mockOracle3), "Mock Oracle 3");

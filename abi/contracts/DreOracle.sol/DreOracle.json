@@ -57,7 +57,7 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "authority",
         "type": "address"
       }
@@ -121,7 +121,7 @@
     "name": "authority",
     "outputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "",
         "type": "address"
       }
@@ -131,7 +131,7 @@
   },
   {
     "inputs": [],
-    "name": "dre",
+    "name": "app",
     "outputs": [
       {
         "internalType": "contract IERC20Metadata",
@@ -144,7 +144,7 @@
   },
   {
     "inputs": [],
-    "name": "getDrePrice",
+    "name": "getAppPrice",
     "outputs": [
       {
         "internalType": "uint256",
@@ -206,7 +206,7 @@
         "type": "address"
       }
     ],
-    "name": "getPriceInDre",
+    "name": "getPriceInApp",
     "outputs": [
       {
         "internalType": "uint256",
@@ -230,7 +230,7 @@
         "type": "uint256"
       }
     ],
-    "name": "getPriceInDreForAmount",
+    "name": "getPriceInAppForAmount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -281,7 +281,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "_newAuthority",
         "type": "address"
       }
@@ -299,7 +299,7 @@
         "type": "uint256"
       }
     ],
-    "name": "setDrePrice",
+    "name": "setAppPrice",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

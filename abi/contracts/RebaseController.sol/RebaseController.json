@@ -14,7 +14,7 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "authority",
         "type": "address"
       }
@@ -115,7 +115,7 @@
     "name": "authority",
     "outputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "",
         "type": "address"
       }
@@ -151,10 +151,10 @@
   },
   {
     "inputs": [],
-    "name": "dre",
+    "name": "app",
     "outputs": [
       {
-        "internalType": "contract IDRE",
+        "internalType": "contract IApp",
         "name": "",
         "type": "address"
       }
@@ -264,7 +264,7 @@
     "name": "oracle",
     "outputs": [
       {
-        "internalType": "contract IDreOracle",
+        "internalType": "contract IAppOracle",
         "name": "",
         "type": "address"
       }
@@ -357,7 +357,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IDreAuthority",
+        "internalType": "contract IAppAuthority",
         "name": "_newAuthority",
         "type": "address"
       }
@@ -400,7 +400,7 @@
     "name": "staking",
     "outputs": [
       {
-        "internalType": "contract IDreStaking",
+        "internalType": "contract IAppStaking",
         "name": "",
         "type": "address"
       }
@@ -426,7 +426,7 @@
     "name": "treasury",
     "outputs": [
       {
-        "internalType": "contract IDreTreasury",
+        "internalType": "contract IAppTreasury",
         "name": "",
         "type": "address"
       }

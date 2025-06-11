@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
 
-contract DreTreasuryTest is BaseTest {
+contract AppTreasuryTest is BaseTest {
     function setUp() public {
         setUpBaseTest();
         vm.startPrank(owner);
@@ -17,7 +17,7 @@ contract DreTreasuryTest is BaseTest {
     }
 
     function test_Initialize() public view {
-        assertEq(address(treasury.dre()), address(dre));
+        assertEq(address(treasury.app()), address(app));
         assertEq(treasury.totalReserves(), 0);
     }
 
@@ -59,9 +59,9 @@ contract DreTreasuryTest is BaseTest {
         uint256 profit = 100e18;
         uint256 dreMinted = treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
-        // Verify DRE was minted correctly
-        assertEq(dre.balanceOf(owner), dreMinted, "DRE balance of owner should be equal to DRE minted");
-        assertEq(dreMinted, depositAmount - profit, "DRE minted should be equal to deposit amount minus profit");
+        // Verify App was minted correctly
+        assertEq(app.balanceOf(owner), dreMinted, "App balance of owner should be equal to App minted");
+        assertEq(dreMinted, depositAmount - profit, "App minted should be equal to deposit amount minus profit");
 
         // Verify reserves were updated
         assertEq(treasury.totalReserves(), depositAmount, "Total reserves should be equal to deposit amount");
@@ -80,15 +80,15 @@ contract DreTreasuryTest is BaseTest {
         uint256 profit = 100e18;
         treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
-        assertEq(dre.balanceOf(owner), 900e18);
+        assertEq(app.balanceOf(owner), 900e18);
 
         // Now withdraw
         uint256 withdrawAmount = 400e18;
-        dre.approve(address(treasury), type(uint256).max);
+        app.approve(address(treasury), type(uint256).max);
         treasury.withdraw(withdrawAmount, address(mockQuoteToken));
 
-        // Verify DRE was burned
-        assertEq(dre.balanceOf(owner), 500e18);
+        // Verify App was burned
+        assertEq(app.balanceOf(owner), 500e18);
 
         treasury.syncReserves();
 
@@ -145,12 +145,12 @@ contract DreTreasuryTest is BaseTest {
         uint256 profit = 100e18;
         treasury.deposit(depositAmount, address(mockQuoteToken), profit);
 
-        // Now mint some DRE
+        // Now mint some App
         uint256 mintAmount = 20e18;
         treasury.mint(user1, mintAmount);
 
-        // Verify DRE was minted to user1
-        assertEq(dre.balanceOf(user1), mintAmount);
+        // Verify App was minted to user1
+        assertEq(app.balanceOf(user1), mintAmount);
 
         vm.stopPrank();
     }
