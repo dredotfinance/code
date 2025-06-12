@@ -38,6 +38,10 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
     event ReferralCodeRegistered(address indexed referrer, bytes8 code);
     event ReferralRegistered(address indexed referred, address indexed referrer, bytes8 code);
     event RewardsClaimed(address indexed user, uint256 amount, bytes32 root);
+    event ReferralStaked(address indexed user, uint256 amount, uint256 declaredValue, bytes8 referralCode);
+    event ReferralBondBought(
+        address indexed user, uint256 id, uint256 amount, uint256 maxPrice, uint256 minPayout, bytes8 referralCode
+    );
 
     struct ClaimRewardsInput {
         bytes32 root;
@@ -153,6 +157,8 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
 
         // stake on behalf of the referrer
         staking.createPosition(msg.sender, amount, declaredValue, 0);
+
+        emit ReferralStaked(msg.sender, amount, declaredValue, referralCode);
     }
 
     /// @notice Buys a bond with a referral code
@@ -175,6 +181,8 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         token.transferFrom(msg.sender, address(this), _amount);
         token.approve(address(bondDepository), _amount);
         bondDepository.deposit(_id, _amount, _maxPrice, _minPayout, msg.sender);
+
+        emit ReferralBondBought(msg.sender, _id, _amount, _maxPrice, _minPayout, referralCode);
     }
 
     function _registerReferral(bytes8 referralCode, address user) internal {

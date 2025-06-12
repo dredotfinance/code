@@ -145,6 +145,19 @@
   },
   {
     "inputs": [],
+    "name": "appToken",
+    "outputs": [
+      {
+        "internalType": "contract IApp",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "bonus",
     "outputs": [
       {
@@ -178,19 +191,6 @@
       }
     ],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "appToken",
-    "outputs": [
-      {
-        "internalType": "contract IApp",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
