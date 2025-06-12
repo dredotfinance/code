@@ -30,9 +30,4 @@ contract AccessControlledMock is AppAccessControlled {
         policyOnlyTest = true;
         return policyOnlyTest;
     }
-
-    function vaultTest() external onlyVault returns (bool) {
-        governorOnlyTest = true;
-        return governorOnlyTest;
-    }
 }

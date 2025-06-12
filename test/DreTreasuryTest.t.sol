@@ -10,9 +10,7 @@ contract AppTreasuryTest is BaseTest {
 
         dreAuthority.addReserveDepositor(owner);
         dreAuthority.addPolicy(owner);
-        dreAuthority.addVault(owner);
         dreAuthority.addReserveManager(owner);
-        dreAuthority.addRewardManager(owner);
         dreAuthority.addReserveDepositor(owner);
     }
 

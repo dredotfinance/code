@@ -118,10 +118,10 @@
   },
   {
     "inputs": [],
-    "name": "authority",
+    "name": "app",
     "outputs": [
       {
-        "internalType": "contract IAppAuthority",
+        "internalType": "contract IERC20Metadata",
         "name": "",
         "type": "address"
       }
@@ -131,10 +131,10 @@
   },
   {
     "inputs": [],
-    "name": "app",
+    "name": "authority",
     "outputs": [
       {
-        "internalType": "contract IERC20Metadata",
+        "internalType": "contract IAppAuthority",
         "name": "",
         "type": "address"
       }
@@ -281,6 +281,19 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "newFloorPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "setAppPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "contract IAppAuthority",
         "name": "_newAuthority",
         "type": "address"
@@ -294,12 +307,17 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "registry",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
-        "name": "newFloorPrice",
+        "name": "projectID",
         "type": "uint256"
       }
     ],
-    "name": "setAppPrice",
+    "name": "setFeeMProjectId",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -13,7 +13,7 @@ contract BootstrapLPTest is BaseTest {
     address public constant USDC_TOKEN = 0x29219dd400f2Bf60E5a23d13Be72B486D4038894;
     address public constant LP_TOKEN = 0x18b6963ebe82B87c338032649aAaD4Eec43D3Ecb;
     address public constant STAKING = 0x21Cfa934CEa191fBD874ee8B1B6CE2B2224De653;
-    address public constant sDRE_TOKEN = 0x11E7D11F63fCeEd28CB3f06eB4C94b3e9F30890f;
+    address public constant sRZR_TOKEN = 0x11E7D11F63fCeEd28CB3f06eB4C94b3e9F30890f;
     address public constant ROUTER = 0x1D368773735ee1E678950B7A97bcA2CafB330CDc;
     address public constant AUTHORITY = 0xe4248e0c16B0E8D94e40bA54Ef2058CeDfe196a7;
     address public constant TREASURY = 0xc589858dA047A4789e099FA2CfD1D974D14F344B;
@@ -57,7 +57,7 @@ contract BootstrapLPTest is BaseTest {
     //     IERC20 usdc = IERC20(USDC_TOKEN);
     //     IERC20 app = IERC20(DRE_TOKEN);
     //     IERC20 lp = IERC20(LP_TOKEN);
-    //     IERC20 dreStaking = IERC20(sDRE_TOKEN);
+    //     IERC20 dreStaking = IERC20(sRZR_TOKEN);
 
     //     // Store initial balances
     //     uint256 initialUsdcBalance = usdc.balanceOf(usdcWhale);

@@ -117,7 +117,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     }
 
     /// @inheritdoc IAppTreasury
-    function mint(address _recipient, uint256 _amount) external override nonReentrant whenNotPaused onlyRewardManager {
+    function mint(address _recipient, uint256 _amount) external override nonReentrant whenNotPaused onlyPolicy {
         _updateReserves();
         require(_amount <= excessReserves(), "Treasury: insufficient reserves");
         app.mint(_recipient, _amount);

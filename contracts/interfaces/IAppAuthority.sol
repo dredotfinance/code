@@ -12,7 +12,6 @@ interface IAppAuthority {
     function addGovernor(address _newGovernor) external;
     function addGuardian(address _newGuardian) external;
     function addPolicy(address _newPolicy) external;
-    function addRewardManager(address _newRewardManager) external;
     function addReserveManager(address _newReserveManager) external;
     function addExecutor(address _newExecutor) external;
     function addBondManager(address _newBondManager) external;
@@ -20,10 +19,8 @@ interface IAppAuthority {
     function removeGovernor(address _oldGovernor) external;
     function removeGuardian(address _oldGuardian) external;
     function removePolicy(address _oldPolicy) external;
-    function removeRewardManager(address _oldRewardManager) external;
     function removeReserveManager(address _oldReserveManager) external;
     function removeExecutor(address _oldExecutor) external;
-    function removeVault(address _oldVault) external;
     function removeBondManager(address _oldBondManager) external;
 
     function isGovernor(address account) external view returns (bool);
@@ -34,15 +31,11 @@ interface IAppAuthority {
 
     function isPolicy(address account) external view returns (bool);
 
-    function isVault(address account) external view returns (bool);
-
     function isExecutor(address account) external view returns (bool);
 
     function isTreasury(address account) external view returns (bool);
 
     function isReserveManager(address account) external view returns (bool);
-
-    function isRewardManager(address account) external view returns (bool);
 
     function isReserveDepositor(address account) external view returns (bool);
 

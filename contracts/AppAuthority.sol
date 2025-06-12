@@ -11,9 +11,7 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
     bytes32 public constant GUARDIAN_ROLE = keccak256("GUARDIAN_ROLE");
     bytes32 public constant POLICY_ROLE = keccak256("POLICY_ROLE");
     bytes32 public constant RESERVE_MANAGER_ROLE = keccak256("RESERVE_MANAGER_ROLE");
-    bytes32 public constant VAULT_ROLE = keccak256("VAULT_ROLE");
     bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-    bytes32 public constant REWARD_MANAGER_ROLE = keccak256("REWARD_MANAGER_ROLE");
     bytes32 public constant RESERVE_DEPOSITOR_ROLE = keccak256("RESERVE_DEPOSITOR_ROLE");
     bytes32 public constant BOND_MANAGER_ROLE = keccak256("BOND_MANAGER_ROLE");
 
@@ -26,15 +24,12 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
         _grantRole(GOVERNOR_ROLE, msg.sender);
 
         _setRoleAdmin(GOVERNOR_ROLE, GOVERNOR_ROLE);
+        _setRoleAdmin(BOND_MANAGER_ROLE, GOVERNOR_ROLE);
+        _setRoleAdmin(EXECUTOR_ROLE, GOVERNOR_ROLE);
         _setRoleAdmin(GUARDIAN_ROLE, GOVERNOR_ROLE);
         _setRoleAdmin(POLICY_ROLE, GOVERNOR_ROLE);
-        _setRoleAdmin(VAULT_ROLE, GOVERNOR_ROLE);
-        _setRoleAdmin(RESERVE_MANAGER_ROLE, GOVERNOR_ROLE);
-        _setRoleAdmin(REWARD_MANAGER_ROLE, GOVERNOR_ROLE);
         _setRoleAdmin(RESERVE_DEPOSITOR_ROLE, GOVERNOR_ROLE);
-        _setRoleAdmin(VAULT_ROLE, GOVERNOR_ROLE);
-        _setRoleAdmin(EXECUTOR_ROLE, GOVERNOR_ROLE);
-        _setRoleAdmin(BOND_MANAGER_ROLE, GOVERNOR_ROLE);
+        _setRoleAdmin(RESERVE_MANAGER_ROLE, GOVERNOR_ROLE);
     }
 
     modifier onlyGovernor() {
@@ -66,20 +61,12 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
         _grantRole(POLICY_ROLE, _newPolicy);
     }
 
-    function addRewardManager(address _newRewardManager) external onlyGovernor {
-        _grantRole(REWARD_MANAGER_ROLE, _newRewardManager);
-    }
-
     function addReserveManager(address _newReserveManager) external onlyGovernor {
         _grantRole(RESERVE_MANAGER_ROLE, _newReserveManager);
     }
 
     function addReserveDepositor(address _newReserveDepositor) external onlyGovernor {
         _grantRole(RESERVE_DEPOSITOR_ROLE, _newReserveDepositor);
-    }
-
-    function addVault(address _newVault) external onlyGovernor {
-        _grantRole(VAULT_ROLE, _newVault);
     }
 
     function addBondManager(address _newBondManager) external onlyGovernor {
@@ -102,20 +89,12 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
         _revokeRole(POLICY_ROLE, _oldPolicy);
     }
 
-    function removeRewardManager(address _oldRewardManager) external onlyGovernor {
-        _revokeRole(REWARD_MANAGER_ROLE, _oldRewardManager);
-    }
-
     function removeReserveManager(address _oldReserveManager) external onlyGovernor {
         _revokeRole(RESERVE_MANAGER_ROLE, _oldReserveManager);
     }
 
     function removeReserveDepositor(address _oldReserveDepositor) external onlyGovernor {
         _revokeRole(RESERVE_DEPOSITOR_ROLE, _oldReserveDepositor);
-    }
-
-    function removeVault(address _oldVault) external onlyGovernor {
-        _revokeRole(VAULT_ROLE, _oldVault);
     }
 
     function removeExecutor(address _oldExecutor) external onlyGovernor {
@@ -128,10 +107,6 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
 
     function isGovernor(address account) external view override returns (bool) {
         return hasRole(GOVERNOR_ROLE, account);
-    }
-
-    function isRewardManager(address account) external view override returns (bool) {
-        return hasRole(REWARD_MANAGER_ROLE, account);
     }
 
     function isReserveDepositor(address account) external view override returns (bool) {
@@ -148,10 +123,6 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
 
     function isPolicy(address account) external view override returns (bool) {
         return hasRole(POLICY_ROLE, account);
-    }
-
-    function isVault(address account) external view override returns (bool) {
-        return hasRole(VAULT_ROLE, account);
     }
 
     function isTreasury(address account) external view override returns (bool) {
@@ -186,16 +157,8 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
         return getAllCandidates(POLICY_ROLE);
     }
 
-    function getAllVaultCandidates() external view returns (address[] memory candidates) {
-        return getAllCandidates(VAULT_ROLE);
-    }
-
     function getAllReserveManagerCandidates() external view returns (address[] memory candidates) {
         return getAllCandidates(RESERVE_MANAGER_ROLE);
-    }
-
-    function getAllRewardManagerCandidates() external view returns (address[] memory candidates) {
-        return getAllCandidates(REWARD_MANAGER_ROLE);
     }
 
     function getAllGuardianCandidates() external view returns (address[] memory candidates) {

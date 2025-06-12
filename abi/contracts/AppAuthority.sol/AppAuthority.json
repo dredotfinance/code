@@ -243,32 +243,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "REWARD_MANAGER_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "VAULT_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -355,32 +329,6 @@
       }
     ],
     "name": "addReserveManager",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_newRewardManager",
-        "type": "address"
-      }
-    ],
-    "name": "addRewardManager",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_newVault",
-        "type": "address"
-      }
-    ],
-    "name": "addVault",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -485,32 +433,6 @@
   {
     "inputs": [],
     "name": "getAllReserveManagerCandidates",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "candidates",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getAllRewardManagerCandidates",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "candidates",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getAllVaultCandidates",
     "outputs": [
       {
         "internalType": "address[]",
@@ -785,45 +707,7 @@
         "type": "address"
       }
     ],
-    "name": "isRewardManager",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
     "name": "isTreasury",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "isVault",
     "outputs": [
       {
         "internalType": "bool",
@@ -934,32 +818,6 @@
       }
     ],
     "name": "removeReserveManager",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_oldRewardManager",
-        "type": "address"
-      }
-    ],
-    "name": "removeRewardManager",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_oldVault",
-        "type": "address"
-      }
-    ],
-    "name": "removeVault",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
