@@ -165,8 +165,8 @@ contract AppUIHelper {
             treasuryBalance: dreToken.balanceOf(address(treasury)),
             treasuryValueApp: dreToken.balanceOf(address(treasury)),
             decimals: 18,
-            oraclePrice: dreOracle.getAppPrice(),
-            oraclePriceInApp: dreOracle.getAppPrice()
+            oraclePrice: dreOracle.getTokenPrice(),
+            oraclePriceInApp: dreOracle.getTokenPrice()
         });
 
         // Add staking token info
@@ -195,7 +195,7 @@ contract AppUIHelper {
                 treasuryBalance: token.balanceOf(address(treasury)),
                 treasuryValueApp: treasury.tokenValueE18(address(token), token.balanceOf(address(treasury))),
                 token: address(token),
-                oraclePriceInApp: dreOracle.getPriceInApp(address(token)),
+                oraclePriceInApp: dreOracle.getPriceInToken(address(token)),
                 oraclePrice: dreOracle.getPrice(address(token))
             });
         }

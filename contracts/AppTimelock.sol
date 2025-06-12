@@ -5,7 +5,6 @@ import {
     AccessControl,
     AccessControlEnumerable
 } from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
-
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 contract AppTimelock is AccessControlEnumerable, TimelockController {
@@ -62,8 +61,4 @@ contract AppTimelock is AccessControlEnumerable, TimelockController {
     function getAllCancellers() public view returns (address[] memory cancelers) {
         return getAllCandidates(CANCELLER_ROLE);
     }
-
-    // function getAllTimelockers() public view returns (address[] memory timelockers) {
-    //     return getAllCandidates(TIMELOCKER_ROLE);
-    // }
 }

@@ -59,7 +59,7 @@ contract AppBurnerTest is BaseTest {
         burner.burn();
 
         // Verify floor price update
-        uint256 newFloorPrice = dreOracle.getAppPrice();
+        uint256 newFloorPrice = dreOracle.getTokenPrice();
         assertApproxEqRel(newFloorPrice, 2e18, 0.001e18, "Floor price should update correctly after burn");
 
         // Verify RZR balance is zero after burn
@@ -69,13 +69,13 @@ contract AppBurnerTest is BaseTest {
 
     function testBurn_NoTokens() public {
         vm.startPrank(owner);
-        uint256 initialFloorPrice = dreOracle.getAppPrice();
+        uint256 initialFloorPrice = dreOracle.getTokenPrice();
 
         // Execute burn with no tokens
         burner.burn();
 
         // Verify floor price remains unchanged
-        uint256 newFloorPrice = dreOracle.getAppPrice();
+        uint256 newFloorPrice = dreOracle.getTokenPrice();
         assertEq(newFloorPrice, initialFloorPrice, "Floor price should remain unchanged with no tokens to burn");
         vm.stopPrank();
     }
@@ -98,7 +98,7 @@ contract AppBurnerTest is BaseTest {
         burner.burn();
 
         // // Verify floor price update
-        // uint256 newFloorPrice = dreOracle.getAppPrice();
+        // uint256 newFloorPrice = dreOracle.getTokenPrice();
         // assertEq(newFloorPrice, 1e22, "Floor price should update correctly with large burn amount");
 
         // // Verify RZR balance is zero after burn

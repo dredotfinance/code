@@ -24,7 +24,7 @@ contract AppOracleTest is BaseTest {
         usdcPriceOracle = new MockOracle(1e18); // 1 USDC = $1
 
         // Set up oracles
-        dreOracle.setAppPrice(1e18);
+        dreOracle.setTokenPrice(1e18);
         dreOracle.updateOracle(address(usdc), address(usdcPriceOracle));
     }
 
@@ -81,25 +81,25 @@ contract AppOracleTest is BaseTest {
         dreOracle.getPrice(address(newToken));
     }
 
-    function test_GetPriceInApp() public {
+    function test_getPriceInToken() public {
         // Get USDC price in RZR
-        uint256 usdcPriceInApp = dreOracle.getPriceInApp(address(usdc));
+        uint256 usdcPriceInApp = dreOracle.getPriceInToken(address(usdc));
         assertEq(usdcPriceInApp, 1e18, "USDC price in RZR should be 1 RZR");
 
         // Update RZR price to $2
-        dreOracle.setAppPrice(2e18);
-        usdcPriceInApp = dreOracle.getPriceInApp(address(usdc));
+        dreOracle.setTokenPrice(2e18);
+        usdcPriceInApp = dreOracle.getPriceInToken(address(usdc));
         assertEq(usdcPriceInApp, 5e17, "USDC price in RZR should be 0.5 RZR");
     }
 
-    function test_GetPriceInAppForAmount() public {
+    function test_getPriceInTokenForAmount() public {
         uint256 amount = 1000 * 1e6; // 1000 USDC
-        uint256 price = dreOracle.getPriceInAppForAmount(address(usdc), amount);
+        uint256 price = dreOracle.getPriceInTokenForAmount(address(usdc), amount);
         assertEq(price, 1000 * 1e18, "1000 USDC should be worth 1000 RZR");
 
         // Update RZR price to $2
-        dreOracle.setAppPrice(2e18);
-        price = dreOracle.getPriceInAppForAmount(address(usdc), amount);
+        dreOracle.setTokenPrice(2e18);
+        price = dreOracle.getPriceInTokenForAmount(address(usdc), amount);
         assertEq(price, 500 * 1e18, "1000 USDC should be worth 500 RZR");
     }
 
@@ -128,7 +128,7 @@ contract AppOracleTest is BaseTest {
         uint256 price = dreOracle.getPriceForAmount(address(token8), amount);
         assertEq(price, 1000 * 1e18, "Price should be correctly scaled");
 
-        uint256 priceInApp = dreOracle.getPriceInAppForAmount(address(token8), amount);
+        uint256 priceInApp = dreOracle.getPriceInTokenForAmount(address(token8), amount);
         assertEq(priceInApp, 1000 * 1e18, "Price in RZR should be correctly scaled");
     }
 
@@ -138,7 +138,7 @@ contract AppOracleTest is BaseTest {
         assertEq(dreOracle.getPrice(address(usdc)), 1e18, "Initial USDC price should be 1 USD");
 
         // Update prices
-        dreOracle.setAppPrice(2e18); // RZR = $2
+        dreOracle.setTokenPrice(2e18); // RZR = $2
         usdcPriceOracle.setPrice(1.5e18); // USDC = $1.5
 
         // Verify updated prices
@@ -146,7 +146,7 @@ contract AppOracleTest is BaseTest {
         assertEq(dreOracle.getPrice(address(usdc)), 1.5e18, "Updated USDC price should be 1.5 USD");
 
         // Verify price in RZR
-        uint256 usdcPriceInApp = dreOracle.getPriceInApp(address(usdc));
+        uint256 usdcPriceInApp = dreOracle.getPriceInToken(address(usdc));
         assertEq(usdcPriceInApp, 0.75e18, "USDC price in RZR should be 0.75 RZR");
     }
 }

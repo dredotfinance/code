@@ -144,7 +144,7 @@
   },
   {
     "inputs": [],
-    "name": "getAppPrice",
+    "name": "getTokenPrice",
     "outputs": [
       {
         "internalType": "uint256",
@@ -206,7 +206,7 @@
         "type": "address"
       }
     ],
-    "name": "getPriceInApp",
+    "name": "getPriceInToken",
     "outputs": [
       {
         "internalType": "uint256",
@@ -230,7 +230,7 @@
         "type": "uint256"
       }
     ],
-    "name": "getPriceInAppForAmount",
+    "name": "getPriceInTokenForAmount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -286,7 +286,7 @@
         "type": "uint256"
       }
     ],
-    "name": "setAppPrice",
+    "name": "setTokenPrice",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

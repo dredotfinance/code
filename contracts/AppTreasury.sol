@@ -149,7 +149,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         enabledTokens[_address] = true;
 
         // ensure the token has a valid price in dreOracle contract
-        require(dreOracle.getPriceInApp(_address) > 0, "Invalid price");
+        require(dreOracle.getPriceInToken(_address) > 0, "Invalid price");
         emit TokenEnabled(_address, true);
     }
 
@@ -174,7 +174,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
 
     /// @inheritdoc IAppTreasury
     function tokenValueE18(address _token, uint256 _amount) public view override returns (uint256 value_) {
-        value_ = dreOracle.getPriceInAppForAmount(_token, _amount);
+        value_ = dreOracle.getPriceInTokenForAmount(_token, _amount);
     }
 
     /// @inheritdoc IAppTreasury

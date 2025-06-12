@@ -38,7 +38,7 @@ interface IAppOracle {
      * @param token The token address
      * @return price The token price in RZR
      */
-    function getPriceInApp(address token) external view returns (uint256 price);
+    function getPriceInToken(address token) external view returns (uint256 price);
 
     /**
      * @notice Get the price for a token in RZR for an amount
@@ -46,19 +46,19 @@ interface IAppOracle {
      * @param amount The amount of the token
      * @return price The token price in RZR for the amount
      */
-    function getPriceInAppForAmount(address token, uint256 amount) external view returns (uint256 price);
+    function getPriceInTokenForAmount(address token, uint256 amount) external view returns (uint256 price);
 
     /**
      * @notice Get the price for RZR
      * @return price The RZR price
      */
-    function getAppPrice() external view returns (uint256);
+    function getTokenPrice() external view returns (uint256);
 
     /**
      * @notice Set the price for RZR
      * @param newFloorPrice The new RZR price
      */
-    function setAppPrice(uint256 newFloorPrice) external;
+    function setTokenPrice(uint256 newFloorPrice) external;
 
     /**
      * @notice Get the price for a token for an amount

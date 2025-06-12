@@ -33,7 +33,7 @@ contract AppBurner is AppAccessControlled {
     /// @dev This function is only callable by the executor
     function burn() external onlyExecutor {
         uint256 balance = app.balanceOf(address(this));
-        uint256 floorPrice = dreOracle.getAppPrice();
+        uint256 floorPrice = dreOracle.getTokenPrice();
         uint256 totalSupply = app.totalSupply();
         uint256 newFloorPrice = calculateFloorUpdate(balance, totalSupply, floorPrice);
 
@@ -41,7 +41,7 @@ contract AppBurner is AppAccessControlled {
         require(newFloorPrice <= floorPrice * 2, "New floor price must be less than 2x current floor price");
 
         app.burn(balance);
-        dreOracle.setAppPrice(newFloorPrice);
+        dreOracle.setTokenPrice(newFloorPrice);
         emit Burned(balance, newFloorPrice);
     }
 

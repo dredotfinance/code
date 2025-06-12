@@ -32,7 +32,7 @@ contract AppOracle is IAppOracle, AppAccessControlled {
         if (address(oracle) == address(0)) revert InvalidOracleAddress();
 
         oracles[IERC20Metadata(token)] = IOracle(oracle);
-        require(getPriceInApp(address(token)) >= 0, "Invalid price");
+        require(getPriceInToken(address(token)) >= 0, "Invalid price");
         require(IERC20Metadata(token).decimals() > 0, "Invalid token");
 
         emit OracleUpdated(address(token), address(oracle));
@@ -47,13 +47,13 @@ contract AppOracle is IAppOracle, AppAccessControlled {
     }
 
     /// @inheritdoc IAppOracle
-    function getPriceInApp(address token) public view returns (uint256 price) {
+    function getPriceInToken(address token) public view returns (uint256 price) {
         uint256 tokenPriceE18 = getPrice(token); // TOKEN/USD in E18
         price = (tokenPriceE18 * 1e18) / _floorPrice;
     }
 
     /// @inheritdoc IAppOracle
-    function getPriceInAppForAmount(address token, uint256 amount) external view returns (uint256 price) {
+    function getPriceInTokenForAmount(address token, uint256 amount) external view returns (uint256 price) {
         IERC20Metadata tokenMetadata = IERC20Metadata(token);
 
         uint256 tokenAmountE18 = amount * 10 ** (18 - tokenMetadata.decimals()); // amount in E18
@@ -72,12 +72,12 @@ contract AppOracle is IAppOracle, AppAccessControlled {
     }
 
     /// @inheritdoc IAppOracle
-    function getAppPrice() external view returns (uint256) {
+    function getTokenPrice() external view returns (uint256) {
         return _floorPrice;
     }
 
     /// @inheritdoc IAppOracle
-    function setAppPrice(uint256 newFloorPrice) external onlyPolicy {
+    function setTokenPrice(uint256 newFloorPrice) external onlyPolicy {
         require(newFloorPrice >= _floorPrice, "floor price can only increase");
 
         uint256 oldPrice = _floorPrice;
