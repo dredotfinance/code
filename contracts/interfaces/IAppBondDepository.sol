@@ -175,14 +175,6 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @return uint256 The staking lock period in seconds
     function STAKING_LOCK_PERIOD() external view returns (uint256);
 
-    /// @notice Gets the basis points used for calculations
-    /// @return uint256 The basis points value
-    function BASIS_POINTS() external view returns (uint256);
-
-    /// @notice Gets the team share percentage
-    /// @return uint256 The team share percentage
-    function TEAM_SHARE() external view returns (uint256);
-
     /// @notice Gets the staking contract address
     /// @return IAppStaking The staking contract interface
     function staking() external view returns (IAppStaking);

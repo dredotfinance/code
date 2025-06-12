@@ -101,7 +101,6 @@ contract BaseTest is Test {
         authority.addExecutor(address(owner));
         authority.addBondManager(address(owner));
         authority.addExecutor(address(rebaseController));
-        authority.addPolicy(address(bondDepository));
         authority.setOperationsTreasury(operationsTreasury);
         authority.setTreasury(address(treasury));
         authority.addReserveDepositor(address(bondDepository));

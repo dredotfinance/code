@@ -29,12 +29,6 @@ contract AppBondDepository is
     /// @inheritdoc IAppBondDepository
     uint256 public immutable override STAKING_LOCK_PERIOD = 30 days;
 
-    /// @inheritdoc IAppBondDepository
-    uint256 public immutable override BASIS_POINTS = 10000;
-
-    /// @inheritdoc IAppBondDepository
-    uint256 public immutable override TEAM_SHARE = 500; // 5%
-
     // Storage
     Bond[] private _bonds;
     mapping(uint256 => BondPosition) private _positions;
@@ -110,6 +104,7 @@ contract AppBondDepository is
         );
 
         emit CreateBond(id_, address(_quoteToken), _initialPrice, _capacity);
+        _quoteToken.approve(address(treasury), type(uint256).max);
     }
 
     /// @inheritdoc IAppBondDepository
@@ -139,18 +134,11 @@ contract AppBondDepository is
         bond.sold += payout_;
         bond.totalDebt += payout_;
 
-        // Calculate fees
-        uint256 teamFee = (_amount * TEAM_SHARE) / BASIS_POINTS;
-        uint256 protocolAmount = _amount - teamFee;
-
         // Transfer tokens
         bond.quoteToken.safeTransferFrom(msg.sender, address(this), _amount);
-        bond.quoteToken.safeTransfer(authority.operationsTreasury(), teamFee);
 
         // Deposit to treasury and mint RZR tokens
-        bond.quoteToken.safeTransfer(address(treasury), protocolAmount);
-        uint256 mintedAmount = treasury.tokenValueE18(address(bond.quoteToken), protocolAmount);
-        app.mint(address(this), mintedAmount);
+        treasury.deposit(_amount, address(bond.quoteToken), 0);
 
         // Create bond position NFT
         tokenId_ = lastId++;
