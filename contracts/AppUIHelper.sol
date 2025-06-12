@@ -83,7 +83,7 @@ contract AppUIHelper {
     IAppStaking public staking;
     IAppBondDepository public bondDepository;
     IAppTreasury public treasury;
-    IERC20 public dreToken;
+    IERC20 public appToken;
     IERC20 public stakingToken;
     IAppOracle public appOracle;
     IRebaseController public rebaseController;
@@ -109,7 +109,7 @@ contract AppUIHelper {
         staking = IAppStaking(_staking);
         bondDepository = IAppBondDepository(_bondDepository);
         treasury = IAppTreasury(_treasury);
-        dreToken = IERC20(_dreToken);
+        appToken = IERC20(_dreToken);
         stakingToken = IERC20(_stakingToken);
         appOracle = IAppOracle(_appOracle);
         shadowLP = IOracle(_shadowLP);
@@ -137,7 +137,7 @@ contract AppUIHelper {
     {
         // Get protocol-wide stats
         tvl = treasury.calculateReserves();
-        totalSupply = dreToken.totalSupply();
+        totalSupply = appToken.totalSupply();
         totalStaked = staking.totalStaked();
         totalRewards = staking.rewardPerToken();
         currentAPR = calculateAPRRaw(totalStaked);
@@ -157,13 +157,13 @@ contract AppUIHelper {
 
         // Add RZR token info
         tokenInfos[0] = TokenInfo({
-            token: address(dreToken),
+            token: address(appToken),
             name: "RZR",
             symbol: "RZR",
-            balance: dreToken.balanceOf(user),
-            allowance: dreToken.allowance(user, address(staking)),
-            treasuryBalance: dreToken.balanceOf(address(treasury)),
-            treasuryValueApp: dreToken.balanceOf(address(treasury)),
+            balance: appToken.balanceOf(user),
+            allowance: appToken.allowance(user, address(staking)),
+            treasuryBalance: appToken.balanceOf(address(treasury)),
+            treasuryValueApp: appToken.balanceOf(address(treasury)),
             decimals: 18,
             oraclePrice: appOracle.getTokenPrice(),
             oraclePriceInApp: appOracle.getTokenPrice()
@@ -346,7 +346,7 @@ contract AppUIHelper {
         (bool success,) = odos.call{value: tokenAmountIn}(odosData);
         require(success, "Odos call failed");
 
-        dreAmountSwapped = dreToken.balanceOf(address(this));
+        dreAmountSwapped = appToken.balanceOf(address(this));
         staking.createPosition(to, dreAmountSwapped, dreAmountDeclared, 0);
     }
 
@@ -367,7 +367,7 @@ contract AppUIHelper {
         (bool success,) = odos.call{value: tokenAmountIn}(odosData);
         require(success, "Odos call failed");
 
-        dreAmountSwapped = dreToken.balanceOf(address(this));
+        dreAmountSwapped = appToken.balanceOf(address(this));
         uint256 dreAmountDeclared = (dreAmountSwapped * dreAmountDeclaredAsPercentage) / 1e18;
         staking.createPosition(to, dreAmountSwapped, dreAmountDeclared, 0);
     }

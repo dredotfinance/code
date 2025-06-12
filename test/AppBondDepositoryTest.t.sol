@@ -13,7 +13,7 @@ contract AppBondDepositoryTest is BaseTest {
         setUpBaseTest();
 
         vm.startPrank(owner);
-        dreAuthority.addPolicy(owner);
+        authority.addPolicy(owner);
 
         // Enable mock quote token in treasury
         treasury.enable(address(mockQuoteToken));
@@ -22,20 +22,19 @@ contract AppBondDepositoryTest is BaseTest {
     }
 
     function test_Initialize() public view {
-        assertEq(address(dreBondDepository.app()), address(app));
-        assertEq(address(dreBondDepository.staking()), address(staking));
-        assertEq(address(dreBondDepository.treasury()), address(treasury));
-        assertEq(dreBondDepository.bondLength(), 0);
+        assertEq(address(bondDepository.app()), address(app));
+        assertEq(address(bondDepository.staking()), address(staking));
+        assertEq(address(bondDepository.treasury()), address(treasury));
+        assertEq(bondDepository.bondLength(), 0);
     }
 
     function test_CreateBond() public {
         vm.startPrank(owner);
 
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         // Verify bond details
-        IAppBondDepository.Bond memory bond = dreBondDepository.getBond(bondId);
+        IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
 
         assertEq(bond.capacity, BOND_AMOUNT);
         assertEq(address(bond.quoteToken), address(mockQuoteToken));
@@ -54,8 +53,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         vm.stopPrank();
 
@@ -64,13 +62,13 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Mint quote tokens to user
         mockQuoteToken.mint(user1, BOND_AMOUNT);
-        mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
 
         // Deposit to bond
-        (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Verify bond position
-        IAppBondDepository.BondPosition memory position = dreBondDepository.positions(tokenId);
+        IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
 
         assertEq(position.bondId, bondId);
         assertEq(position.amount, payout);
@@ -79,7 +77,7 @@ contract AppBondDepositoryTest is BaseTest {
         assertFalse(position.isStaked);
 
         // Verify bond state
-        IAppBondDepository.Bond memory bond = dreBondDepository.getBond(bondId);
+        IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
 
         assertApproxEqRel(bond.capacity, 9.09e19, 1e18); // Bond is partially sold
         assertEq(bond.sold, payout);
@@ -92,8 +90,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         vm.stopPrank();
 
@@ -102,15 +99,15 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Deposit to bond
         mockQuoteToken.mint(user1, BOND_AMOUNT);
-        mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
-        (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Fast forward past vesting period
-        vm.warp(block.timestamp + dreBondDepository.VESTING_PERIOD() + 1);
+        vm.warp(block.timestamp + bondDepository.VESTING_PERIOD() + 1);
 
         // Claim tokens
         uint256 balanceBefore = app.balanceOf(user1);
-        dreBondDepository.claim(tokenId);
+        bondDepository.claim(tokenId);
 
         // Verify tokens received
         assertEq(app.balanceOf(user1), balanceBefore + payout);
@@ -122,8 +119,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         vm.stopPrank();
 
@@ -132,17 +128,17 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Deposit to bond
         mockQuoteToken.mint(user1, BOND_AMOUNT);
-        mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
-        (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Fast forward past vesting period
-        vm.warp(block.timestamp + dreBondDepository.VESTING_PERIOD() + 1);
+        vm.warp(block.timestamp + bondDepository.VESTING_PERIOD() + 1);
 
         // Stake tokens
-        dreBondDepository.stake(tokenId, payout);
+        bondDepository.stake(tokenId, payout);
 
         // Verify position is staked
-        IAppBondDepository.BondPosition memory position = dreBondDepository.positions(tokenId);
+        IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
 
         assertTrue(position.isStaked);
 
@@ -153,24 +149,23 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         // Check initial price
-        assertEq(dreBondDepository.currentPrice(bondId), INITIAL_PRICE);
+        assertEq(bondDepository.currentPrice(bondId), INITIAL_PRICE);
 
         // Fast forward half way
         vm.warp(block.timestamp + BOND_DURATION / 2);
 
         // Check middle price
         uint256 expectedPrice = INITIAL_PRICE - ((INITIAL_PRICE - FINAL_PRICE) / 2);
-        assertEq(dreBondDepository.currentPrice(bondId), expectedPrice);
+        assertEq(bondDepository.currentPrice(bondId), expectedPrice);
 
         // Fast forward to end
         vm.warp(block.timestamp + BOND_DURATION);
 
         // Check final price
-        assertEq(dreBondDepository.currentPrice(bondId), FINAL_PRICE);
+        assertEq(bondDepository.currentPrice(bondId), FINAL_PRICE);
 
         vm.stopPrank();
     }
@@ -179,7 +174,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Try to create bond with invalid price range
-        dreBondDepository.create(
+        bondDepository.create(
             mockQuoteToken,
             BOND_AMOUNT,
             FINAL_PRICE, // Initial price lower than final price
@@ -194,7 +189,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Try to create bond with zero duration
-        dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, 0);
+        bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, 0);
 
         vm.stopPrank();
     }
@@ -203,8 +198,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         // Fast forward past end time
         vm.warp(block.timestamp + BOND_DURATION + 1);
@@ -214,8 +208,8 @@ contract AppBondDepositoryTest is BaseTest {
         // Try to deposit
         vm.startPrank(user1);
         mockQuoteToken.mint(user1, BOND_AMOUNT);
-        mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
-        dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         vm.stopPrank();
     }
@@ -224,7 +218,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond with small capacity
-        uint256 bondId = dreBondDepository.create(
+        uint256 bondId = bondDepository.create(
             mockQuoteToken,
             BOND_AMOUNT / 2, // Half capacity
             INITIAL_PRICE,
@@ -237,8 +231,8 @@ contract AppBondDepositoryTest is BaseTest {
         // Try to deposit more than capacity
         vm.startPrank(user1);
         mockQuoteToken.mint(user1, BOND_AMOUNT);
-        mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
-        dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         vm.stopPrank();
     }
@@ -247,8 +241,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         vm.stopPrank();
 
@@ -257,11 +250,11 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Deposit to bond
         mockQuoteToken.mint(user1, BOND_AMOUNT);
-        mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
-        dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Try to claim before vesting
-        dreBondDepository.claim(1); // tokenId will be 1 since it's the first deposit
+        bondDepository.claim(1); // tokenId will be 1 since it's the first deposit
 
         vm.stopPrank();
     }
@@ -270,8 +263,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         vm.stopPrank();
 
@@ -280,11 +272,11 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Deposit to bond
         mockQuoteToken.mint(user1, BOND_AMOUNT);
-        mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
-        (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Try to stake before vesting; it should work
-        dreBondDepository.stake(tokenId, payout);
+        bondDepository.stake(tokenId, payout);
 
         vm.stopPrank();
     }
@@ -293,8 +285,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId =
-            dreBondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
 
         vm.stopPrank();
 
@@ -303,17 +294,17 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Deposit to bond
         mockQuoteToken.mint(user1, BOND_AMOUNT);
-        mockQuoteToken.approve(address(dreBondDepository), BOND_AMOUNT);
-        (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Fast forward past vesting period
-        vm.warp(block.timestamp + dreBondDepository.VESTING_PERIOD() + 1);
+        vm.warp(block.timestamp + bondDepository.VESTING_PERIOD() + 1);
 
         // Stake tokens
-        dreBondDepository.stake(tokenId, payout);
+        bondDepository.stake(tokenId, payout);
 
         // Try to stake again
-        dreBondDepository.stake(tokenId, payout);
+        bondDepository.stake(tokenId, payout);
 
         vm.stopPrank();
     }
@@ -333,10 +324,10 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Create bond
         uint256 capacity = bondAmount * initialPrice / 1e18;
-        uint256 bondId = dreBondDepository.create(mockQuoteToken, capacity, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, capacity, initialPrice, finalPrice, BOND_DURATION);
 
         // Verify bond details
-        IAppBondDepository.Bond memory bond = dreBondDepository.getBond(bondId);
+        IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
         assertEq(bond.capacity, capacity);
         assertEq(bond.initialPrice, initialPrice);
         assertEq(bond.finalPrice, finalPrice);
@@ -349,25 +340,25 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Mint quote tokens to user
         mockQuoteToken.mint(user1, depositAmount);
-        mockQuoteToken.approve(address(dreBondDepository), depositAmount);
+        mockQuoteToken.approve(address(bondDepository), depositAmount);
 
         // Calculate expected payout based on current price
-        uint256 currentPrice = dreBondDepository.currentPrice(bondId);
+        uint256 currentPrice = bondDepository.currentPrice(bondId);
         uint256 expectedPayout = (depositAmount * 1e18) / currentPrice;
 
         // Deposit to bond
-        (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, depositAmount, currentPrice, 0, user1);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, depositAmount, currentPrice, 0, user1);
 
         // Verify payout is within acceptable range (allowing for small rounding differences)
         assertApproxEqRel(payout, expectedPayout, 0.0001e18, "Payout amount incorrect");
 
         // Verify bond state
-        bond = dreBondDepository.getBond(bondId);
+        bond = bondDepository.getBond(bondId);
         assertEq(bond.sold, payout);
         assertEq(bond.purchased, depositAmount);
 
         // Verify position details
-        IAppBondDepository.BondPosition memory position = dreBondDepository.positions(tokenId);
+        IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
 
         assertEq(position.bondId, bondId);
         assertEq(position.amount, payout);
@@ -391,7 +382,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = dreBondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
 
         // Fast forward by random time
         vm.warp(block.timestamp + timeElapsed);
@@ -407,7 +398,7 @@ contract AppBondDepositoryTest is BaseTest {
         }
 
         // Verify current price
-        uint256 currentPrice = dreBondDepository.currentPrice(bondId);
+        uint256 currentPrice = bondDepository.currentPrice(bondId);
         assertApproxEqRel(currentPrice, expectedPrice, 0.0001e18, "Price decay incorrect");
 
         vm.stopPrank();
@@ -435,7 +426,7 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = dreBondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
 
         vm.stopPrank();
 
@@ -456,14 +447,14 @@ contract AppBondDepositoryTest is BaseTest {
 
             // Mint quote tokens to user
             mockQuoteToken.mint(user1, depositAmount);
-            mockQuoteToken.approve(address(dreBondDepository), depositAmount);
+            mockQuoteToken.approve(address(bondDepository), depositAmount);
 
             // Get current price
-            uint256 currentPrice = dreBondDepository.currentPrice(bondId);
+            uint256 currentPrice = bondDepository.currentPrice(bondId);
             uint256 expectedPayout = (depositAmount * 1e18) / currentPrice;
 
             // Deposit to bond
-            (uint256 payout,) = dreBondDepository.deposit(bondId, depositAmount, currentPrice, 0, user1);
+            (uint256 payout,) = bondDepository.deposit(bondId, depositAmount, currentPrice, 0, user1);
 
             // Verify payout is within acceptable range
             assertApproxEqRel(payout, expectedPayout, 0.0001e18, "Payout amount incorrect");
@@ -473,7 +464,7 @@ contract AppBondDepositoryTest is BaseTest {
         }
 
         // Verify final bond state
-        IAppBondDepository.Bond memory bond = dreBondDepository.getBond(bondId);
+        IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
         assertEq(bond.sold, totalPayout);
         assertEq(bond.purchased, totalDeposited);
         assertTrue(bond.purchased <= bondAmount, "Bond capacity exceeded");
@@ -483,7 +474,7 @@ contract AppBondDepositoryTest is BaseTest {
 
     function test_TreasuryInflationWithOraclePriceMovements() public {
         vm.startPrank(owner);
-        dreAuthority.addPolicy(owner);
+        authority.addPolicy(owner);
 
         // Enable multiple quote tokens in treasury with different initial prices
         treasury.enable(address(mockQuoteToken));
@@ -554,10 +545,10 @@ contract AppBondDepositoryTest is BaseTest {
         uint256 initialPrice = 1.1e18;
         uint256 finalPrice = 0.9e18;
 
-        uint256 bondId = dreBondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
 
         // Verify bond price calculations consider new oracle prices
-        uint256 currentPrice = dreBondDepository.currentPrice(bondId);
+        uint256 currentPrice = bondDepository.currentPrice(bondId);
         assertApproxEqRel(currentPrice, initialPrice, 0.0001e18, "Bond price incorrect");
 
         // Test deposit with new prices
@@ -566,9 +557,9 @@ contract AppBondDepositoryTest is BaseTest {
 
         uint256 depositAmount = 100e18;
         mockQuoteToken.mint(user1, depositAmount);
-        mockQuoteToken.approve(address(dreBondDepository), depositAmount);
+        mockQuoteToken.approve(address(bondDepository), depositAmount);
 
-        (uint256 payout,) = dreBondDepository.deposit(bondId, depositAmount, currentPrice, 0, user1);
+        (uint256 payout,) = bondDepository.deposit(bondId, depositAmount, currentPrice, 0, user1);
 
         // Verify payout considers new oracle prices
         uint256 expectedPayout = (depositAmount * 1e18) / currentPrice;
@@ -598,10 +589,10 @@ contract AppBondDepositoryTest is BaseTest {
         uint256 dreCapacity = 15000e18; // 15000 RZR (6 decimals)
 
         // Create bond
-        uint256 bondId = dreBondDepository.create(usdc, dreCapacity, initialPrice, finalPrice, duration);
+        uint256 bondId = bondDepository.create(usdc, dreCapacity, initialPrice, finalPrice, duration);
 
         // Verify bond details
-        IAppBondDepository.Bond memory bond = dreBondDepository.getBond(bondId);
+        IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
         assertEq(bond.capacity, dreCapacity);
         assertEq(address(bond.quoteToken), address(usdc));
         assertEq(bond.initialPrice, initialPrice);
@@ -615,20 +606,20 @@ contract AppBondDepositoryTest is BaseTest {
         // Mint USDC to user
         uint256 depositAmount = 10000e6; // 10000 USDC
         usdc.mint(user1, depositAmount);
-        usdc.approve(address(dreBondDepository), depositAmount);
+        usdc.approve(address(bondDepository), depositAmount);
 
         // Calculate expected RZR payout at initial price
         uint256 expectedPayout = (depositAmount * 1e18) / initialPrice; // Should be 10000 RZR
 
         // Deposit to bond
-        (uint256 payout, uint256 tokenId) = dreBondDepository.deposit(bondId, depositAmount, initialPrice, 0, user1);
+        (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, depositAmount, initialPrice, 0, user1);
 
         // Verify payout is correct (1500 USDC / 1.5 = 1000 RZR)
         assertEq(payout, expectedPayout);
         assertEq(payout, 5000e18); // Should receive 1000 RZR
 
         // Verify bond position
-        IAppBondDepository.BondPosition memory position = dreBondDepository.positions(tokenId);
+        IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
         assertEq(position.bondId, bondId);
         assertEq(position.amount, payout);
         assertEq(position.quoteAmount, depositAmount);
@@ -636,7 +627,7 @@ contract AppBondDepositoryTest is BaseTest {
         assertFalse(position.isStaked);
 
         // Verify bond state
-        bond = dreBondDepository.getBond(bondId);
+        bond = bondDepository.getBond(bondId);
         assertEq(bond.sold, payout);
         assertEq(bond.purchased, depositAmount);
 
@@ -645,22 +636,22 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Calculate expected price at half way point
         uint256 expectedPrice = initialPrice - ((initialPrice - finalPrice) / 2);
-        uint256 currentPrice = dreBondDepository.currentPrice(bondId);
+        uint256 currentPrice = bondDepository.currentPrice(bondId);
         assertApproxEqRel(currentPrice, expectedPrice, 0.0001e18);
 
         // Fast forward to end of bond
         vm.warp(block.timestamp + duration);
 
         // Verify final price
-        currentPrice = dreBondDepository.currentPrice(bondId);
+        currentPrice = bondDepository.currentPrice(bondId);
         assertEq(currentPrice, finalPrice);
 
         // Fast forward past vesting period
-        vm.warp(block.timestamp + dreBondDepository.VESTING_PERIOD() + 1);
+        vm.warp(block.timestamp + bondDepository.VESTING_PERIOD() + 1);
 
         // Claim tokens
         uint256 balanceBefore = app.balanceOf(user1);
-        dreBondDepository.claim(tokenId);
+        bondDepository.claim(tokenId);
 
         // Verify tokens received
         assertEq(app.balanceOf(user1), balanceBefore + payout);

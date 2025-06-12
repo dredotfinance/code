@@ -12,11 +12,11 @@ contract AppStakingTest is BaseTest {
         setUpBaseTest();
 
         vm.startPrank(owner);
-        dreAuthority.addPolicy(owner);
+        authority.addPolicy(owner);
     }
 
     function test_Initialize() public view {
-        assertEq(address(staking.dreToken()), address(app));
+        assertEq(address(staking.appToken()), address(app));
         assertEq(address(staking.trackingToken()), address(sapp));
         assertEq(staking.totalStaked(), 0);
     }

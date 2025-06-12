@@ -9,10 +9,10 @@ contract TreasuryReserveFeeTest is BaseTest {
         vm.startPrank(owner);
 
         // Setup authority roles
-        dreAuthority.addReserveDepositor(owner);
-        dreAuthority.addPolicy(owner);
-        dreAuthority.addReserveManager(owner);
-        dreAuthority.addReserveDepositor(owner);
+        authority.addReserveDepositor(owner);
+        authority.addPolicy(owner);
+        authority.addReserveManager(owner);
+        authority.addReserveDepositor(owner);
 
         // Enable token for testing
         treasury.enable(address(mockQuoteToken));
@@ -33,7 +33,7 @@ contract TreasuryReserveFeeTest is BaseTest {
 
         // Get initial balances
         uint256 initialTreasuryBalance = mockQuoteToken.balanceOf(address(treasury));
-        uint256 initialOperationsTreasuryBalance = mockQuoteToken.balanceOf(address(dreAuthority.operationsTreasury()));
+        uint256 initialOperationsTreasuryBalance = mockQuoteToken.balanceOf(address(authority.operationsTreasury()));
         uint256 initialOwnerBalance = app.balanceOf(owner);
 
         // Perform deposit
@@ -46,7 +46,7 @@ contract TreasuryReserveFeeTest is BaseTest {
             "Treasury should receive deposit amount minus fee"
         );
         assertEq(
-            mockQuoteToken.balanceOf(address(dreAuthority.operationsTreasury())),
+            mockQuoteToken.balanceOf(address(authority.operationsTreasury())),
             initialOperationsTreasuryBalance + expectedFee,
             "Operations treasury should receive fee"
         );
@@ -101,7 +101,7 @@ contract TreasuryReserveFeeTest is BaseTest {
 
         // Verify operations treasury received both fees
         assertEq(
-            mockQuoteToken.balanceOf(address(dreAuthority.operationsTreasury())),
+            mockQuoteToken.balanceOf(address(authority.operationsTreasury())),
             firstExpectedFee + secondExpectedFee,
             "Operations treasury should receive sum of both fees"
         );

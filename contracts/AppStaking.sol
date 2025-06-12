@@ -33,7 +33,7 @@ contract AppStaking is
     uint256 public rewardCooldownPeriod;
 
     // State variables
-    IERC20 public dreToken;
+    IERC20 public appToken;
     IPermissionedERC20 public trackingToken;
 
     // Mapping from token ID to Position
@@ -82,7 +82,7 @@ contract AppStaking is
         require(_withdrawCooldownPeriod > 0, "Invalid withdraw cooldown period");
         require(_rewardCooldownPeriod > 0, "Invalid reward cooldown period");
 
-        dreToken = IERC20(_dreToken);
+        appToken = IERC20(_dreToken);
         trackingToken = IPermissionedERC20(_trackingToken);
         burner = _burner;
 
@@ -145,7 +145,7 @@ contract AppStaking is
 
         // Update rewards
         _updateReward(0);
-        dreToken.safeTransferFrom(msg.sender, address(this), reward);
+        appToken.safeTransferFrom(msg.sender, address(this), reward);
 
         if (block.timestamp >= periodFinish) {
             // If no reward is currently being distributed, the new rate is just `reward / duration`
@@ -161,7 +161,7 @@ contract AppStaking is
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of `rewardRate` in the earned and `rewardsPerToken` functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
-        uint256 balance = dreToken.balanceOf(address(this));
+        uint256 balance = appToken.balanceOf(address(this));
         require(rewardRate <= balance / EPOCH_DURATION, "Reward rate too high");
 
         // Update period finish
@@ -182,7 +182,7 @@ contract AppStaking is
         require(declaredValue > 0, "Declared value must be greater than 0");
 
         // Transfer RZR tokens from user
-        dreToken.safeTransferFrom(msg.sender, address(this), amount);
+        appToken.safeTransferFrom(msg.sender, address(this), amount);
 
         // Calculate and collect harberger tax
         taxPaid = _distributeTax(declaredValue);
@@ -239,7 +239,7 @@ contract AppStaking is
         trackingToken.burn(msg.sender, amount);
 
         // Transfer RZR tokens back to user
-        dreToken.safeTransfer(msg.sender, amount);
+        appToken.safeTransfer(msg.sender, amount);
 
         // Burn the NFT
         _burn(tokenId);
@@ -262,11 +262,11 @@ contract AppStaking is
         uint256 sellerAmount = price - resellFee;
 
         // Transfer RZR tokens from buyer
-        dreToken.safeTransferFrom(msg.sender, address(this), price);
+        appToken.safeTransferFrom(msg.sender, address(this), price);
 
         // Distribute payment
-        dreToken.safeTransfer(seller, sellerAmount);
-        dreToken.safeTransfer(burner, resellFee);
+        appToken.safeTransfer(seller, sellerAmount);
+        appToken.safeTransfer(burner, resellFee);
 
         // Burn tracking tokens from seller and mint to buyer
         trackingToken.burn(seller, position.amount);
@@ -313,7 +313,7 @@ contract AppStaking is
 
         // Transfer RZR tokens from user
         if (additionalAmount > 0) {
-            dreToken.safeTransferFrom(msg.sender, address(this), additionalAmount);
+            appToken.safeTransferFrom(msg.sender, address(this), additionalAmount);
         }
 
         // Calculate harberger tax on the additional amount
@@ -374,7 +374,7 @@ contract AppStaking is
         if (reward > 0) {
             address owner = ownerOf(tokenId);
             position.rewards = 0;
-            dreToken.safeTransfer(owner, reward);
+            appToken.safeTransfer(owner, reward);
             emit RewardsClaimed(tokenId, owner, reward);
         }
     }
@@ -394,7 +394,7 @@ contract AppStaking is
     /// @return taxPaid The total amount of tax paid
     function _distributeTax(uint256 amount) internal returns (uint256 taxPaid) {
         taxPaid = (amount * harbergerTaxRate) / BASIS_POINTS;
-        dreToken.safeTransfer(burner, taxPaid); // burn the tax so that the floor price increases
+        appToken.safeTransfer(burner, taxPaid); // burn the tax so that the floor price increases
     }
 
     /// @notice Updates the reward for a position

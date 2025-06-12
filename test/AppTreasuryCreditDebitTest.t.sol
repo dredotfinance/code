@@ -8,10 +8,10 @@ contract AppTreasuryCreditDebitTest is BaseTest {
         setUpBaseTest();
         vm.startPrank(owner);
 
-        dreAuthority.addReserveDepositor(owner);
-        dreAuthority.addPolicy(owner);
-        dreAuthority.addReserveManager(owner);
-        dreAuthority.addReserveDepositor(owner);
+        authority.addReserveDepositor(owner);
+        authority.addPolicy(owner);
+        authority.addReserveManager(owner);
+        authority.addReserveDepositor(owner);
     }
 
     function test_InitialState() public view {

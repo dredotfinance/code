@@ -32,8 +32,8 @@ contract BaseTest is Test {
     MockOracle public mockOracle2;
     MockOracle public mockOracle3;
 
-    AppAuthority public dreAuthority;
-    AppBondDepository public dreBondDepository;
+    AppAuthority public authority;
+    AppBondDepository public bondDepository;
     AppBurner public burner;
 
     address public owner = makeAddr("owner");
@@ -43,7 +43,7 @@ contract BaseTest is Test {
 
     function setUpBaseTest() public {
         vm.startPrank(owner);
-        dreAuthority = new AppAuthority();
+        authority = new AppAuthority();
 
         // Deploy mock quote token
         mockQuoteToken = new MockERC20("Mock Token", "MTK");
@@ -57,68 +57,63 @@ contract BaseTest is Test {
 
         // Deploy RZR token
         MockEndpoint lz = new MockEndpoint();
-        app = new RZR(address(lz), address(dreAuthority));
+        app = new RZR(address(lz), address(authority));
 
         // Deploy sRZR token
-        sapp = new sRZR(address(dreAuthority));
+        sapp = new sRZR(address(authority));
 
         appOracle = new AppOracle();
-        appOracle.initialize(address(dreAuthority), address(app));
+        appOracle.initialize(address(authority), address(app));
         appOracle.updateOracle(address(mockQuoteToken), address(mockOracle));
         appOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2));
         appOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
 
         // Deploy Burner
         burner = new AppBurner();
-        burner.initialize(address(appOracle), address(app), address(dreAuthority));
+        burner.initialize(address(appOracle), address(app), address(authority));
 
         // Deploy Treasury
         treasury = new AppTreasury();
-        treasury.initialize(address(app), address(appOracle), address(dreAuthority));
+        treasury.initialize(address(app), address(appOracle), address(authority));
         treasury.enable(address(mockQuoteToken));
 
         // Deploy Staking
         staking = new AppStaking();
-        staking.initialize(address(app), address(sapp), address(dreAuthority), address(burner));
+        staking.initialize(address(app), address(sapp), address(authority), address(burner));
 
         // Deploy AppBondDepository
-        dreBondDepository = new AppBondDepository();
-        dreBondDepository.initialize(address(app), address(staking), address(treasury), address(dreAuthority));
+        bondDepository = new AppBondDepository();
+        bondDepository.initialize(address(app), address(staking), address(treasury), address(authority));
 
         sapp.setStakingContract(address(staking));
 
         // Deploy RebaseController
         rebaseController = new RebaseController();
         rebaseController.initialize(
-            address(app),
-            address(treasury),
-            address(staking),
-            address(appOracle),
-            address(dreAuthority),
-            address(burner)
+            address(app), address(treasury), address(staking), address(appOracle), address(authority), address(burner)
         );
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 
-        dreAuthority.addPolicy(address(treasury));
-        dreAuthority.addPolicy(address(rebaseController));
-        dreAuthority.addPolicy(address(owner));
-        dreAuthority.addPolicy(address(burner));
-        dreAuthority.addExecutor(address(owner));
-        dreAuthority.addBondManager(address(owner));
-        dreAuthority.addExecutor(address(rebaseController));
-        dreAuthority.addPolicy(address(dreBondDepository));
-        dreAuthority.setOperationsTreasury(operationsTreasury);
-        dreAuthority.setTreasury(address(treasury));
-        dreAuthority.addReserveDepositor(address(dreBondDepository));
+        authority.addPolicy(address(treasury));
+        authority.addPolicy(address(rebaseController));
+        authority.addPolicy(address(owner));
+        authority.addPolicy(address(burner));
+        authority.addExecutor(address(owner));
+        authority.addBondManager(address(owner));
+        authority.addExecutor(address(rebaseController));
+        authority.addPolicy(address(bondDepository));
+        authority.setOperationsTreasury(operationsTreasury);
+        authority.setTreasury(address(treasury));
+        authority.addReserveDepositor(address(bondDepository));
 
         vm.label(address(app), "RZR");
         vm.label(address(sapp), "sRZR");
         vm.label(address(treasury), "Treasury");
         vm.label(address(staking), "Staking");
         vm.label(address(rebaseController), "RebaseController");
-        vm.label(address(dreBondDepository), "AppBondDepository");
+        vm.label(address(bondDepository), "AppBondDepository");
         vm.label(address(burner), "Burner");
-        vm.label(address(dreAuthority), "Authority");
+        vm.label(address(authority), "Authority");
         vm.label(address(mockQuoteToken), "Mock Quote Token");
         vm.label(address(mockQuoteToken2), "Mock Quote Token 2");
         vm.label(address(mockQuoteToken3), "Mock Quote Token 3");

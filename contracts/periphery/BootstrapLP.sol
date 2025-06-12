@@ -15,7 +15,7 @@ import "../interfaces/IBootstrapLP.sol";
 contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
-    IApp public immutable dreToken;
+    IApp public immutable appToken;
     IERC20 public immutable usdcToken;
     IERC20 public immutable lpToken;
 
@@ -38,7 +38,7 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         uint256 _bonus,
         uint256 _filled
     ) Ownable(msg.sender) {
-        dreToken = IApp(_dreToken);
+        appToken = IApp(_dreToken);
         usdcToken = IERC20(_usdcToken);
         lpToken = IERC20(_lpToken);
         staking = IAppStaking(_staking);
@@ -48,9 +48,9 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         bonus = _bonus;
         usdcAquired = _filled;
 
-        dreToken.approve(address(router), type(uint256).max);
+        appToken.approve(address(router), type(uint256).max);
         usdcToken.approve(address(router), type(uint256).max);
-        dreToken.approve(address(staking), type(uint256).max);
+        appToken.approve(address(staking), type(uint256).max);
     }
 
     function setMaxUsdcCapacity(uint256 _maxUsdcCapacity) external onlyOwner {
@@ -74,13 +74,13 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         uint256 dreAmountToMint = treasury.tokenValueE18(address(usdcToken), usdcAmount);
 
         // Mint RZR tokens with the half the USDC
-        dreToken.mint(address(this), dreAmountToMint / 2);
+        appToken.mint(address(this), dreAmountToMint / 2);
         usdcToken.safeTransfer(address(treasury), usdcAmount / 2);
 
         // Deposit into LP
         (,, uint256 lpReceived) = router.addLiquidity(
             address(usdcToken),
-            address(dreToken),
+            address(appToken),
             false,
             usdcAmount / 2,
             dreAmountToMint / 2,
@@ -93,7 +93,7 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         // Deposit the LP into the treasury
         dreAmountOfLp = treasury.tokenValueE18(address(lpToken), lpReceived) * bonus / 1e18;
         lpToken.safeTransfer(address(treasury), lpReceived);
-        dreToken.mint(address(this), dreAmountOfLp);
+        appToken.mint(address(this), dreAmountOfLp);
 
         // require(dreAmountOfLp == dreAmount, "RZR amount of LP does not match RZR amount");
 
@@ -101,8 +101,8 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         staking.createPosition(to, dreAmountOfLp, dreAmountOfLp, 0);
 
         // Burn any pending RZR
-        if (dreToken.balanceOf(address(this)) > 0) {
-            dreToken.burn(dreToken.balanceOf(address(this)));
+        if (appToken.balanceOf(address(this)) > 0) {
+            appToken.burn(appToken.balanceOf(address(this)));
         }
 
         // Return back any pending USDC
@@ -113,7 +113,7 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         // invariant check - dont' mint RZR if we don't have enough reserves
         uint256 totalReservesAfter = reserves();
         require(totalReservesAfter > totalReservesBefore, "Reserves invariant violated");
-        require(totalReservesAfter >= dreToken.totalSupply(), "Reserves invariant violated");
+        require(totalReservesAfter >= appToken.totalSupply(), "Reserves invariant violated");
 
         return dreAmountOfLp;
     }
@@ -128,6 +128,6 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
     }
 
     function reserves() public view returns (uint256) {
-        return treasury.calculateReserves() + dreToken.balanceOf(address(treasury));
+        return treasury.calculateReserves() + appToken.balanceOf(address(treasury));
     }
 }

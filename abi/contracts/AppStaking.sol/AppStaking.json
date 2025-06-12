@@ -800,7 +800,7 @@
   },
   {
     "inputs": [],
-    "name": "dreToken",
+    "name": "appToken",
     "outputs": [
       {
         "internalType": "contract IERC20",

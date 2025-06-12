@@ -21,7 +21,7 @@ contract RebaseControllerTest is BaseTest {
         setUpBaseTest();
 
         vm.startPrank(owner);
-        dreAuthority.addPolicy(owner);
+        authority.addPolicy(owner);
 
         // Mint some quote tokens to treasury to simulate PCV
         mockQuoteToken.mint(address(treasury), 1_000_000e18);
@@ -109,7 +109,7 @@ contract RebaseControllerTest is BaseTest {
             rebaseController.projectedEpochRate();
 
         uint256 stakingBalanceBefore = app.balanceOf(address(staking));
-        uint256 opsBalanceBefore = app.balanceOf(address(dreAuthority.operationsTreasury()));
+        uint256 opsBalanceBefore = app.balanceOf(address(authority.operationsTreasury()));
 
         vm.expectEmit(true, true, true, true);
         emit Rebased(epochMint, toStakers, toOps, toBurner);
@@ -120,7 +120,7 @@ contract RebaseControllerTest is BaseTest {
         assertApproxEqRel(stakingBalance, toStakers + stakingBalanceBefore, 0.001e18);
 
         // Verify ops treasury received tokens
-        uint256 opsBalance = app.balanceOf(address(dreAuthority.operationsTreasury()));
+        uint256 opsBalance = app.balanceOf(address(authority.operationsTreasury()));
         assertApproxEqRel(opsBalance, toOps + opsBalanceBefore, 0.001e18);
     }
 
