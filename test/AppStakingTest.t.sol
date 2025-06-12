@@ -119,8 +119,7 @@ contract AppStakingTest is BaseTest {
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
         // taxes would've been paid
-        assertEq(app.balanceOf(operationsTreasury), 10e18);
-        assertEq(app.balanceOf(address(burner)), 40e18);
+        assertEq(app.balanceOf(address(burner)), 50e18);
 
         app.mint(user1, DECLARED_VALUE);
 
@@ -138,8 +137,7 @@ contract AppStakingTest is BaseTest {
         assertEq(sapp.balanceOf(owner), 0);
 
         // no taxes earned but the burner gets 1% of the declared value
-        assertEq(app.balanceOf(operationsTreasury), 10e18);
-        assertEq(app.balanceOf(address(burner)), 50e18);
+        assertEq(app.balanceOf(address(burner)), 60e18);
 
         vm.stopPrank();
     }
@@ -328,11 +326,9 @@ contract AppStakingTest is BaseTest {
         staking.createPosition(owner, STAKE_AMOUNT, highValue, 0);
 
         // Calculate expected tax distribution
-        uint256 operationsShare = (highValue * staking.teamTreasuryShare()) / staking.BASIS_POINTS();
         uint256 treasuryShare = (highValue * staking.harbergerTaxRate()) / staking.BASIS_POINTS();
 
         // Verify tax distribution
-        assertEq(app.balanceOf(dreAuthority.operationsTreasury()), operationsShare);
         assertEq(app.balanceOf(address(burner)), treasuryShare);
 
         vm.stopPrank();
@@ -482,10 +478,10 @@ contract AppStakingTest is BaseTest {
         IAppStaking.Position memory finalPosition = staking.positions(tokenId);
 
         // Verify position was updated correctly
-        uint256 totalTax = staking.harbergerTaxRate() + staking.teamTreasuryShare();
         assertApproxEqAbs(
             finalPosition.amount,
-            initialPosition.amount + additionalAmount - ((additionalValue * totalTax) / staking.BASIS_POINTS()),
+            initialPosition.amount + additionalAmount
+                - ((additionalValue * staking.harbergerTaxRate()) / staking.BASIS_POINTS()),
             100,
             "Amount not updated correctly"
         );
@@ -592,7 +588,7 @@ contract AppStakingTest is BaseTest {
         app.approve(address(staking), declaredValue);
         staking.buyPosition(tokenId);
 
-        uint256 totalTax = staking.harbergerTaxRate() + staking.teamTreasuryShare();
+        uint256 totalTax = staking.harbergerTaxRate();
 
         // Verify buyer owns the position
         assertEq(staking.ownerOf(tokenId), user1, "Position ownership not transferred");
@@ -605,7 +601,7 @@ contract AppStakingTest is BaseTest {
 
         // Verify seller received payment minus fees
         uint256 expectedSellerAmount =
-            declaredValue - ((declaredValue * staking.teamTreasuryShare()) / staking.BASIS_POINTS());
+            declaredValue - ((declaredValue * staking.resellFeeRate()) / staking.BASIS_POINTS());
         assertApproxEqRel(
             app.balanceOf(owner), expectedSellerAmount, 0.0001e18, "Seller did not receive correct amount"
         );

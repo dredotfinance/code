@@ -87,15 +87,10 @@ interface IAppStaking is IERC721Enumerable {
     /// @param newValue The new harberger tax rate
     event HarbergerTaxRateUpdated(uint256 oldValue, uint256 newValue);
 
-    /// @notice Emitted when team treasury share is updated
-    /// @param oldValue The old team treasury share
-    /// @param newValue The new team treasury share
-    event TeamTreasuryShareUpdated(uint256 oldValue, uint256 newValue);
-
-    /// @notice Emitted when treasury share is updated
-    /// @param oldValue The old treasury share
-    /// @param newValue The new treasury share
-    event TreasuryShareUpdated(uint256 oldValue, uint256 newValue);
+    /// @notice Emitted when staking fee rate is updated
+    /// @param oldValue The old staking fee rate
+    /// @param newValue The new staking fee rate
+    event StakingFeeRateUpdated(uint256 oldValue, uint256 newValue);
 
     /// @notice Emitted when basis points is updated
     /// @param oldValue The old basis points
@@ -213,14 +208,6 @@ interface IAppStaking is IERC721Enumerable {
     /// @notice Gets the harberger tax rate
     /// @return The harberger tax rate
     function harbergerTaxRate() external view returns (uint256);
-
-    /// @notice Gets the team treasury share
-    /// @return The team treasury share
-    function teamTreasuryShare() external view returns (uint256);
-
-    /// @notice Gets the treasury share
-    /// @return The treasury share
-    function treasuryShare() external view returns (uint256);
 
     /// @notice Gets the withdraw cooldown period
     /// @return The withdraw cooldown period

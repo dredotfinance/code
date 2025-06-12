@@ -28,8 +28,7 @@ contract AppStaking is
 
     // Configurable parameters
     uint256 public harbergerTaxRate;
-    uint256 public teamTreasuryShare;
-    uint256 public treasuryShare;
+    uint256 public resellFeeRate;
     uint256 public withdrawCooldownPeriod;
     uint256 public rewardCooldownPeriod;
 
@@ -71,17 +70,15 @@ contract AppStaking is
         __ReentrancyGuard_init();
         __AppAccessControlled_init(_authority);
 
-        uint256 _harbergerTaxRate = 400;
-        uint256 _teamTreasuryShare = 100;
-        uint256 _treasuryShare = 400;
+        uint256 _harbergerTaxRate = 500;
+        uint256 _resellFeeRate = 100;
         uint256 _withdrawCooldownPeriod = 3 days;
         uint256 _rewardCooldownPeriod = 1 days;
 
         require(_dreToken != address(0), "Invalid RZR token address");
         require(_trackingToken != address(0), "Invalid tracking token address");
         require(_harbergerTaxRate <= BASIS_POINTS, "Invalid harberger tax rate");
-        require(_teamTreasuryShare <= BASIS_POINTS, "Invalid team treasury share");
-        require(_treasuryShare <= BASIS_POINTS, "Invalid treasury share");
+        require(_resellFeeRate <= BASIS_POINTS, "Invalid resell fee rate");
         require(_withdrawCooldownPeriod > 0, "Invalid withdraw cooldown period");
         require(_rewardCooldownPeriod > 0, "Invalid reward cooldown period");
 
@@ -90,8 +87,7 @@ contract AppStaking is
         burner = _burner;
 
         harbergerTaxRate = _harbergerTaxRate;
-        teamTreasuryShare = _teamTreasuryShare;
-        treasuryShare = _treasuryShare;
+        resellFeeRate = _resellFeeRate;
         withdrawCooldownPeriod = _withdrawCooldownPeriod;
         rewardCooldownPeriod = _rewardCooldownPeriod;
     }
@@ -103,24 +99,6 @@ contract AppStaking is
         uint256 oldValue = harbergerTaxRate;
         harbergerTaxRate = _harbergerTaxRate;
         emit HarbergerTaxRateUpdated(oldValue, _harbergerTaxRate);
-    }
-
-    /// @notice Sets the team treasury share
-    /// @param _teamTreasuryShare The new team treasury share
-    function setTeamTreasuryShare(uint256 _teamTreasuryShare) external onlyGovernor {
-        require(_teamTreasuryShare <= BASIS_POINTS, "Invalid team treasury share");
-        uint256 oldValue = teamTreasuryShare;
-        teamTreasuryShare = _teamTreasuryShare;
-        emit TeamTreasuryShareUpdated(oldValue, _teamTreasuryShare);
-    }
-
-    /// @notice Sets the treasury share
-    /// @param _treasuryShare The new treasury share
-    function setTreasuryShare(uint256 _treasuryShare) external onlyGovernor {
-        require(_treasuryShare <= BASIS_POINTS, "Invalid treasury share");
-        uint256 oldValue = treasuryShare;
-        treasuryShare = _treasuryShare;
-        emit TreasuryShareUpdated(oldValue, _treasuryShare);
     }
 
     /// @notice Sets the withdraw cooldown period
@@ -280,7 +258,7 @@ contract AppStaking is
         uint256 price = position.declaredValue;
 
         // Calculate resell fee
-        uint256 resellFee = (price * teamTreasuryShare) / BASIS_POINTS;
+        uint256 resellFee = (price * resellFeeRate) / BASIS_POINTS;
         uint256 sellerAmount = price - resellFee;
 
         // Transfer RZR tokens from buyer
@@ -415,13 +393,8 @@ contract AppStaking is
     /// @param amount The amount of RZR to distribute
     /// @return taxPaid The total amount of tax paid
     function _distributeTax(uint256 amount) internal returns (uint256 taxPaid) {
-        uint256 taxPaidTreasury = (amount * harbergerTaxRate) / BASIS_POINTS;
-        uint256 taxPaidOperations = (amount * teamTreasuryShare) / BASIS_POINTS;
-
-        dreToken.safeTransfer(address(authority.operationsTreasury()), taxPaidOperations);
-        dreToken.safeTransfer(burner, taxPaidTreasury); // burn the tax so that the floor price increases
-
-        taxPaid = taxPaidOperations + taxPaidTreasury;
+        taxPaid = (amount * harbergerTaxRate) / BASIS_POINTS;
+        dreToken.safeTransfer(burner, taxPaid); // burn the tax so that the floor price increases
     }
 
     /// @notice Updates the reward for a position
