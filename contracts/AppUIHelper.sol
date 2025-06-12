@@ -116,6 +116,10 @@ contract AppUIHelper {
         rebaseController = IRebaseController(_rebaseController);
         bootstrapLP = IBootstrapLP(_bootstrapLP);
         odos = _odos;
+
+        IERC20 usdcToken = bootstrapLP.usdcToken();
+        usdcToken.approve(address(bootstrapLP), type(uint256).max);
+        appToken.approve(address(staking), type(uint256).max);
     }
 
     /// @notice Get all protocol information for a user
@@ -318,13 +322,17 @@ contract AppUIHelper {
             require(msg.value == tokenAmountIn, "Invalid ETH amount");
         } else {
             IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
-            IERC20(tokenIn).approve(odos, tokenAmountIn);
+        }
+
+        if (tokenIn != address(0)) {
+            IERC20(tokenIn).approve(odos, type(uint256).max);
         }
 
         (bool success,) = odos.call{value: tokenAmountIn}(odosData);
         require(success, "Odos call failed");
 
         IERC20 usdcToken = bootstrapLP.usdcToken();
+        usdcToken.approve(address(bootstrapLP), type(uint256).max);
         uint256 balance = usdcToken.balanceOf(address(this));
         dreAmountOfLp = bootstrapLP.bootstrap(balance, to);
     }
@@ -340,7 +348,10 @@ contract AppUIHelper {
             require(msg.value == tokenAmountIn, "Invalid ETH amount");
         } else {
             IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
-            IERC20(tokenIn).approve(odos, tokenAmountIn);
+        }
+
+        if (tokenIn != address(0)) {
+            IERC20(tokenIn).approve(odos, type(uint256).max);
         }
 
         (bool success,) = odos.call{value: tokenAmountIn}(odosData);
@@ -361,7 +372,10 @@ contract AppUIHelper {
             require(msg.value == tokenAmountIn, "Invalid ETH amount");
         } else {
             IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
-            IERC20(tokenIn).approve(odos, tokenAmountIn);
+        }
+
+        if (tokenIn != address(0)) {
+            IERC20(tokenIn).approve(odos, type(uint256).max);
         }
 
         (bool success,) = odos.call{value: tokenAmountIn}(odosData);
