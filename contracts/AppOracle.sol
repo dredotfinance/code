@@ -18,6 +18,7 @@ contract AppOracle is IAppOracle, AppAccessControlled {
 
     event FloorPriceUpdated(uint256 oldPrice, uint256 newPrice);
 
+    /// @inheritdoc IAppOracle
     function initialize(address _authority, address _dre) external initializer {
         __AppAccessControlled_init(_authority);
         app = IERC20Metadata(_dre);
@@ -62,12 +63,7 @@ contract AppOracle is IAppOracle, AppAccessControlled {
         price = (tokenPriceE18 * tokenAmountE18) / drePriceE18;
     }
 
-    /**
-     * @notice Get the price for a token for an amount
-     * @param token The token address
-     * @param amount The amount of the token
-     * @return price The token price for the amount
-     */
+    /// @inheritdoc IAppOracle
     function getPriceForAmount(address token, uint256 amount) external view returns (uint256 price) {
         IERC20Metadata tokenMetadata = IERC20Metadata(token);
         uint256 tokenAmountE18 = amount * 10 ** (18 - tokenMetadata.decimals()); // amount in E18
@@ -75,10 +71,12 @@ contract AppOracle is IAppOracle, AppAccessControlled {
         price = (tokenPriceE18 * tokenAmountE18) / 1e18;
     }
 
+    /// @inheritdoc IAppOracle
     function getAppPrice() external view returns (uint256) {
         return _floorPrice;
     }
 
+    /// @inheritdoc IAppOracle
     function setAppPrice(uint256 newFloorPrice) external onlyPolicy {
         require(newFloorPrice >= _floorPrice, "floor price can only increase");
 

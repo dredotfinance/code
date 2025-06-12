@@ -8,15 +8,12 @@ import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./interfaces/IAppStaking.sol";
+import "./interfaces/IPermissionedERC20.sol";
 import "./AppAccessControlled.sol";
 
-// Permissioned ERC20 for tracking events
-interface IPermissionedERC20 {
-    function mint(address to, uint256 amount) external;
-
-    function burn(address from, uint256 amount) external;
-}
-
+/// @title AppStaking
+/// @notice Implementation of the staking system that allows users to stake RZR tokens and earn rewards
+/// @dev This contract handles staking positions as NFTs, with harberger tax and reward distribution
 contract AppStaking is
     IAppStaking,
     AppAccessControlled,
@@ -53,6 +50,7 @@ contract AppStaking is
 
     address public burner;
 
+    /// @inheritdoc IAppStaking
     function initialize(address _dreToken, address _trackingToken, address _authority, address _burner)
         public
         initializer
@@ -72,14 +70,17 @@ contract AppStaking is
         burner = _burner;
     }
 
+    /// @inheritdoc IAppStaking
     function positions(uint256 tokenId) external view override returns (Position memory) {
         return _positions[tokenId];
     }
 
+    /// @inheritdoc IAppStaking
     function lastTimeRewardApplicable() public view override returns (uint256) {
         return block.timestamp < periodFinish ? block.timestamp : periodFinish;
     }
 
+    /// @inheritdoc IAppStaking
     function rewardPerToken() public view override returns (uint256) {
         if (totalStaked == 0) return rewardPerTokenStored;
         // Round down at each step to prevent over-distribution
@@ -88,10 +89,7 @@ contract AppStaking is
         return rewardPerTokenStored + rewardPerTokenDelta;
     }
 
-    /**
-     * @notice Notify the contract of new rewards to be distributed
-     * @param reward Amount of rewards to distribute over the next 8 hours
-     */
+    /// @inheritdoc IAppStaking
     function notifyRewardAmount(uint256 reward) external override onlyPolicy {
         require(reward > 0, "No reward");
         require(totalStaked > 0, "No stakers");
@@ -124,15 +122,7 @@ contract AppStaking is
         emit RewardAdded(reward);
     }
 
-    /**
-     * @notice Create a new position
-     * @param to The address to mint the position to
-     * @param amount The amount of RZR to stake
-     * @param declaredValue The declared value of the position
-     * @param minLockDuration The minimum time tokens must be locked (0 for no minimum)
-     * @return tokenId The token ID of the new position
-     * @return taxPaid The amount of tax paid
-     */
+    /// @inheritdoc IAppStaking
     function createPosition(address to, uint256 amount, uint256 declaredValue, uint256 minLockDuration)
         external
         override
@@ -171,10 +161,7 @@ contract AppStaking is
         emit PositionCreated(tokenId, to, amount, declaredValue);
     }
 
-    /**
-     * @notice Start the unstaking process
-     * @param tokenId The position ID
-     */
+    /// @inheritdoc IAppStaking
     function startUnstaking(uint256 tokenId) external override nonReentrant {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
         require(_positions[tokenId].cooldownEnd == 0, "Already in cooldown");
@@ -186,10 +173,7 @@ contract AppStaking is
         emit CooldownStarted(tokenId, msg.sender);
     }
 
-    /**
-     * @notice Complete the unstaking process
-     * @param tokenId The position ID
-     */
+    /// @inheritdoc IAppStaking
     function completeUnstaking(uint256 tokenId) external override nonReentrant {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
 
@@ -215,10 +199,7 @@ contract AppStaking is
         emit PositionUnstaked(tokenId, msg.sender, amount);
     }
 
-    /**
-     * @notice Buy a position
-     * @param tokenId The position ID
-     */
+    /// @inheritdoc IAppStaking
     function buyPosition(uint256 tokenId) external override nonReentrant {
         address seller = ownerOf(tokenId);
         require(seller != address(0), "Position does not exist");
@@ -252,19 +233,12 @@ contract AppStaking is
         emit PositionSold(tokenId, seller, msg.sender, price);
     }
 
-    /**
-     * @notice Claim rewards for a position
-     * @param tokenId The position ID
-     */
+    /// @inheritdoc IAppStaking
     function claimRewards(uint256 tokenId) external override nonReentrant returns (uint256 reward) {
         reward = _claimRewards(tokenId);
     }
 
-    /**
-     * @notice Get the claimable rewards for a position
-     * @param tokenId The position ID
-     * @return The claimable rewards
-     */
+    /// @inheritdoc IAppStaking
     function earned(uint256 tokenId) public view override returns (uint256) {
         Position storage position = _positions[tokenId];
         if (position.amount == 0) return 0;
@@ -275,12 +249,7 @@ contract AppStaking is
         return rewardDelta + position.rewards;
     }
 
-    /**
-     * @notice Increase the staked amount for a position
-     * @param tokenId The position ID
-     * @param additionalAmount The amount to add to the stake
-     * @param addtionalDeclaredValue The additional declared value
-     */
+    /// @inheritdoc IAppStaking
     function increaseAmount(uint256 tokenId, uint256 additionalAmount, uint256 addtionalDeclaredValue)
         external
         override
@@ -317,10 +286,7 @@ contract AppStaking is
         emit PositionUpdated(tokenId, owner, position.amount, position.declaredValue);
     }
 
-    /**
-     * @notice Cancel the unstaking process and reset cooldown variables
-     * @param tokenId The position ID
-     */
+    /// @inheritdoc IAppStaking
     function cancelUnstaking(uint256 tokenId) external override nonReentrant {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
 
@@ -331,10 +297,8 @@ contract AppStaking is
         _cancelUnstaking(tokenId);
     }
 
-    /**
-     * @notice Cancel the unstaking process and reset cooldown variables
-     * @param tokenId The position ID
-     */
+    /// @notice Cancels the unstaking process and resets cooldown variables
+    /// @param tokenId The position ID
     function _cancelUnstaking(uint256 tokenId) internal {
         Position storage position = _positions[tokenId];
 
@@ -348,6 +312,9 @@ contract AppStaking is
         _updateReward(tokenId);
     }
 
+    /// @notice Claims rewards for a position
+    /// @param tokenId The position ID
+    /// @return reward The amount of rewards claimed
     function _claimRewards(uint256 tokenId) internal returns (uint256 reward) {
         Position storage position = _positions[tokenId];
         // require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
@@ -363,18 +330,19 @@ contract AppStaking is
         }
     }
 
-    /**
-     * @notice Override the beforeTokenTransfer function to prevent transfers
-     */
+    /// @notice Overrides the beforeTokenTransfer function to prevent transfers
+    /// @param to The address receiving the token
+    /// @param tokenId The token ID
+    /// @param auth The address authorized to transfer
+    /// @return The address that should be the owner
     function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
         require(auth == address(0), "Only mints/burns");
         return super._update(to, tokenId, auth);
     }
 
-    /**
-     * @notice Distribute the tax to the operations treasury and protocol treasury
-     * @param amount The amount of RZR to distribute
-     */
+    /// @notice Distributes the tax to the operations treasury and protocol treasury
+    /// @param amount The amount of RZR to distribute
+    /// @return taxPaid The total amount of tax paid
     function _distributeTax(uint256 amount) internal returns (uint256 taxPaid) {
         uint256 taxPaidTreasury = (amount * HARBERGER_TAX_RATE) / BASIS_POINTS;
         uint256 taxPaidOperations = (amount * TEAM_TREASURY_SHARE) / BASIS_POINTS;
@@ -385,10 +353,8 @@ contract AppStaking is
         taxPaid = taxPaidOperations + taxPaidTreasury;
     }
 
-    /**
-     * @notice Update the reward for a position
-     * @param tokenId The position ID
-     */
+    /// @notice Updates the reward for a position
+    /// @param tokenId The position ID
     function _updateReward(uint256 tokenId) internal {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
@@ -400,7 +366,9 @@ contract AppStaking is
         }
     }
 
+    /// @notice Returns the base URI for the NFT metadata
+    /// @return The base URI string
     function _baseURI() internal view virtual override returns (string memory) {
-        return "https://uri.app.finance/staking/";
+        return "https://uri.rezerve.money/api/staking/";
     }
 }

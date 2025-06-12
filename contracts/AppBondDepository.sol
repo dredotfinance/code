@@ -268,4 +268,10 @@ contract AppBondDepository is
     function bondLength() external view override returns (uint256) {
         return _bonds.length;
     }
+
+    /// @notice Returns the base URI for the NFT metadata
+    /// @return The base URI string
+    function _baseURI() internal view virtual override returns (string memory) {
+        return "https://uri.rezerve.money/api/bonds/";
+    }
 }

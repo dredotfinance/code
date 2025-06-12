@@ -13,6 +13,12 @@ interface IAppOracle {
     error InvalidOracleAddress();
     error InvalidTokenAddress();
 
+    /// @notice Initializes the AppOracle contract
+    /// @dev This function is only callable once
+    /// @param _authority The address of the authority contract
+    /// @param _dre The address of the dre contract
+    function initialize(address _authority, address _dre) external;
+
     /**
      * @notice Update the oracle for a token
      * @param token The token address
@@ -53,4 +59,12 @@ interface IAppOracle {
      * @param newFloorPrice The new RZR price
      */
     function setAppPrice(uint256 newFloorPrice) external;
+
+    /**
+     * @notice Get the price for a token for an amount
+     * @param token The token address
+     * @param amount The amount of the token
+     * @return price The token price for the amount
+     */
+    function getPriceForAmount(address token, uint256 amount) external view returns (uint256);
 }
