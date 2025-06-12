@@ -75,6 +75,8 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         app.approve(address(staking), type(uint256).max);
     }
 
+    /// @notice Sets the merkle server
+    /// @param _merkleServer The merkle server address
     function setMerkleServer(address _merkleServer) external onlyGovernor {
         merkleServer = _merkleServer;
     }
@@ -139,6 +141,10 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         }
     }
 
+    /// @notice Stakes RZR tokens with a referral code
+    /// @param amount The amount of RZR tokens to stake
+    /// @param declaredValue The declared value of the stake
+    /// @param referralCode The referral code to use
     function stakeWithReferral(uint256 amount, uint256 declaredValue, bytes8 referralCode) external nonReentrant {
         app.transferFrom(msg.sender, address(this), amount);
 
@@ -149,6 +155,12 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         staking.createPosition(msg.sender, amount, declaredValue, 0);
     }
 
+    /// @notice Buys a bond with a referral code
+    /// @param _id The ID of the bond to buy
+    /// @param _amount The amount of quote tokens to pay
+    /// @param _maxPrice The maximum price to pay
+    /// @param _minPayout The minimum payout to receive
+    /// @param referralCode The referral code to use
     function bondWithReferral(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, bytes8 referralCode)
         external
         nonReentrant
