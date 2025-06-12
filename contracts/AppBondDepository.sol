@@ -13,6 +13,8 @@ import "./interfaces/IAppTreasury.sol";
 
 /// @title RZR Bond Depository
 /// @author RZR Protocol
+/// @notice Implementation of the bond depository system that allows users to purchase bonds with quote tokens
+/// @dev This contract handles bond creation, management, and NFT-based bond positions
 contract AppBondDepository is
     AppAccessControlled,
     ERC721EnumerableUpgradeable,
@@ -21,24 +23,39 @@ contract AppBondDepository is
 {
     using SafeERC20 for IERC20;
 
-    // Constants
+    /// @inheritdoc IAppBondDepository
     uint256 public immutable override VESTING_PERIOD = 12 days;
+
+    /// @inheritdoc IAppBondDepository
     uint256 public immutable override STAKING_LOCK_PERIOD = 30 days;
+
+    /// @inheritdoc IAppBondDepository
     uint256 public immutable override BASIS_POINTS = 10000;
+
+    /// @inheritdoc IAppBondDepository
     uint256 public immutable override TEAM_SHARE = 500; // 5%
 
     // Storage
     Bond[] private _bonds;
-    IAppStaking public override staking;
-    IApp public override app;
-    IAppTreasury public override treasury;
     mapping(uint256 => BondPosition) private _positions;
+
+    /// @inheritdoc IAppBondDepository
+    IAppStaking public override staking;
+
+    /// @inheritdoc IAppBondDepository
+    IApp public override app;
+
+    /// @inheritdoc IAppBondDepository
+    IAppTreasury public override treasury;
+
+    /// @inheritdoc IAppBondDepository
     uint256 public override lastId = 1;
 
+    /// @inheritdoc IAppBondDepository
     function initialize(address _dre, address _staking, address _treasury, address _authority)
         public
         override
-        reinitializer(3)
+        initializer
     {
         __ERC721_init("RZR Bond Position", "RZR-BOND");
         __ReentrancyGuard_init();
@@ -49,25 +66,19 @@ contract AppBondDepository is
         if (lastId == 0) lastId = 1;
     }
 
+    /// @inheritdoc IAppBondDepository
     function bonds(uint256 index) external view override returns (Bond memory bond) {
         bond = _bonds[index];
     }
 
+    /// @inheritdoc IAppBondDepository
     function positions(uint256 tokenId) external view override returns (BondPosition memory position) {
         position = _positions[tokenId];
     }
 
     /* ======== MUTATIVE FUNCTIONS ======== */
 
-    /**
-     * @notice creates a new bond
-     * @param _quoteToken token used to deposit
-     * @param _capacity total capacity of the bond
-     * @param _initialPrice starting price in quote token
-     * @param _finalPrice ending price in quote token
-     * @param _duration duration of the bond in seconds
-     * @return id_ ID of new bond
-     */
+    /// @inheritdoc IAppBondDepository
     function create(
         IERC20 _quoteToken,
         uint256 _capacity,
@@ -101,16 +112,7 @@ contract AppBondDepository is
         emit CreateBond(id_, address(_quoteToken), _initialPrice, _capacity);
     }
 
-    /**
-     * @notice deposit quote tokens in exchange for a bond
-     * @param _id ID of the bond
-     * @param _amount amount of quote token to spend
-     * @param _maxPrice maximum price willing to pay
-     * @param _minPayout minimum payout required
-     * @param _user recipient of the bond
-     * @return payout_ amount of RZR tokens
-     * @return tokenId_ ID of the bond position NFT
-     */
+    /// @inheritdoc IAppBondDepository
     function deposit(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, address _user)
         external
         override
@@ -167,10 +169,7 @@ contract AppBondDepository is
         emit BondCreated(_id, _amount, currentPrice_);
     }
 
-    /**
-     * @notice claim vested tokens from a bond position
-     * @param _tokenId ID of the bond position
-     */
+    /// @inheritdoc IAppBondDepository
     function claim(uint256 _tokenId) external override nonReentrant {
         require(ownerOf(_tokenId) == msg.sender, "Not owner");
         BondPosition storage position = _positions[_tokenId];
@@ -187,11 +186,7 @@ contract AppBondDepository is
         emit Claimed(_tokenId, claimable);
     }
 
-    /**
-     * @notice stake tokens from a bond position
-     * @param _tokenId ID of the bond position
-     * @param _declaredValue declared value for harberger tax
-     */
+    /// @inheritdoc IAppBondDepository
     function stake(uint256 _tokenId, uint256 _declaredValue) external override nonReentrant {
         require(ownerOf(_tokenId) == msg.sender, "Not owner");
         BondPosition storage position = _positions[_tokenId];
@@ -212,11 +207,9 @@ contract AppBondDepository is
 
     /* ======== VIEW FUNCTIONS ======== */
 
-    /**
-     * @notice calculate current price of bond
-     * @param _id ID of the bond
-     * @return current price in quote token
-     */
+    /// @notice Calculates the current price of a bond based on time elapsed
+    /// @param _id The ID of the bond
+    /// @return The current price in quote token
     function _currentPrice(uint256 _id) internal view returns (uint256) {
         Bond memory bond = _bonds[_id];
         if (block.timestamp >= bond.endTime) return bond.finalPrice;
@@ -227,11 +220,9 @@ contract AppBondDepository is
         return bond.initialPrice - ((bond.initialPrice - bond.finalPrice) * timeElapsed) / duration;
     }
 
-    /**
-     * @notice calculate claimable amount for a position
-     * @param _tokenId ID of the bond position
-     * @return amount of tokens claimable
-     */
+    /// @notice Calculates the amount of tokens that can be claimed from a bond position
+    /// @param _tokenId The ID of the bond position
+    /// @return The amount of tokens that can be claimed
     function _claimableAmount(uint256 _tokenId) internal view returns (uint256) {
         BondPosition memory position = _positions[_tokenId];
         if (position.claimedAmount >= position.amount) return 0;
@@ -245,52 +236,35 @@ contract AppBondDepository is
         return vestedAmount - position.claimedAmount;
     }
 
+    /// @notice Disables a bond, preventing further deposits
+    /// @param _id The ID of the bond to disable
     function disable(uint256 _id) external onlyPolicy {
         _bonds[_id].enabled = false;
         emit DisableBond(_id);
     }
 
-    /**
-     * @notice check if a bond is still active
-     * @param _id ID of the bond
-     * @return true if bond is active
-     */
+    /// @inheritdoc IAppBondDepository
     function isLive(uint256 _id) external view override returns (bool) {
         Bond memory bond = _bonds[_id];
         return block.timestamp < bond.endTime && bond.capacity > 0;
     }
 
-    /**
-     * @notice get current price of a bond
-     * @param _id ID of the bond
-     * @return current price in quote token
-     */
+    /// @inheritdoc IAppBondDepository
     function currentPrice(uint256 _id) external view override returns (uint256) {
         return _currentPrice(_id);
     }
 
-    /**
-     * @notice get claimable amount for a position
-     * @param _tokenId ID of the bond position
-     * @return amount of tokens claimable
-     */
+    /// @inheritdoc IAppBondDepository
     function claimableAmount(uint256 _tokenId) external view override returns (uint256) {
         return _claimableAmount(_tokenId);
     }
 
-    /**
-     * @notice get a bond
-     * @param _id ID of the bond
-     * @return bond
-     */
+    /// @inheritdoc IAppBondDepository
     function getBond(uint256 _id) external view override returns (Bond memory) {
         return _bonds[_id];
     }
 
-    /**
-     * @notice get the number of bonds
-     * @return number of bonds
-     */
+    /// @inheritdoc IAppBondDepository
     function bondLength() external view override returns (uint256) {
         return _bonds.length;
     }

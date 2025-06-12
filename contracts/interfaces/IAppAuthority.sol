@@ -5,7 +5,8 @@ import "./IAppTreasury.sol";
 
 /// @title IAppAuthority
 /// @notice Interface for managing different roles and authorities in the application
-/// @dev This interface defines the core access control functionality for the application
+/// @dev This interface defines the core access control functionality for the application, including role management,
+/// treasury management, and candidate tracking for various roles in the system
 interface IAppAuthority {
     /// @notice Emitted when the treasury address is updated
     /// @param newTreasury The address of the new treasury
@@ -130,7 +131,7 @@ interface IAppAuthority {
     function treasury() external view returns (IAppTreasury);
 
     /// @notice Returns an array of all candidates for a given role
-    /// @param role The role to get candidates for
+    /// @param role The role to get candidates for (e.g., GOVERNOR_ROLE, GUARDIAN_ROLE, etc.)
     /// @return candidates Array of addresses that are candidates for the given role
     function getAllCandidates(bytes32 role) external view returns (address[] memory candidates);
 

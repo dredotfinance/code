@@ -55,19 +55,19 @@ contract AppStaking is
 
     function initialize(address _dreToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(8)
+        initializer
     {
         if (lastId == 0) lastId = 1;
 
         __ERC721_init("RZR Staking Position", "RZR-POS");
         __ReentrancyGuard_init();
+        __AppAccessControlled_init(_authority);
 
         require(_dreToken != address(0), "Invalid RZR token address");
         require(_trackingToken != address(0), "Invalid tracking token address");
 
         dreToken = IERC20(_dreToken);
         trackingToken = IPermissionedERC20(_trackingToken);
-        __AppAccessControlled_init(_authority);
 
         burner = _burner;
     }

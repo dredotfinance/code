@@ -25,7 +25,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     /// @inheritdoc IAppTreasury
     uint256 public override unbackedSupply;
 
-    function initialize(address _dre, address _dreOracle, address _authority) public reinitializer(5) {
+    function initialize(address _dre, address _dreOracle, address _authority) public initializer {
         require(_dre != address(0), "Zero address: app");
         require(_dreOracle != address(0), "Zero address: dreOracle");
         app = IApp(_dre);

@@ -5,8 +5,6 @@ import "./interfaces/IAppAuthority.sol";
 import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 
 contract AppAuthority is IAppAuthority, AccessControlEnumerable {
-    /* ========== STATE VARIABLES ========== */
-
     bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR_ROLE");
     bytes32 public constant GUARDIAN_ROLE = keccak256("GUARDIAN_ROLE");
     bytes32 public constant POLICY_ROLE = keccak256("POLICY_ROLE");
@@ -15,10 +13,11 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
     bytes32 public constant RESERVE_DEPOSITOR_ROLE = keccak256("RESERVE_DEPOSITOR_ROLE");
     bytes32 public constant BOND_MANAGER_ROLE = keccak256("BOND_MANAGER_ROLE");
 
+    /// @inheritdoc IAppAuthority
     address public override operationsTreasury;
-    IAppTreasury public override treasury;
 
-    /* ========== Constructor ========== */
+    /// @inheritdoc IAppAuthority
+    IAppTreasury public override treasury;
 
     constructor() {
         _grantRole(GOVERNOR_ROLE, msg.sender);
@@ -31,8 +30,6 @@ contract AppAuthority is IAppAuthority, AccessControlEnumerable {
         _setRoleAdmin(RESERVE_DEPOSITOR_ROLE, GOVERNOR_ROLE);
         _setRoleAdmin(RESERVE_MANAGER_ROLE, GOVERNOR_ROLE);
     }
-
-    /* ========== MODIFIERS ========== */
 
     modifier onlyGovernor() {
         require(hasRole(GOVERNOR_ROLE, msg.sender), "Only governor");
