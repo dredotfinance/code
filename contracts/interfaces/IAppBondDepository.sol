@@ -91,7 +91,7 @@ interface IAppBondDepository is IERC721Enumerable {
 
     /* ======== FUNCTIONS ======== */
     /// @notice Initializes the bond depository contract
-    /// @param _dre The address of the DRE token
+    /// @param _dre The address of the RZR token
     /// @param _staking The address of the staking contract
     /// @param _treasury The address of the treasury contract
     /// @param _authority The address of the authority contract
