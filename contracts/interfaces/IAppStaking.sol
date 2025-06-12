@@ -162,4 +162,20 @@ interface IAppStaking is IERC721Enumerable {
     /// @notice Gets the current reward rate
     /// @return The current reward rate
     function rewardRate() external view returns (uint256);
+
+    /// @notice Gets the current reward per token rate
+    /// @return The current reward per token rate
+    function rewardPerTokenStored() external view returns (uint256);
+
+    /// @notice Gets the last time rewards were applicable
+    /// @return The timestamp of the last reward application
+    function lastUpdateTime() external view returns (uint256);
+
+    /// @notice Gets the current reward rate
+    /// @return The current reward rate
+    function periodFinish() external view returns (uint256);
+
+    /// @notice Gets the address of the burner contract
+    /// @return The address of the burner contract
+    function burner() external view returns (address);
 }

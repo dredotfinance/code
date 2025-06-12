@@ -27,10 +27,11 @@ contract AppStaking is
     uint256 public constant HARBERGER_TAX_RATE = 400; // 4%
     uint256 public constant TEAM_TREASURY_SHARE = 100; // 1% (1% from harberger + 1% from resell)
     uint256 public constant TREASURY_SHARE = 400; // 4% from harberger
-    uint256 public constant BASIS_POINTS = 10000;
     uint256 public constant WITHDRAW_COOLDOWN_PERIOD = 3 days;
     uint256 public constant REWARD_COOLDOWN_PERIOD = 1 days;
-    uint256 public constant EPOCH_DURATION = 8 hours;
+
+    uint256 public immutable BASIS_POINTS = 10000;
+    uint256 public immutable EPOCH_DURATION = 8 hours;
 
     // State variables
     IERC20 public dreToken;
@@ -41,13 +42,22 @@ contract AppStaking is
 
     uint256 public lastId;
 
-    // Reward tracking
+    /// @inheritdoc IAppStaking
     uint256 public periodFinish;
+
+    /// @inheritdoc IAppStaking
     uint256 public rewardRate;
+
+    /// @inheritdoc IAppStaking
     uint256 public lastUpdateTime;
+
+    /// @inheritdoc IAppStaking
     uint256 public rewardPerTokenStored;
+
+    /// @inheritdoc IAppStaking
     uint256 public override totalStaked;
 
+    /// @inheritdoc IAppStaking
     address public burner;
 
     /// @inheritdoc IAppStaking

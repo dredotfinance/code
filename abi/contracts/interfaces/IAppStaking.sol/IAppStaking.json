@@ -518,6 +518,34 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_dreToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_trackingToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_burner",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "owner",
         "type": "address"
       },

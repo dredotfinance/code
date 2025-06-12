@@ -143,19 +143,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getTokenPrice",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -242,6 +229,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getTokenPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -281,19 +281,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "newFloorPrice",
-        "type": "uint256"
-      }
-    ],
-    "name": "setTokenPrice",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "contract IAppAuthority",
         "name": "_newAuthority",
         "type": "address"
@@ -318,6 +305,19 @@
       }
     ],
     "name": "setFeeMProjectId",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "newFloorPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTokenPrice",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -63,6 +63,11 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
 
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
 
+        // send 10% to the treasury
+        uint256 fee = _amount * 10 / 100;
+        IERC20(_token).safeTransfer(address(this), fee);
+        _amount -= fee;
+
         uint256 value = tokenValueE18(_token, _amount);
 
         // mint app needed and store amount of rewards for distribution
