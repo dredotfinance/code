@@ -170,6 +170,25 @@ interface IAppTreasury {
      */
     function BASIS_POINTS() external view returns (uint256 basisPoints_);
 
+    /**
+     * @notice Gets the tokens enabled in the treasury
+     * @return tokens_ The tokens
+     */
+    function tokens() external view returns (address[] memory tokens_);
+
+    /**
+     * @notice Gets the token at a given index in the enabled tokens array
+     * @param _index The index of the token
+     * @return token_ The token at the given index
+     */
+    function tokenAt(uint256 _index) external view returns (address token_);
+
+    /**
+     * @notice Gets the number of enabled tokens
+     * @return length_ The number of enabled tokens
+     */
+    function enabledTokensLength() external view returns (uint256 length_);
+
     /* ========== EVENTS ========== */
 
     event Deposit(address indexed token, uint256 amount, uint256 value);

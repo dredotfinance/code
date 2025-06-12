@@ -374,6 +374,19 @@
   },
   {
     "inputs": [],
+    "name": "enabledTokensLength",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "length_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "excessReserves",
     "outputs": [
       {
@@ -489,6 +502,25 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "tokenAt",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "token_",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "_token",
         "type": "address"
@@ -505,6 +537,19 @@
         "internalType": "uint256",
         "name": "value_",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokens",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "tokens_",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",

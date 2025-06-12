@@ -546,7 +546,7 @@
         "type": "uint256"
       }
     ],
-    "name": "TeamTreasuryShareUpdated",
+    "name": "StakingFeeRateUpdated",
     "type": "event"
   },
   {
@@ -572,25 +572,6 @@
       }
     ],
     "name": "Transfer",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "oldValue",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "TreasuryShareUpdated",
     "type": "event"
   },
   {
@@ -1125,6 +1106,19 @@
   },
   {
     "inputs": [],
+    "name": "resellFeeRate",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "rewardCooldownPeriod",
     "outputs": [
       {
@@ -1305,32 +1299,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_teamTreasuryShare",
-        "type": "uint256"
-      }
-    ],
-    "name": "setTeamTreasuryShare",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_treasuryShare",
-        "type": "uint256"
-      }
-    ],
-    "name": "setTreasuryShare",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "_withdrawCooldownPeriod",
         "type": "uint256"
       }
@@ -1380,19 +1348,6 @@
         "internalType": "string",
         "name": "",
         "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "teamTreasuryShare",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1520,19 +1475,6 @@
     "name": "transferFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "treasuryShare",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

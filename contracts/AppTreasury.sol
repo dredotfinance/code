@@ -5,23 +5,22 @@ import "./AppAccessControlled.sol";
 import "./interfaces/IAppOracle.sol";
 import "./interfaces/IApp.sol";
 import "./interfaces/IAppTreasury.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @inheritdoc IAppTreasury
     uint256 public immutable BASIS_POINTS = 10000; // 100%
 
-    IApp public app;
     uint256 private _totalReserves;
+    EnumerableSet.AddressSet private _tokens;
 
-    address[] public tokens;
-
-    /// @inheritdoc IAppTreasury
-    mapping(address => bool) public enabledTokens;
+    IApp public app;
 
     /// @inheritdoc IAppTreasury
     IAppOracle public appOracle;
@@ -76,7 +75,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         onlyReserveDepositor
         returns (uint256 send_)
     {
-        require(enabledTokens[_token], "Treasury: invalid token");
+        require(_tokens.contains(_token), "Treasury: invalid token");
 
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -107,7 +106,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         whenNotPaused
         onlyReserveManager
     {
-        require(enabledTokens[_token], "Treasury: not accepted");
+        require(_tokens.contains(_token), "Treasury: not accepted");
 
         uint256 value = tokenValueE18(_token, _amount);
         app.transferFrom(msg.sender, address(this), value);
@@ -129,7 +128,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         returns (uint256 value_)
     {
         _updateReserves();
-        if (enabledTokens[_token]) {
+        if (_tokens.contains(_token)) {
             value_ = tokenValueE18(_token, _amount);
             require(value_ <= excessReserves(), "Treasury: insufficient reserves");
             _totalReserves = _totalReserves - value_;
@@ -159,16 +158,9 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         require(_address != address(app), "RZR address");
 
         // add token into tokens array if not already added
-        bool isAdded = false;
-        for (uint256 i = 0; i < tokens.length; i++) {
-            if (tokens[i] == _address) {
-                isAdded = true;
-                break;
-            }
+        if (!_tokens.contains(_address)) {
+            _tokens.add(_address);
         }
-        if (!isAdded) tokens.push(_address);
-
-        enabledTokens[_address] = true;
 
         // ensure the token has a valid price in appOracle contract
         require(appOracle.getPriceInToken(_address) > 0, "Invalid price");
@@ -177,7 +169,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
 
     /// @inheritdoc IAppTreasury
     function disable(address _toDisable) external onlyGuardianOrGovernor {
-        enabledTokens[_toDisable] = false;
+        _tokens.remove(_toDisable);
         emit TokenEnabled(_toDisable, false);
     }
 
@@ -227,13 +219,34 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
 
     /// @inheritdoc IAppTreasury
     function calculateActualReserves() public view override returns (uint256 reserves) {
-        for (uint256 i = 0; i < tokens.length; i++) {
-            if (enabledTokens[tokens[i]]) {
-                uint256 balance = IERC20(tokens[i]).balanceOf(address(this));
-                uint256 value = tokenValueE18(tokens[i], balance);
+        for (uint256 i = 0; i < _tokens.length(); i++) {
+            address token = _tokens.at(i);
+            if (_tokens.contains(token)) {
+                uint256 balance = IERC20(token).balanceOf(address(this));
+                uint256 value = tokenValueE18(token, balance);
                 reserves += value;
             }
         }
+    }
+
+    /// @inheritdoc IAppTreasury
+    function tokens() public view returns (address[] memory) {
+        return _tokens.values();
+    }
+
+    /// @inheritdoc IAppTreasury
+    function tokenAt(uint256 _index) public view returns (address) {
+        return _tokens.at(_index);
+    }
+
+    /// @inheritdoc IAppTreasury
+    function enabledTokensLength() public view returns (uint256) {
+        return _tokens.length();
+    }
+
+    /// @inheritdoc IAppTreasury
+    function enabledTokens(address _token) public view override returns (bool) {
+        return _tokens.contains(_token);
     }
 
     function _updateReserves() internal {
