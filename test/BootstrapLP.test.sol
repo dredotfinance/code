@@ -34,7 +34,7 @@ contract BootstrapLPTest is BaseTest {
         IAppAuthority(AUTHORITY).addPolicy(address(bootstrapLP));
         vm.stopPrank();
 
-        // dreOracle.setTokenPrice(1e18);
+        // appOracle.setTokenPrice(1e18);
 
         vm.label(DRE_TOKEN, "RZR");
         vm.label(USDC_TOKEN, "USDC");

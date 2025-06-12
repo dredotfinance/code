@@ -91,6 +91,25 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "ReserveFeeSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "uint256",
         "name": "totalReserves",
@@ -177,6 +196,19 @@
   },
   {
     "inputs": [],
+    "name": "BASIS_POINTS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "basisPoints_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "actualReserves",
     "outputs": [
       {
@@ -196,6 +228,19 @@
         "internalType": "uint256",
         "name": "actualSupply_",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "appOracle",
+    "outputs": [
+      {
+        "internalType": "contract IAppOracle",
+        "name": "appOracle_",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -309,6 +354,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "enabledTokens",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "enabledTokens_",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "excessReserves",
     "outputs": [
@@ -364,6 +428,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "reserveFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "reserveFee_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -372,6 +449,19 @@
       }
     ],
     "name": "setCreditReserves",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_reserveFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReserveFee",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

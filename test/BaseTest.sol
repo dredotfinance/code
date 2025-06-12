@@ -26,7 +26,7 @@ contract BaseTest is Test {
     MockERC20 public mockQuoteToken2;
     MockERC20 public mockQuoteToken3;
 
-    AppOracle public dreOracle;
+    AppOracle public appOracle;
 
     MockOracle public mockOracle;
     MockOracle public mockOracle2;
@@ -62,19 +62,19 @@ contract BaseTest is Test {
         // Deploy sRZR token
         sapp = new sRZR(address(dreAuthority));
 
-        dreOracle = new AppOracle();
-        dreOracle.initialize(address(dreAuthority), address(app));
-        dreOracle.updateOracle(address(mockQuoteToken), address(mockOracle));
-        dreOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2));
-        dreOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
+        appOracle = new AppOracle();
+        appOracle.initialize(address(dreAuthority), address(app));
+        appOracle.updateOracle(address(mockQuoteToken), address(mockOracle));
+        appOracle.updateOracle(address(mockQuoteToken2), address(mockOracle2));
+        appOracle.updateOracle(address(mockQuoteToken3), address(mockOracle3));
 
         // Deploy Burner
         burner = new AppBurner();
-        burner.initialize(address(dreOracle), address(app), address(dreAuthority));
+        burner.initialize(address(appOracle), address(app), address(dreAuthority));
 
         // Deploy Treasury
         treasury = new AppTreasury();
-        treasury.initialize(address(app), address(dreOracle), address(dreAuthority));
+        treasury.initialize(address(app), address(appOracle), address(dreAuthority));
         treasury.enable(address(mockQuoteToken));
 
         // Deploy Staking
@@ -93,7 +93,7 @@ contract BaseTest is Test {
             address(app),
             address(treasury),
             address(staking),
-            address(dreOracle),
+            address(appOracle),
             address(dreAuthority),
             address(burner)
         );
@@ -123,7 +123,7 @@ contract BaseTest is Test {
         vm.label(address(mockQuoteToken2), "Mock Quote Token 2");
         vm.label(address(mockQuoteToken3), "Mock Quote Token 3");
 
-        vm.label(address(dreOracle), "RZR Oracle");
+        vm.label(address(appOracle), "RZR Oracle");
         vm.label(address(mockOracle), "Mock Oracle");
         vm.label(address(mockOracle2), "Mock Oracle 2");
         vm.label(address(mockOracle3), "Mock Oracle 3");

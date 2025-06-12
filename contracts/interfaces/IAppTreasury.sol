@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.15;
 
+import "./IAppOracle.sol";
+
 interface IAppTreasury {
     /**
      * @notice allow approved address to deposit an asset for app
@@ -122,6 +124,12 @@ interface IAppTreasury {
     function actualReserves() external view returns (uint256 actualReserves_);
 
     /**
+     * @notice Sets the reserve fee
+     * @param _reserveFee The new reserve fee
+     */
+    function setReserveFee(uint256 _reserveFee) external;
+
+    /**
      * @notice Syncs the reserves of the treasury
      */
     function syncReserves() external;
@@ -138,6 +146,30 @@ interface IAppTreasury {
      */
     function calculateActualReserves() external view returns (uint256 actualReserves_);
 
+    /**
+     * @notice Gets the reserve fee
+     * @return reserveFee_ The reserve fee
+     */
+    function reserveFee() external view returns (uint256 reserveFee_);
+
+    /**
+     * @notice Gets the app oracle
+     * @return appOracle_ The app oracle
+     */
+    function appOracle() external view returns (IAppOracle appOracle_);
+
+    /**
+     * @notice Gets the enabled tokens
+     * @return enabledTokens_ The enabled tokens
+     */
+    function enabledTokens(address _token) external view returns (bool enabledTokens_);
+
+    /**
+     * @notice Gets the basis points
+     * @return basisPoints_ The basis points
+     */
+    function BASIS_POINTS() external view returns (uint256 basisPoints_);
+
     /* ========== EVENTS ========== */
 
     event Deposit(address indexed token, uint256 amount, uint256 value);
@@ -150,4 +182,5 @@ interface IAppTreasury {
     event TokenEnabled(address addr, bool result);
     event CreditReservesSet(uint256 newCredit, uint256 oldCredit);
     event UnbackedSupplySet(uint256 newUnbacked, uint256 oldUnbacked);
+    event ReserveFeeSet(uint256 newFee, uint256 oldFee);
 }

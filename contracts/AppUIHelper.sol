@@ -85,7 +85,7 @@ contract AppUIHelper {
     IAppTreasury public treasury;
     IERC20 public dreToken;
     IERC20 public stakingToken;
-    IAppOracle public dreOracle;
+    IAppOracle public appOracle;
     IRebaseController public rebaseController;
     IOracle public shadowLP;
     IBootstrapLP public bootstrapLP;
@@ -101,7 +101,7 @@ contract AppUIHelper {
         address _dreToken,
         address _stakingToken,
         address _rebaseController,
-        address _dreOracle,
+        address _appOracle,
         address _shadowLP,
         address _bootstrapLP,
         address _odos
@@ -111,7 +111,7 @@ contract AppUIHelper {
         treasury = IAppTreasury(_treasury);
         dreToken = IERC20(_dreToken);
         stakingToken = IERC20(_stakingToken);
-        dreOracle = IAppOracle(_dreOracle);
+        appOracle = IAppOracle(_appOracle);
         shadowLP = IOracle(_shadowLP);
         rebaseController = IRebaseController(_rebaseController);
         bootstrapLP = IBootstrapLP(_bootstrapLP);
@@ -165,8 +165,8 @@ contract AppUIHelper {
             treasuryBalance: dreToken.balanceOf(address(treasury)),
             treasuryValueApp: dreToken.balanceOf(address(treasury)),
             decimals: 18,
-            oraclePrice: dreOracle.getTokenPrice(),
-            oraclePriceInApp: dreOracle.getTokenPrice()
+            oraclePrice: appOracle.getTokenPrice(),
+            oraclePriceInApp: appOracle.getTokenPrice()
         });
 
         // Add staking token info
@@ -195,8 +195,8 @@ contract AppUIHelper {
                 treasuryBalance: token.balanceOf(address(treasury)),
                 treasuryValueApp: treasury.tokenValueE18(address(token), token.balanceOf(address(treasury))),
                 token: address(token),
-                oraclePriceInApp: dreOracle.getPriceInToken(address(token)),
-                oraclePrice: dreOracle.getPrice(address(token))
+                oraclePriceInApp: appOracle.getPriceInToken(address(token)),
+                oraclePrice: appOracle.getPrice(address(token))
             });
         }
     }

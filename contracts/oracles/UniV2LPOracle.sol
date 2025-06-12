@@ -19,12 +19,12 @@ contract UniV2LPOracle is IOracle {
     uint256 internal constant UNIT = 1e18;
     address public app;
 
-    IAppOracle public dreOracle;
+    IAppOracle public appOracle;
 
-    constructor(address _uniV2LP, address _dre, IAppOracle _dreOracle) {
+    constructor(address _uniV2LP, address _dre, IAppOracle _appOracle) {
         amm = IUniswapV2Pair(_uniV2LP);
         app = _dre;
-        dreOracle = _dreOracle;
+        appOracle = _appOracle;
 
         token0Decimals = IERC20Metadata(amm.token0()).decimals();
         token1Decimals = IERC20Metadata(amm.token1()).decimals();
@@ -88,7 +88,7 @@ contract UniV2LPOracle is IOracle {
 
     function getPx(address token) public view returns (uint256) {
         uint8 decimals = IERC20Metadata(token).decimals();
-        uint256 answer = dreOracle.getPrice(token);
+        uint256 answer = appOracle.getPrice(token);
         return (answer * UNIT) / (10 ** decimals);
     }
 }

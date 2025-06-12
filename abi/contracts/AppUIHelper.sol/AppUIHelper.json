@@ -33,7 +33,7 @@
       },
       {
         "internalType": "address",
-        "name": "_dreOracle",
+        "name": "_appOracle",
         "type": "address"
       },
       {
@@ -84,6 +84,19 @@
     ],
     "name": "RewardsClaimed",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "appOracle",
+    "outputs": [
+      {
+        "internalType": "contract IAppOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -160,19 +173,6 @@
       }
     ],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "dreOracle",
-    "outputs": [
-      {
-        "internalType": "contract IAppOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

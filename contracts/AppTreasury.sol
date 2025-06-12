@@ -12,12 +12,22 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
 
+    /// @inheritdoc IAppTreasury
+    uint256 public immutable BASIS_POINTS = 10000; // 100%
+
     IApp public app;
     uint256 private _totalReserves;
 
     address[] public tokens;
+
+    /// @inheritdoc IAppTreasury
     mapping(address => bool) public enabledTokens;
-    IAppOracle public dreOracle;
+
+    /// @inheritdoc IAppTreasury
+    IAppOracle public appOracle;
+
+    /// @inheritdoc IAppTreasury
+    uint256 public reserveFee;
 
     /// @inheritdoc IAppTreasury
     uint256 public override creditReserves;
@@ -25,11 +35,11 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     /// @inheritdoc IAppTreasury
     uint256 public override unbackedSupply;
 
-    function initialize(address _dre, address _dreOracle, address _authority) public initializer {
+    function initialize(address _dre, address _appOracle, address _authority) public initializer {
         require(_dre != address(0), "Zero address: app");
-        require(_dreOracle != address(0), "Zero address: dreOracle");
+        require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_dre);
-        dreOracle = IAppOracle(_dreOracle);
+        appOracle = IAppOracle(_appOracle);
         __Pausable_init();
         __AppAccessControlled_init(_authority);
         _updateReserves();
@@ -40,6 +50,13 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         emit CreditReservesSet(_credit, creditReserves);
         creditReserves = _credit;
         _updateReserves();
+    }
+
+    /// @inheritdoc IAppTreasury
+    function setReserveFee(uint256 _reserveFee) external onlyPolicy {
+        require(_reserveFee <= BASIS_POINTS, "Invalid reserve fee");
+        emit ReserveFeeSet(_reserveFee, reserveFee);
+        reserveFee = _reserveFee;
     }
 
     /// @inheritdoc IAppTreasury
@@ -64,8 +81,8 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
 
         // send 10% to the treasury
-        uint256 fee = _amount * 10 / 100;
-        IERC20(_token).safeTransfer(address(this), fee);
+        uint256 fee = _amount * reserveFee / BASIS_POINTS;
+        IERC20(_token).safeTransfer(authority.operationsTreasury(), fee);
         _amount -= fee;
 
         uint256 value = tokenValueE18(_token, _amount);
@@ -153,8 +170,8 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
 
         enabledTokens[_address] = true;
 
-        // ensure the token has a valid price in dreOracle contract
-        require(dreOracle.getPriceInToken(_address) > 0, "Invalid price");
+        // ensure the token has a valid price in appOracle contract
+        require(appOracle.getPriceInToken(_address) > 0, "Invalid price");
         emit TokenEnabled(_address, true);
     }
 
@@ -179,7 +196,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
 
     /// @inheritdoc IAppTreasury
     function tokenValueE18(address _token, uint256 _amount) public view override returns (uint256 value_) {
-        value_ = dreOracle.getPriceInTokenForAmount(_token, _amount);
+        value_ = appOracle.getPriceInTokenForAmount(_token, _amount);
     }
 
     /// @inheritdoc IAppTreasury

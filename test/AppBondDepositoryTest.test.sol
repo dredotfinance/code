@@ -585,7 +585,7 @@ contract AppBondDepositoryTest is BaseTest {
         usdc.setDecimals(6);
 
         MockOracle usdcOracle = new MockOracle(1e18);
-        dreOracle.updateOracle(address(usdc), address(usdcOracle));
+        appOracle.updateOracle(address(usdc), address(usdcOracle));
         treasury.enable(address(usdc));
 
         // Calculate bond parameters

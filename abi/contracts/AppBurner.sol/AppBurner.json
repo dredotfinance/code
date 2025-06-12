@@ -69,6 +69,19 @@
   },
   {
     "inputs": [],
+    "name": "appOracle",
+    "outputs": [
+      {
+        "internalType": "contract IAppOracle",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "authority",
     "outputs": [
       {
@@ -117,23 +130,10 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "dreOracle",
-    "outputs": [
-      {
-        "internalType": "contract IAppOracle",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
-        "name": "_dreOracle",
+        "name": "_appOracle",
         "type": "address"
       },
       {

@@ -57,7 +57,7 @@ contract AppStakingTest is BaseTest {
         // Verify cooldown state
         IAppStaking.Position memory position = staking.positions(tokenId);
         assertTrue(position.cooldownEnd > 0);
-        assertEq(position.cooldownEnd, block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD());
+        assertEq(position.cooldownEnd, block.timestamp + staking.withdrawCooldownPeriod());
 
         vm.stopPrank();
     }
@@ -74,7 +74,7 @@ contract AppStakingTest is BaseTest {
         staking.startUnstaking(tokenId);
 
         // Fast forward past cooldown period
-        vm.warp(block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.withdrawCooldownPeriod() + 1);
 
         uint256 balanceBefore = app.balanceOf(owner);
         staking.completeUnstaking(tokenId);
@@ -101,7 +101,7 @@ contract AppStakingTest is BaseTest {
         staking.notifyRewardAmount(REWARD_AMOUNT);
 
         // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
 
         // Claim rewards
         uint256 reward = staking.claimRewards(tokenId);
@@ -302,7 +302,7 @@ contract AppStakingTest is BaseTest {
         vm.warp(block.timestamp + staking.EPOCH_DURATION());
 
         // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
 
         // Claim rewards for both positions
         uint256 reward1 = staking.claimRewards(tokenId1);
@@ -328,8 +328,8 @@ contract AppStakingTest is BaseTest {
         staking.createPosition(owner, STAKE_AMOUNT, highValue, 0);
 
         // Calculate expected tax distribution
-        uint256 operationsShare = (highValue * staking.TEAM_TREASURY_SHARE()) / staking.BASIS_POINTS();
-        uint256 treasuryShare = (highValue * staking.HARBERGER_TAX_RATE()) / staking.BASIS_POINTS();
+        uint256 operationsShare = (highValue * staking.teamTreasuryShare()) / staking.BASIS_POINTS();
+        uint256 treasuryShare = (highValue * staking.harbergerTaxRate()) / staking.BASIS_POINTS();
 
         // Verify tax distribution
         assertEq(app.balanceOf(dreAuthority.operationsTreasury()), operationsShare);
@@ -377,7 +377,7 @@ contract AppStakingTest is BaseTest {
         staking.startUnstaking(tokenId);
 
         // Fast forward past cooldown period
-        vm.warp(block.timestamp + staking.WITHDRAW_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.withdrawCooldownPeriod() + 1);
 
         // Complete unstaking
         uint256 balanceBefore = app.balanceOf(user1);
@@ -434,7 +434,7 @@ contract AppStakingTest is BaseTest {
         }
 
         // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
 
         // Claim rewards
         uint256 reward1 = staking.claimRewards(tokenId1);
@@ -482,7 +482,7 @@ contract AppStakingTest is BaseTest {
         IAppStaking.Position memory finalPosition = staking.positions(tokenId);
 
         // Verify position was updated correctly
-        uint256 totalTax = staking.HARBERGER_TAX_RATE() + staking.TEAM_TREASURY_SHARE();
+        uint256 totalTax = staking.harbergerTaxRate() + staking.teamTreasuryShare();
         assertApproxEqAbs(
             finalPosition.amount,
             initialPosition.amount + additionalAmount - ((additionalValue * totalTax) / staking.BASIS_POINTS()),
@@ -542,7 +542,7 @@ contract AppStakingTest is BaseTest {
         staking.notifyRewardAmount(rewardAmount);
 
         // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
 
         // Get earned rewards
         uint256 earned = staking.earned(tokenId);
@@ -592,7 +592,7 @@ contract AppStakingTest is BaseTest {
         app.approve(address(staking), declaredValue);
         staking.buyPosition(tokenId);
 
-        uint256 totalTax = staking.HARBERGER_TAX_RATE() + staking.TEAM_TREASURY_SHARE();
+        uint256 totalTax = staking.harbergerTaxRate() + staking.teamTreasuryShare();
 
         // Verify buyer owns the position
         assertEq(staking.ownerOf(tokenId), user1, "Position ownership not transferred");
@@ -605,7 +605,7 @@ contract AppStakingTest is BaseTest {
 
         // Verify seller received payment minus fees
         uint256 expectedSellerAmount =
-            declaredValue - ((declaredValue * staking.TEAM_TREASURY_SHARE()) / staking.BASIS_POINTS());
+            declaredValue - ((declaredValue * staking.teamTreasuryShare()) / staking.BASIS_POINTS());
         assertApproxEqRel(
             app.balanceOf(owner), expectedSellerAmount, 0.0001e18, "Seller did not receive correct amount"
         );
@@ -614,7 +614,7 @@ contract AppStakingTest is BaseTest {
         assertEq(app.balanceOf(user1), earnedBefore, "Rewards not automatically claimed during purchase");
 
         // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
 
         // Verify no additional rewards to claim
         uint256 earnedAfter = staking.earned(tokenId);
@@ -671,7 +671,7 @@ contract AppStakingTest is BaseTest {
         staking.buyPosition(tokenId);
 
         // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
 
         // Verify buyer can claim accumulated rewards
         uint256 earnedAfter = staking.earned(tokenId);
@@ -717,7 +717,7 @@ contract AppStakingTest is BaseTest {
         assertEq(position.cooldownEnd, 0, "Unstaking not cancelled after position transfer");
 
         // Fast forward past reward cooldown
-        vm.warp(block.timestamp + staking.REWARD_COOLDOWN_PERIOD() + 1);
+        vm.warp(block.timestamp + staking.rewardCooldownPeriod() + 1);
 
         // Verify buyer can claim rewards
         uint256 earned = staking.earned(tokenId);

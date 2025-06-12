@@ -11,7 +11,7 @@ contract AppBurner is AppAccessControlled {
     /* ========== STATE VARIABLES ========== */
 
     uint256 private immutable ONE = 1e18; // 100 %
-    IAppOracle public dreOracle;
+    IAppOracle public appOracle;
     IApp public app;
 
     /* ========== EVENTS ========== */
@@ -19,12 +19,12 @@ contract AppBurner is AppAccessControlled {
 
     /// @notice Initializes the AppBurner contract
     /// @dev This function is only callable once
-    /// @param _dreOracle The address of the dreOracle contract
+    /// @param _appOracle The address of the appOracle contract
     /// @param _dre The address of the dre contract
     /// @param _authority The address of the authority contract
-    function initialize(address _dreOracle, address _dre, address _authority) external initializer {
+    function initialize(address _appOracle, address _dre, address _authority) external initializer {
         __AppAccessControlled_init(_authority);
-        dreOracle = IAppOracle(_dreOracle);
+        appOracle = IAppOracle(_appOracle);
         app = IApp(_dre);
         app.approve(address(this), type(uint256).max);
     }
@@ -33,7 +33,7 @@ contract AppBurner is AppAccessControlled {
     /// @dev This function is only callable by the executor
     function burn() external onlyExecutor {
         uint256 balance = app.balanceOf(address(this));
-        uint256 floorPrice = dreOracle.getTokenPrice();
+        uint256 floorPrice = appOracle.getTokenPrice();
         uint256 totalSupply = app.totalSupply();
         uint256 newFloorPrice = calculateFloorUpdate(balance, totalSupply, floorPrice);
 
@@ -41,7 +41,7 @@ contract AppBurner is AppAccessControlled {
         require(newFloorPrice <= floorPrice * 2, "New floor price must be less than 2x current floor price");
 
         app.burn(balance);
-        dreOracle.setTokenPrice(newFloorPrice);
+        appOracle.setTokenPrice(newFloorPrice);
         emit Burned(balance, newFloorPrice);
     }
 

@@ -23,15 +23,15 @@ contract AppStaking is
 {
     using SafeERC20 for IERC20;
 
-    // Constants
-    uint256 public constant HARBERGER_TAX_RATE = 400; // 4%
-    uint256 public constant TEAM_TREASURY_SHARE = 100; // 1% (1% from harberger + 1% from resell)
-    uint256 public constant TREASURY_SHARE = 400; // 4% from harberger
-    uint256 public constant WITHDRAW_COOLDOWN_PERIOD = 3 days;
-    uint256 public constant REWARD_COOLDOWN_PERIOD = 1 days;
-
     uint256 public immutable BASIS_POINTS = 10000;
     uint256 public immutable EPOCH_DURATION = 8 hours;
+
+    // Configurable parameters
+    uint256 public harbergerTaxRate;
+    uint256 public teamTreasuryShare;
+    uint256 public treasuryShare;
+    uint256 public withdrawCooldownPeriod;
+    uint256 public rewardCooldownPeriod;
 
     // State variables
     IERC20 public dreToken;
@@ -71,13 +71,74 @@ contract AppStaking is
         __ReentrancyGuard_init();
         __AppAccessControlled_init(_authority);
 
+        uint256 _harbergerTaxRate = 400;
+        uint256 _teamTreasuryShare = 100;
+        uint256 _treasuryShare = 400;
+        uint256 _withdrawCooldownPeriod = 3 days;
+        uint256 _rewardCooldownPeriod = 1 days;
+
         require(_dreToken != address(0), "Invalid RZR token address");
         require(_trackingToken != address(0), "Invalid tracking token address");
+        require(_harbergerTaxRate <= BASIS_POINTS, "Invalid harberger tax rate");
+        require(_teamTreasuryShare <= BASIS_POINTS, "Invalid team treasury share");
+        require(_treasuryShare <= BASIS_POINTS, "Invalid treasury share");
+        require(_withdrawCooldownPeriod > 0, "Invalid withdraw cooldown period");
+        require(_rewardCooldownPeriod > 0, "Invalid reward cooldown period");
 
         dreToken = IERC20(_dreToken);
         trackingToken = IPermissionedERC20(_trackingToken);
-
         burner = _burner;
+
+        harbergerTaxRate = _harbergerTaxRate;
+        teamTreasuryShare = _teamTreasuryShare;
+        treasuryShare = _treasuryShare;
+        withdrawCooldownPeriod = _withdrawCooldownPeriod;
+        rewardCooldownPeriod = _rewardCooldownPeriod;
+    }
+
+    /// @notice Sets the harberger tax rate
+    /// @param _harbergerTaxRate The new harberger tax rate
+    function setHarbergerTaxRate(uint256 _harbergerTaxRate) external onlyGovernor {
+        require(_harbergerTaxRate <= BASIS_POINTS, "Invalid harberger tax rate");
+        uint256 oldValue = harbergerTaxRate;
+        harbergerTaxRate = _harbergerTaxRate;
+        emit HarbergerTaxRateUpdated(oldValue, _harbergerTaxRate);
+    }
+
+    /// @notice Sets the team treasury share
+    /// @param _teamTreasuryShare The new team treasury share
+    function setTeamTreasuryShare(uint256 _teamTreasuryShare) external onlyGovernor {
+        require(_teamTreasuryShare <= BASIS_POINTS, "Invalid team treasury share");
+        uint256 oldValue = teamTreasuryShare;
+        teamTreasuryShare = _teamTreasuryShare;
+        emit TeamTreasuryShareUpdated(oldValue, _teamTreasuryShare);
+    }
+
+    /// @notice Sets the treasury share
+    /// @param _treasuryShare The new treasury share
+    function setTreasuryShare(uint256 _treasuryShare) external onlyGovernor {
+        require(_treasuryShare <= BASIS_POINTS, "Invalid treasury share");
+        uint256 oldValue = treasuryShare;
+        treasuryShare = _treasuryShare;
+        emit TreasuryShareUpdated(oldValue, _treasuryShare);
+    }
+
+    /// @notice Sets the withdraw cooldown period
+    /// @param _withdrawCooldownPeriod The new withdraw cooldown period
+    function setWithdrawCooldownPeriod(uint256 _withdrawCooldownPeriod) external onlyGovernor {
+        require(_withdrawCooldownPeriod > 0, "Invalid withdraw cooldown period");
+        uint256 oldValue = withdrawCooldownPeriod;
+        withdrawCooldownPeriod = _withdrawCooldownPeriod;
+        emit WithdrawCooldownPeriodUpdated(oldValue, _withdrawCooldownPeriod);
+    }
+
+    /// @notice Sets the reward cooldown period
+    /// @param _rewardCooldownPeriod The new reward cooldown period
+    function setRewardCooldownPeriod(uint256 _rewardCooldownPeriod) external onlyPolicy {
+        require(_rewardCooldownPeriod > 0, "Invalid reward cooldown period");
+        uint256 oldValue = rewardCooldownPeriod;
+        rewardCooldownPeriod = _rewardCooldownPeriod;
+        emit RewardCooldownPeriodUpdated(oldValue, _rewardCooldownPeriod);
     }
 
     /// @inheritdoc IAppStaking
@@ -159,7 +220,7 @@ contract AppStaking is
             rewardPerTokenPaid: rewardPerTokenStored,
             rewards: 0,
             cooldownEnd: 0,
-            rewardsUnlockAt: block.timestamp + Math.max(minLockDuration, REWARD_COOLDOWN_PERIOD)
+            rewardsUnlockAt: block.timestamp + Math.max(minLockDuration, rewardCooldownPeriod)
         });
 
         totalStaked += amount;
@@ -178,7 +239,7 @@ contract AppStaking is
 
         Position storage position = _positions[tokenId];
         _updateReward(tokenId);
-        position.cooldownEnd = block.timestamp + WITHDRAW_COOLDOWN_PERIOD;
+        position.cooldownEnd = block.timestamp + withdrawCooldownPeriod;
 
         emit CooldownStarted(tokenId, msg.sender);
     }
@@ -219,7 +280,7 @@ contract AppStaking is
         uint256 price = position.declaredValue;
 
         // Calculate resell fee
-        uint256 resellFee = (price * TEAM_TREASURY_SHARE) / BASIS_POINTS;
+        uint256 resellFee = (price * teamTreasuryShare) / BASIS_POINTS;
         uint256 sellerAmount = price - resellFee;
 
         // Transfer RZR tokens from buyer
@@ -354,8 +415,8 @@ contract AppStaking is
     /// @param amount The amount of RZR to distribute
     /// @return taxPaid The total amount of tax paid
     function _distributeTax(uint256 amount) internal returns (uint256 taxPaid) {
-        uint256 taxPaidTreasury = (amount * HARBERGER_TAX_RATE) / BASIS_POINTS;
-        uint256 taxPaidOperations = (amount * TEAM_TREASURY_SHARE) / BASIS_POINTS;
+        uint256 taxPaidTreasury = (amount * harbergerTaxRate) / BASIS_POINTS;
+        uint256 taxPaidOperations = (amount * teamTreasuryShare) / BASIS_POINTS;
 
         dreToken.safeTransfer(address(authority.operationsTreasury()), taxPaidOperations);
         dreToken.safeTransfer(burner, taxPaidTreasury); // burn the tax so that the floor price increases

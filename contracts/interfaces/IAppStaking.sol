@@ -82,6 +82,41 @@ interface IAppStaking is IERC721Enumerable {
     /// @param reward The amount of rewards paid
     event RewardPaid(address indexed user, uint256 reward);
 
+    /// @notice Emitted when harberger tax rate is updated
+    /// @param oldValue The old harberger tax rate
+    /// @param newValue The new harberger tax rate
+    event HarbergerTaxRateUpdated(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted when team treasury share is updated
+    /// @param oldValue The old team treasury share
+    /// @param newValue The new team treasury share
+    event TeamTreasuryShareUpdated(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted when treasury share is updated
+    /// @param oldValue The old treasury share
+    /// @param newValue The new treasury share
+    event TreasuryShareUpdated(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted when basis points is updated
+    /// @param oldValue The old basis points
+    /// @param newValue The new basis points
+    event BasisPointsUpdated(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted when withdraw cooldown period is updated
+    /// @param oldValue The old withdraw cooldown period
+    /// @param newValue The new withdraw cooldown period
+    event WithdrawCooldownPeriodUpdated(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted when reward cooldown period is updated
+    /// @param oldValue The old reward cooldown period
+    /// @param newValue The new reward cooldown period
+    event RewardCooldownPeriodUpdated(uint256 oldValue, uint256 newValue);
+
+    /// @notice Emitted when epoch duration is updated
+    /// @param oldValue The old epoch duration
+    /// @param newValue The new epoch duration
+    event EpochDurationUpdated(uint256 oldValue, uint256 newValue);
+
     /// @notice Initializes the staking contract
     /// @param _dreToken The address of the dre token
     /// @param _trackingToken The address of the tracking token
@@ -102,10 +137,6 @@ interface IAppStaking is IERC721Enumerable {
     /// @param tokenId The ID of the position NFT
     /// @return The amount of rewards earned
     function earned(uint256 tokenId) external view returns (uint256);
-
-    /// @notice Gets the address of the burner contract
-    /// @return The address of the burner contract
-    function burner() external view returns (address);
 
     /// @notice Gets the total amount of tokens staked
     /// @return The total amount of staked tokens
@@ -178,4 +209,28 @@ interface IAppStaking is IERC721Enumerable {
     /// @notice Gets the address of the burner contract
     /// @return The address of the burner contract
     function burner() external view returns (address);
+
+    /// @notice Gets the harberger tax rate
+    /// @return The harberger tax rate
+    function harbergerTaxRate() external view returns (uint256);
+
+    /// @notice Gets the team treasury share
+    /// @return The team treasury share
+    function teamTreasuryShare() external view returns (uint256);
+
+    /// @notice Gets the treasury share
+    /// @return The treasury share
+    function treasuryShare() external view returns (uint256);
+
+    /// @notice Gets the withdraw cooldown period
+    /// @return The withdraw cooldown period
+    function withdrawCooldownPeriod() external view returns (uint256);
+
+    /// @notice Gets the reward cooldown period
+    /// @return The reward cooldown period
+    function rewardCooldownPeriod() external view returns (uint256);
+
+    /// @notice Gets the epoch duration
+    /// @return The epoch duration
+    function EPOCH_DURATION() external view returns (uint256);
 }
