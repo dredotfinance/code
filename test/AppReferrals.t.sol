@@ -30,7 +30,7 @@ contract AppReferralsTest is BaseTest {
         // Setup referrals contract
         referrals = new AppReferrals();
         referrals.initialize(
-            address(bondDepository), address(staking), address(app), address(treasury), address(authority)
+            address(bondDepository), address(staking), address(app), address(treasury), address(authority), address(0)
         );
 
         // Set merkle server

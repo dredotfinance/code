@@ -62,12 +62,17 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
     mapping(address => bytes8) public referrerCodes;
     mapping(bytes8 => address) public referralCodes;
 
+    address public odos;
     address public merkleServer;
 
-    function initialize(address _bondDepository, address _staking, address _app, address _treasury, address _authority)
-        external
-        initializer
-    {
+    function initialize(
+        address _bondDepository,
+        address _staking,
+        address _app,
+        address _treasury,
+        address _authority,
+        address _odos
+    ) external initializer {
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
 
@@ -75,7 +80,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         staking = IAppStaking(_staking);
         app = IApp(_app);
         treasury = IAppTreasury(_treasury);
-
+        odos = _odos;
         app.approve(address(staking), type(uint256).max);
     }
 
@@ -161,6 +166,36 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         emit ReferralStaked(msg.sender, amount, declaredValue, referralCode);
     }
 
+    function stakeWithReferralOdos(
+        uint256 amount,
+        uint256 declaredValue,
+        IERC20 _tokenIn,
+        bytes memory _odosData,
+        bytes8 referralCode
+    ) external payable nonReentrant returns (uint256 tokenId, uint256 totalStaked, uint256 taxPaid) {
+        // convert to app token if using odos
+        if (_odosData.length > 0) {
+            _tokenIn.transferFrom(msg.sender, address(this), amount);
+            _tokenIn.approve(odos, amount);
+            (bool success,) = odos.call{value: msg.value}(_odosData);
+            require(success, "Odos call failed");
+            amount = app.balanceOf(address(this));
+        } else {
+            require(_tokenIn == app, "Invalid token");
+            app.transferFrom(msg.sender, address(this), amount);
+        }
+        app.transferFrom(msg.sender, address(this), amount);
+
+        // pay out any referral rewards if a referral code was set
+        _registerReferral(referralCode, msg.sender);
+
+        // stake on behalf of the referrer
+        (tokenId, taxPaid) = staking.createPosition(msg.sender, amount, declaredValue, 0);
+        totalStaked = amount - taxPaid;
+
+        emit ReferralStaked(msg.sender, amount, declaredValue, referralCode);
+    }
+
     /// @notice Buys a bond with a referral code
     /// @param _id The ID of the bond to buy
     /// @param _amount The amount of quote tokens to pay
@@ -183,6 +218,40 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         bondDepository.deposit(_id, _amount, _maxPrice, _minPayout, msg.sender);
 
         emit ReferralBondBought(msg.sender, _id, _amount, _maxPrice, _minPayout, referralCode);
+    }
+
+    function bondWithReferralOdos(
+        uint256 _id,
+        uint256 _amountIn,
+        IERC20 _tokenIn,
+        bytes memory _odosData,
+        uint256 _maxPrice,
+        uint256 _minPayout,
+        bytes8 referralCode
+    ) external payable nonReentrant returns (uint256 payout_, uint256 tokenId_) {
+        IAppBondDepository.Bond memory bond = bondDepository.getBond(_id);
+        IERC20 quoteToken = bond.quoteToken;
+
+        // convert to quote token if using odos
+        if (_odosData.length > 0) {
+            _tokenIn.transferFrom(msg.sender, address(this), _amountIn);
+            _tokenIn.approve(odos, _amountIn);
+            (bool success,) = odos.call{value: msg.value}(_odosData);
+            require(success, "Odos call failed");
+            _amountIn = quoteToken.balanceOf(address(this));
+        } else {
+            require(_tokenIn == quoteToken, "Invalid token");
+            quoteToken.transferFrom(msg.sender, address(this), _amountIn);
+        }
+
+        // register referral if not already registered for tracking purposes only
+        _registerReferral(referralCode, msg.sender);
+
+        // buy bond on behalf of the referrer
+        quoteToken.approve(address(bondDepository), _amountIn);
+        (payout_, tokenId_) = bondDepository.deposit(_id, _amountIn, _maxPrice, _minPayout, msg.sender);
+
+        emit ReferralBondBought(msg.sender, _id, _amountIn, _maxPrice, _minPayout, referralCode);
     }
 
     function _registerReferral(bytes8 referralCode, address user) internal {

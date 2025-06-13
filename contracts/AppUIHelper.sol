@@ -354,7 +354,7 @@ contract AppUIHelper {
             IERC20(tokenIn).approve(odos, type(uint256).max);
         }
 
-        (bool success,) = odos.call{value: tokenAmountIn}(odosData);
+        (bool success,) = odos.call{value: msg.value}(odosData);
         require(success, "Odos call failed");
 
         dreAmountSwapped = appToken.balanceOf(address(this));
@@ -378,7 +378,7 @@ contract AppUIHelper {
             IERC20(tokenIn).approve(odos, type(uint256).max);
         }
 
-        (bool success,) = odos.call{value: tokenAmountIn}(odosData);
+        (bool success,) = odos.call{value: msg.value}(odosData);
         require(success, "Odos call failed");
 
         dreAmountSwapped = appToken.balanceOf(address(this));
