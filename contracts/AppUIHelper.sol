@@ -351,6 +351,10 @@ contract AppUIHelper {
         usdcToken.approve(address(bootstrapLP), type(uint256).max);
         uint256 balance = usdcToken.balanceOf(address(this));
         dreAmountOfLp = bootstrapLP.bootstrap(balance, to);
+
+        _purge(address(usdcToken));
+        _purge(address(appToken));
+        _purge(address(tokenIn));
     }
 
     function zapAndStake(
@@ -370,11 +374,16 @@ contract AppUIHelper {
             IERC20(tokenIn).approve(odos, type(uint256).max);
         }
 
-        (bool success,) = odos.call{value: msg.value}(odosData);
-        require(success, "Odos call failed");
+        if (odosData.length > 0) {
+            (bool success,) = odos.call{value: msg.value}(odosData);
+            require(success, "Odos call failed");
+        }
 
         dreAmountSwapped = appToken.balanceOf(address(this));
         staking.createPosition(to, dreAmountSwapped, dreAmountDeclared, 0);
+
+        _purge(tokenIn);
+        _purge(address(appToken));
     }
 
     function zapAndStakeAsPercentage(
@@ -394,11 +403,27 @@ contract AppUIHelper {
             IERC20(tokenIn).approve(odos, type(uint256).max);
         }
 
-        (bool success,) = odos.call{value: msg.value}(odosData);
-        require(success, "Odos call failed");
+        if (odosData.length > 0) {
+            (bool success,) = odos.call{value: msg.value}(odosData);
+            require(success, "Odos call failed");
+        }
 
         dreAmountSwapped = appToken.balanceOf(address(this));
         uint256 dreAmountDeclared = (dreAmountSwapped * dreAmountDeclaredAsPercentage) / 1e18;
         staking.createPosition(to, dreAmountSwapped, dreAmountDeclared, 0);
+
+        _purge(tokenIn);
+    }
+
+    function _purge(address token) internal {
+        if (token == address(0)) {
+            (bool success,) = address(this).call{value: address(this).balance}("");
+            require(success, "Failed to send ETH");
+        } else {
+            uint256 balance = IERC20(token).balanceOf(address(this));
+            if (balance > 0) {
+                IERC20(token).safeTransfer(address(this), balance);
+            }
+        }
     }
 }
