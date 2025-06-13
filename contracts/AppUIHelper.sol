@@ -426,4 +426,6 @@ contract AppUIHelper {
             }
         }
     }
+
+    receive() external payable {}
 }
