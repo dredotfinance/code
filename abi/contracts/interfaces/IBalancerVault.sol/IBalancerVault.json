@@ -1,0 +1,75 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "pool",
+        "type": "address"
+      }
+    ],
+    "name": "getPoolData",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "poolConfigBits",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "contract IERC20[]",
+            "name": "tokens",
+            "type": "address[]"
+          },
+          {
+            "components": [
+              {
+                "internalType": "enum IBalancerVault.BalancerTokenType",
+                "name": "tokenType",
+                "type": "uint8"
+              },
+              {
+                "internalType": "address",
+                "name": "rateProvider",
+                "type": "address"
+              },
+              {
+                "internalType": "bool",
+                "name": "paysYieldFees",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct IBalancerVault.BalancerTokenInfo[]",
+            "name": "tokenInfo",
+            "type": "tuple[]"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "balancesRaw",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "balancesLiveScaled18",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "tokenRates",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "decimalScalingFactors",
+            "type": "uint256[]"
+          }
+        ],
+        "internalType": "struct IBalancerVault.BalancerPoolData",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
