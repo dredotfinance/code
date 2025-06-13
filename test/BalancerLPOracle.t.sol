@@ -26,7 +26,7 @@ contract BalancerLPOracleTest is Test {
 
     function testGetETHPx() public {
         // Get price
-        uint256 price = oracle.getETHPx(address(0));
+        uint256 price = oracle.getPrice();
 
         // Basic validation - price should be non-zero
         assertTrue(price > 0, "Price should be greater than 0");

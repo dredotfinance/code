@@ -535,6 +535,38 @@
         "internalType": "struct AppUIHelper.BondPositionInfo[]",
         "name": "bondPositions",
         "type": "tuple[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "apr",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "epochRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toStakers",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toOps",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "toBurner",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AppUIHelper.ProjectedEpochRate",
+        "name": "projectedEpochRate",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",

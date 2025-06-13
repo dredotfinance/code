@@ -79,6 +79,14 @@ contract AppUIHelper {
         BondPositionInfo[] bondPositions;
     }
 
+    struct ProjectedEpochRate {
+        uint256 apr;
+        uint256 epochRate;
+        uint256 toStakers;
+        uint256 toOps;
+        uint256 toBurner;
+    }
+
     // State variables
     IAppStaking public staking;
     IAppBondDepository public bondDepository;
@@ -136,7 +144,8 @@ contract AppUIHelper {
             uint256 currentSpotPrice,
             TokenInfo[] memory tokenInfos,
             StakingPositionInfo[] memory stakingPositions,
-            BondPositionInfo[] memory bondPositions
+            BondPositionInfo[] memory bondPositions,
+            ProjectedEpochRate memory projectedEpochRate
         )
     {
         // Get protocol-wide stats
@@ -146,7 +155,7 @@ contract AppUIHelper {
         totalRewards = staking.rewardPerToken();
         currentAPR = calculateAPRRaw(totalStaked);
         currentSpotPrice = shadowLP.getPrice();
-
+        projectedEpochRate = getProjectedEpochRate();
         tokenInfos = getTokenInfos(user, bondTokens);
         stakingPositions = getStakingPositions(user);
         bondPositions = getBondPositions(user);
@@ -247,6 +256,13 @@ contract AppUIHelper {
                 isStaked: position.isStaked
             });
         }
+    }
+
+    function getProjectedEpochRate() internal view returns (ProjectedEpochRate memory projectedEpochRate) {
+        (uint256 apr, uint256 epochRate, uint256 toStakers, uint256 toOps, uint256 toBurner) =
+            rebaseController.projectedEpochRate();
+        projectedEpochRate =
+            ProjectedEpochRate({apr: apr, epochRate: epochRate, toStakers: toStakers, toOps: toOps, toBurner: toBurner});
     }
 
     /// @notice Claim all rewards for a staking position
