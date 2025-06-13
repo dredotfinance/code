@@ -179,7 +179,7 @@ contract AppUIHelper {
             treasuryValueApp: appToken.balanceOf(address(treasury)),
             decimals: 18,
             oraclePrice: appOracle.getTokenPrice(),
-            oraclePriceInApp: appOracle.getTokenPrice()
+            oraclePriceInApp: 1e18
         });
 
         // Add staking token info
