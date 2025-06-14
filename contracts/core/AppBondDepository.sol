@@ -142,7 +142,7 @@ contract AppBondDepository is
 
         // Create bond position NFT
         tokenId_ = lastId++;
-        _safeMint(_user, tokenId_);
+        _mint(_user, tokenId_);
 
         _positions[tokenId_] = BondPosition({
             bondId: _id,
@@ -226,7 +226,7 @@ contract AppBondDepository is
 
     /// @notice Disables a bond, preventing further deposits
     /// @param _id The ID of the bond to disable
-    function disable(uint256 _id) external onlyPolicy {
+    function disable(uint256 _id) external onlyBondManager {
         _bonds[_id].enabled = false;
         emit DisableBond(_id);
     }

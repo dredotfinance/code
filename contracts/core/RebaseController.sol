@@ -78,7 +78,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
 
         if (epochMint > 0) {
             // Mint tokens
-            app.mint(address(this), epochMint);
+            treasury.mint(address(this), epochMint);
 
             // Distribute to stakers
             staking.notifyRewardAmount(toStakers);
