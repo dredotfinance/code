@@ -129,6 +129,20 @@ interface IAppStaking is IERC721Enumerable {
         uint256 splitDeclaredValue
     );
 
+    /// @notice Emitted when a position is merged
+    /// @param survivingTokenId The ID of the surviving position NFT
+    /// @param mergedTokenId The ID of the merged position NFT
+    /// @param owner The address of the position owner
+    /// @param newAmount The new amount of tokens staked in the merged position
+    /// @param newDeclaredValue The new declared value for harberger tax in the merged position
+    event PositionMerged(
+        uint256 indexed survivingTokenId,
+        uint256 indexed mergedTokenId,
+        address indexed owner,
+        uint256 newAmount,
+        uint256 newDeclaredValue
+    );
+
     /// @notice Initializes the staking contract
     /// @param _dreToken The address of the dre token
     /// @param _trackingToken The address of the tracking token
@@ -248,4 +262,10 @@ interface IAppStaking is IERC721Enumerable {
     /// @param to The address to receive the new position
     /// @return newTokenId The ID of the newly created position
     function splitPosition(uint256 tokenId, uint256 splitRatio, address to) external returns (uint256 newTokenId);
+
+    /// @notice Merges two positions owned by the caller into a single position.
+    /// @param tokenId1 The ID of the first position NFT (this one will survive).
+    /// @param tokenId2 The ID of the second position NFT (this one will be burned).
+    /// @return mergedTokenId The ID of the resulting merged position (equals tokenId1)
+    function mergePositions(uint256 tokenId1, uint256 tokenId2) external returns (uint256 mergedTokenId);
 }

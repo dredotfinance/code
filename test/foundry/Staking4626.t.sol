@@ -113,4 +113,70 @@ contract Staking4626Test is BaseTest {
         vault.withdraw(withdrawAmount, user1, user1);
         vm.stopPrank();
     }
+
+    /*//////////////////////////////////////////////////////////////
+                               ERC-4626 PROPERTIES
+    //////////////////////////////////////////////////////////////*/
+
+    function _prepareUser(uint256 amount) internal {
+        vm.startPrank(owner);
+        app.mint(user1, amount);
+        vm.stopPrank();
+        vm.startPrank(user1);
+        app.approve(address(vault), amount);
+    }
+
+    /// previewDeposit should accurately predict shares minted by deposit
+    function testPreviewDepositMatchesDeposit() public {
+        uint256 assets = 10 ether;
+        _prepareUser(assets);
+
+        uint256 expectedShares = vault.previewDeposit(assets);
+        uint256 returnedShares = vault.deposit(assets, user1);
+        assertEq(returnedShares, expectedShares, "previewDeposit mismatch");
+        vm.stopPrank();
+    }
+
+    /// Mint is expected to revert in the current implementation because supply is zero and required assets are prohibitive
+    function testMintReverts() public {
+        _prepareUser(1 ether); // approval setup
+        vm.expectRevert();
+        vault.mint(1 ether, user1);
+        vm.stopPrank();
+    }
+
+    /// convertToShares should be non-increasing (assets returned after round trip <= original)
+    function testConvertAssetsMonotonic() public view {
+        uint256 assets = 7 ether;
+        uint256 shares = vault.convertToShares(assets);
+        uint256 assetsRoundtrip = vault.convertToAssets(shares);
+        assertLe(assetsRoundtrip, assets);
+    }
+
+    /// convertToAssets and convertToShares round-trip for shares input
+    function testConvertRoundtripSharesAssets() public view {
+        uint256 shares = 4 ether;
+        uint256 assets = vault.convertToAssets(shares);
+        uint256 sharesRoundtrip = vault.convertToShares(assets);
+        assertApproxEqAbs(sharesRoundtrip, shares, 1e9);
+    }
+
+    /// maxDeposit and maxMint should return uint256 max
+    function testMaxDepositMintUnlimited() public view {
+        assertEq(vault.maxDeposit(user1), type(uint256).max);
+        assertEq(vault.maxMint(user1), type(uint256).max);
+    }
+
+    /// maxWithdraw and maxRedeem reflect user balance
+    function testMaxWithdrawRedeemMatchesBalance() public {
+        uint256 assets = 12 ether;
+        _prepareUser(assets);
+        uint256 shares = vault.deposit(assets, user1);
+        vm.stopPrank();
+
+        uint256 maxWithdraw = vault.maxWithdraw(user1);
+        uint256 maxRedeem = vault.maxRedeem(user1);
+        assertEq(maxRedeem, shares);
+        assertApproxEqAbs(maxWithdraw, vault.convertToAssets(shares), 1e9);
+    }
 }

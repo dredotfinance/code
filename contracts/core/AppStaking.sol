@@ -464,4 +464,44 @@ contract AppStaking is
     function _baseURI() internal view virtual override returns (string memory) {
         return "https://uri.rezerve.money/api/staking/";
     }
+
+    /// @inheritdoc IAppStaking
+    function mergePositions(uint256 tokenId1, uint256 tokenId2)
+        external
+        override
+        nonReentrant
+        returns (uint256 mergedTokenId)
+    {
+        require(tokenId1 != tokenId2, "Token IDs must differ");
+        require(ownerOf(tokenId1) == msg.sender && ownerOf(tokenId2) == msg.sender, "Not owner of both tokens");
+
+        // Ensure neither position is in cooldown
+        Position storage position1 = _positions[tokenId1];
+        Position storage position2 = _positions[tokenId2];
+        require(position1.cooldownEnd == 0 && position2.cooldownEnd == 0, "Position in cooldown");
+
+        // Update rewards for both positions so that their rewards are up to date before merging
+        _updateReward(tokenId1);
+        _updateReward(tokenId2);
+
+        // Aggregate values
+        position1.amount += position2.amount;
+        position1.declaredValue += position2.declaredValue;
+        position1.rewards += position2.rewards;
+        // Keep the strictest rewards unlock schedule (the furthest date)
+        position1.rewardsUnlockAt = Math.max(position1.rewardsUnlockAt, position2.rewardsUnlockAt);
+
+        // Burn the second token and delete its storage
+        _burn(tokenId2);
+        delete _positions[tokenId2];
+
+        // No change in totalStaked or tracking tokens is required since the overall amount stays the same
+
+        // Refresh accounting for the merged position
+        _updateReward(tokenId1);
+
+        emit PositionMerged(tokenId1, tokenId2, msg.sender, position1.amount, position1.declaredValue);
+
+        return tokenId1;
+    }
 }
