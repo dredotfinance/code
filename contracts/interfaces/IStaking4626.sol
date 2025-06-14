@@ -22,6 +22,9 @@ interface IStaking4626 is IERC4626 {
     /// @param _buyoutPremiumBps The new buyout premium
     function setBuyoutPremiumBps(uint256 _buyoutPremiumBps) external;
 
+    /// @notice Recreate the position
+    function recreatePosition() external;
+
     /// @notice Emitted when rewards are compounded into the position
     /// @param amount The amount of rewards compounded
     event RewardsCompounded(uint256 amount);

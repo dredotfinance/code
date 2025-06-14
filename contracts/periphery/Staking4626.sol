@@ -35,7 +35,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
         appToken = IERC20(staking.appToken());
         appToken.approve(address(staking), type(uint256).max);
 
-        buyoutPremiumBps = 1_000; // 10%
+        buyoutPremiumBps = 3_000; // 30%
     }
 
     /// @inheritdoc IStaking4626
@@ -55,6 +55,18 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     /// @inheritdoc IStaking4626
     function harvest() external {
         _harvest();
+    }
+
+    /// @inheritdoc IStaking4626
+    function recreatePosition() external {
+        require(tokenId != 0, "Position not initialized");
+        require(initialAmount > 0, "Position not initialized");
+
+        require(staking.ownerOf(tokenId) != address(this), "Already owner"); // Position was sold
+
+        uint256 balance = appToken.balanceOf(address(this));
+        require(balance > 0, "No assets to recreate position");
+        (tokenId,) = staking.createPosition(address(this), balance, _declaredValue(balance), 0);
     }
 
     /// -----------------------------------------------------------------------

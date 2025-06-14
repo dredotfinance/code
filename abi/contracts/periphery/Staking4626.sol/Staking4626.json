@@ -739,6 +739,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "recreatePosition",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
