@@ -55,6 +55,9 @@ contract AppBurnerTest is BaseTest {
         app.mint(address(owner), 1000e18);
         app.mint(address(burner), 1000e18);
 
+        treasury.enable(address(mockQuoteToken));
+        mockQuoteToken.mint(address(treasury), 10000e18);
+
         // Execute burn
         burner.burn();
 

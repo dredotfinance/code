@@ -84,5 +84,11 @@ contract AppOracle is IAppOracle, AppAccessControlled {
         _floorPrice = newFloorPrice;
 
         emit FloorPriceUpdated(oldPrice, newFloorPrice);
+
+        // ensure that the treasury has enough RZR to cover the new floor price
+        IAppTreasury treasury = IAppTreasury(authority.treasury());
+        uint256 totalSupply = treasury.totalSupply();
+        uint256 currentRZR = treasury.calculateReserves();
+        require(currentRZR >= totalSupply, "treasury backing would fail");
     }
 }
