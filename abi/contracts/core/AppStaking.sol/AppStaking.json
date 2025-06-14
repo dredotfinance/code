@@ -373,6 +373,43 @@
       {
         "indexed": true,
         "internalType": "uint256",
+        "name": "survivingTokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "mergedTokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newDeclaredValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "PositionMerged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
       },
@@ -924,7 +961,13 @@
       }
     ],
     "name": "increaseAmount",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "taxPaid",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1017,6 +1060,30 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId1",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId2",
+        "type": "uint256"
+      }
+    ],
+    "name": "mergePositions",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "mergedTokenId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

@@ -21,7 +21,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
 
     /// @dev Percentage (in basis points) above the deposit amount used as the buy-out (declared) value.
     /// 10% = 1,000 bps.
-    uint256 public buyoutPremiumBps = 1_000; // 10%
+    uint256 public buyoutPremiumBps;
     uint256 private initialAmount;
 
     function initialize(string memory name, string memory symbol, address _staking, address _authority)
@@ -34,6 +34,8 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
         __AppAccessControlled_init(_authority);
         appToken = IERC20(staking.appToken());
         appToken.approve(address(staking), type(uint256).max);
+
+        buyoutPremiumBps = 1_000; // 10%
     }
 
     /// @inheritdoc IStaking4626
@@ -43,7 +45,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     }
 
     /// @inheritdoc IStaking4626
-    function initializePosition(uint256 amount) external onlyGovernor {
+    function initializePosition(uint256 amount) external {
         require(initialAmount == 0, "Position already initialized");
         initialAmount = _netStakeAfterTax(amount);
         appToken.safeTransferFrom(msg.sender, address(this), amount);

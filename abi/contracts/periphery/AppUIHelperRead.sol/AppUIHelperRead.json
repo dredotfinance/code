@@ -56,17 +56,6 @@
     "type": "constructor"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "SafeERC20FailedOperation",
-    "type": "error"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -172,25 +161,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      }
-    ],
-    "name": "claimAllRewards",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "startingIndex",
         "type": "uint256"
@@ -246,7 +216,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct AppUIHelper.StakingPositionInfo[]",
+        "internalType": "struct AppUIHelperBase.StakingPositionInfo[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -433,7 +403,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct AppUIHelper.TokenInfo[]",
+        "internalType": "struct AppUIHelperBase.TokenInfo[]",
         "name": "tokenInfos",
         "type": "tuple[]"
       },
@@ -480,7 +450,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct AppUIHelper.StakingPositionInfo[]",
+        "internalType": "struct AppUIHelperBase.StakingPositionInfo[]",
         "name": "stakingPositions",
         "type": "tuple[]"
       },
@@ -532,7 +502,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct AppUIHelper.BondPositionInfo[]",
+        "internalType": "struct AppUIHelperBase.BondPositionInfo[]",
         "name": "bondPositions",
         "type": "tuple[]"
       },
@@ -564,7 +534,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct AppUIHelper.ProjectedEpochRate",
+        "internalType": "struct AppUIHelperBase.ProjectedEpochRate",
         "name": "projectedEpochRate",
         "type": "tuple"
       }
@@ -649,121 +619,5 @@
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "tokenAmountIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "tokenIn",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "odosData",
-        "type": "bytes"
-      }
-    ],
-    "name": "zapAndMint",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "dreAmountOfLp",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "tokenAmountIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "dreAmountDeclared",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "tokenIn",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "odosData",
-        "type": "bytes"
-      }
-    ],
-    "name": "zapAndStake",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "dreAmountSwapped",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "tokenAmountIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "dreAmountDeclaredAsPercentage",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "tokenIn",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "odosData",
-        "type": "bytes"
-      }
-    ],
-    "name": "zapAndStakeAsPercentage",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "dreAmountSwapped",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]
