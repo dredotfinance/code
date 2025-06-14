@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../core/AppAccessControlled.sol";
 import "../interfaces/IAppStaking.sol";
@@ -13,16 +11,17 @@ import "../interfaces/IStaking4626.sol";
 
 /// @title Staking4626
 /// @notice ERC-4626 compliant staking vault that automatically compounds rewards
-contract Staking4626 is IStaking4626, ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled {
+contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAccessControlled {
     using SafeERC20 for IERC20;
     using Math for uint256;
 
     IAppStaking public staking;
     uint256 public tokenId;
+    IERC20 public appToken;
 
     /// @dev Percentage (in basis points) above the deposit amount used as the buy-out (declared) value.
     /// 10% = 1,000 bps.
-    uint256 private constant BUYOUT_PREMIUM_BPS = 1_000; // 10%
+    uint256 public buyoutPremiumBps = 1_000; // 10%
 
     function initialize(string memory name, string memory symbol, address _staking, address _authority)
         external
@@ -30,15 +29,21 @@ contract Staking4626 is IStaking4626, ERC4626Upgradeable, ReentrancyGuard, AppAc
     {
         staking = IAppStaking(_staking);
 
-        __ERC4626_init(staking.appToken());
         __ERC20_init(name, symbol);
         __AppAccessControlled_init(_authority);
+        appToken = IERC20(staking.appToken());
+        appToken.approve(address(staking), type(uint256).max);
+    }
 
-        IERC20(asset()).approve(address(staking), type(uint256).max);
+    /// @inheritdoc IStaking4626
+    function setBuyoutPremiumBps(uint256 _buyoutPremiumBps) external onlyGovernor {
+        buyoutPremiumBps = _buyoutPremiumBps;
+        emit BuyoutPremiumBpsUpdated(buyoutPremiumBps);
     }
 
     /// @inheritdoc IStaking4626
     function initializePosition(uint256 amount) external {
+        appToken.safeTransferFrom(msg.sender, address(this), amount);
         _increaseAmount(amount);
     }
 
@@ -47,70 +52,64 @@ contract Staking4626 is IStaking4626, ERC4626Upgradeable, ReentrancyGuard, AppAc
         _harvest();
     }
 
-    function _harvest() internal {
-        uint256 balance = IERC20(asset()).balanceOf(address(this));
-        uint256 rewards = staking.claimRewards(tokenId);
-        _increaseAmount(rewards + balance);
+    /// -----------------------------------------------------------------------
+    /// IERC4626 actions (custom implementation)
+    /// -----------------------------------------------------------------------
 
-        emit RewardsCompounded(rewards);
+    /// @inheritdoc IERC4626
+    function deposit(uint256 assets, address receiver) public override nonReentrant returns (uint256 shares) {
+        require(assets > 0, "ZERO_ASSETS");
+        shares = previewDeposit(assets);
+        require(shares > 0, "ZERO_SHARES");
+
+        _mint(receiver, shares);
+        _deposit(assets, shares, receiver);
     }
 
-    function _increaseAmount(uint256 amount) internal {
-        if (amount == 0) return;
-        // Use the new 10% premium for the declared value
-        uint256 declaredValue = _declaredValue(amount);
-        if (tokenId == 0 || staking.ownerOf(tokenId) != address(this)) {
-            (tokenId,) = staking.createPosition(address(this), amount, declaredValue, 0);
-        } else {
-            staking.increaseAmount(tokenId, amount, declaredValue);
+    /// @inheritdoc IERC4626
+    function mint(uint256 shares, address receiver) public override nonReentrant returns (uint256 assets) {
+        require(shares > 0, "ZERO_SHARES");
+        assets = previewMint(shares);
+        require(assets > 0, "ZERO_ASSETS");
+
+        _mint(receiver, shares);
+        _deposit(assets, shares, receiver);
+    }
+
+    /// @inheritdoc IERC4626
+    function withdraw(uint256 assets, address receiver, address owner)
+        public
+        override
+        nonReentrant
+        returns (uint256 shares)
+    {
+        require(assets > 0, "ZERO_ASSETS");
+        shares = previewWithdraw(assets);
+
+        if (msg.sender != owner) {
+            _spendAllowance(owner, msg.sender, shares);
         }
 
-        emit Staked(amount);
+        _burn(owner, shares);
+        _withdraw(assets, shares, receiver, owner);
     }
 
     /// @inheritdoc IERC4626
-    function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
-        // First deposit the assets into the vault
-        shares = super.deposit(assets, receiver);
-
-        // Then stake the assets
-        _increaseAmount(assets);
-    }
-
-    /// @inheritdoc IERC4626
-    function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
-        // First mint the shares
-        assets = super.mint(shares, receiver);
-
-        // Then stake the assets
-        IERC20(asset()).approve(address(staking), assets);
-        staking.createPosition(address(this), assets, assets, 0);
-    }
-
-    /// @inheritdoc IERC4626
-    function withdraw(uint256 assets, address receiver, address owner) public override returns (uint256 shares) {
-        uint256 percentage = assets * 1e18 / totalAssets();
-
-        // withdraw the assets from staking
-        _harvest();
-        staking.splitPosition(tokenId, percentage, receiver);
-
-        // Withdraw from the vault
-        shares = super.withdraw(assets, receiver, owner);
-    }
-
-    /// @inheritdoc IERC4626
-    function redeem(uint256 shares, address receiver, address owner) public override returns (uint256 assets) {
-        // First calculate how many assets we need to withdraw
+    function redeem(uint256 shares, address receiver, address owner)
+        public
+        override
+        nonReentrant
+        returns (uint256 assets)
+    {
+        require(shares > 0, "ZERO_SHARES");
         assets = previewRedeem(shares);
-        uint256 percentage = assets * 1e18 / totalAssets();
 
-        // Then withdraw the assets from staking
-        _harvest();
-        staking.splitPosition(tokenId, percentage, receiver);
+        if (msg.sender != owner) {
+            _spendAllowance(owner, msg.sender, shares);
+        }
 
-        // Finally redeem the shares
-        assets = super.redeem(shares, receiver, owner);
+        _burn(owner, shares);
+        _withdraw(assets, shares, receiver, owner);
     }
 
     /// @inheritdoc IERC4626
@@ -128,23 +127,84 @@ contract Staking4626 is IStaking4626, ERC4626Upgradeable, ReentrancyGuard, AppAc
     /// @inheritdoc IERC4626
     function previewDeposit(uint256 assets) public view override returns (uint256) {
         uint256 netAssets = _netStakeAfterTax(assets);
+        if (totalSupply() == 0) {
+            // First external deposit: 1:1 mapping (post-tax) so that the initial price is 1 share per net RZR.
+            return netAssets;
+        }
         return _convertToShares(netAssets, Math.Rounding.Floor);
     }
 
     /// @inheritdoc IERC4626
     function previewMint(uint256 shares) public view override returns (uint256) {
-        // Determine the net assets that need to be added to back the requested shares.
-        uint256 netAssets = _convertToAssets(shares, Math.Rounding.Ceil);
+        uint256 netAssets;
+        if (totalSupply() == 0) {
+            // With no existing shares the initial price is 1:1 (post-tax) – requested shares == desired net assets.
+            netAssets = shares;
+        } else {
+            // Determine the net assets that need to be added to back the requested shares given current price.
+            netAssets = _convertToAssets(shares, Math.Rounding.Ceil);
+        }
 
-        // Invert the tax equation to compute the gross amount of assets that must be supplied so that
-        // `netAssets` remain after the vault pays Harberger tax.
-        uint256 grossAssets = _grossAssetsFromNet(netAssets);
-        return grossAssets;
+        // Compute the gross amount of assets that must be supplied so that `netAssets` remain after tax.
+        return _grossAssetsFromNet(netAssets);
     }
 
     /// -----------------------------------------------------------------------
     /// Internal helpers
     /// -----------------------------------------------------------------------
+
+    /// @dev Withdraw assets from the position
+    /// @param assets The amount of assets to withdraw
+    /// @param shares The amount of shares to burn
+    /// @param receiver The address to send the assets to
+    /// @param owner The address of the owner of the shares
+    function _withdraw(uint256 assets, uint256 shares, address receiver, address owner) internal {
+        uint256 percentage = assets * 1e18 / totalAssets();
+        _harvest();
+        staking.splitPosition(tokenId, percentage, receiver);
+
+        // invariant; keep at least one share in the vault forever
+        require(totalSupply() > 1e18, "Cannot redeem when there are no shares");
+
+        emit Withdraw(msg.sender, receiver, owner, assets, shares);
+    }
+
+    /// @dev Deposit assets into the position
+    /// @param assets The amount of assets to deposit
+    /// @param shares The amount of shares to mint
+    /// @param receiver The address to mint the shares to
+    function _deposit(uint256 assets, uint256 shares, address receiver) internal {
+        appToken.safeTransferFrom(msg.sender, address(this), assets);
+        _mint(receiver, shares);
+        uint256 positionValue = _increaseAmount(assets);
+        require(positionValue == assets, "Position value mismatch");
+
+        emit Deposit(msg.sender, receiver, assets, shares);
+    }
+
+    /// @dev Harvest rewards and compound them into the position
+    function _harvest() internal {
+        uint256 balance = appToken.balanceOf(address(this));
+        uint256 rewards = staking.claimRewards(tokenId);
+        _increaseAmount(rewards + balance);
+
+        emit RewardsCompounded(rewards);
+    }
+
+    /// @dev Increase the amount of the position by `amount`
+    function _increaseAmount(uint256 amount) internal returns (uint256 positionValue) {
+        if (amount == 0) return 0;
+
+        // Use the new 10% premium for the declared value
+        uint256 declaredValue = _declaredValue(amount);
+        if (tokenId == 0 || staking.ownerOf(tokenId) != address(this)) {
+            (tokenId,) = staking.createPosition(address(this), amount, declaredValue, 0);
+        } else {
+            staking.increaseAmount(tokenId, amount, declaredValue);
+        }
+
+        emit Staked(amount);
+    }
 
     /// @dev Given a desired net stake (`netAssets`), returns the gross amount of tokens that must be supplied
     /// to the vault such that, after paying Harberger tax, exactly `netAssets` remain staked.
@@ -152,7 +212,7 @@ contract Staking4626 is IStaking4626, ERC4626Upgradeable, ReentrancyGuard, AppAc
         // factorDenominator = 1e8 (since we multiply two basis-points values of 1e4 each)
         uint256 factorDenominator = 1e8;
         uint256 taxRateBps = staking.harbergerTaxRate(); // out of 1e4
-        uint256 subFactor = (10_000 + BUYOUT_PREMIUM_BPS) * taxRateBps; // still in 1e8 scale
+        uint256 subFactor = (10_000 + buyoutPremiumBps) * taxRateBps; // still in 1e8 scale
 
         // Prevent division by zero if subFactor >= 1e8 (not expected given current params)
         require(subFactor < factorDenominator, "Invalid tax parameters");
@@ -177,8 +237,75 @@ contract Staking4626 is IStaking4626, ERC4626Upgradeable, ReentrancyGuard, AppAc
     }
 
     /// @dev Computes the declared value given an `amount` of RZR being staked.
-    function _declaredValue(uint256 amount) internal pure returns (uint256) {
+    function _declaredValue(uint256 amount) internal view returns (uint256) {
         // declaredValue = amount * (1 + premium)
-        return amount * (10_000 + BUYOUT_PREMIUM_BPS) / 10_000;
+        return amount * (10_000 + buyoutPremiumBps) / 10_000;
+    }
+
+    // -----------------------------------------------------------------------
+    // IERC4626 getters/converters
+    // -----------------------------------------------------------------------
+
+    /// @inheritdoc IERC4626
+    function asset() public view override returns (address) {
+        return address(staking.appToken());
+    }
+
+    /// @inheritdoc IERC4626
+    function convertToShares(uint256 assets) public view override returns (uint256) {
+        return _convertToShares(assets, Math.Rounding.Floor);
+    }
+
+    /// @inheritdoc IERC4626
+    function convertToAssets(uint256 shares) public view override returns (uint256) {
+        return _convertToAssets(shares, Math.Rounding.Floor);
+    }
+
+    /// @inheritdoc IERC4626
+    function maxDeposit(address) public pure override returns (uint256) {
+        return type(uint256).max;
+    }
+
+    /// @inheritdoc IERC4626
+    function maxMint(address) public pure override returns (uint256) {
+        return type(uint256).max;
+    }
+
+    /// @inheritdoc IERC4626
+    function maxWithdraw(address owner) public view override returns (uint256) {
+        return _convertToAssets(balanceOf(owner), Math.Rounding.Floor);
+    }
+
+    /// @inheritdoc IERC4626
+    function maxRedeem(address owner) public view override returns (uint256) {
+        return balanceOf(owner);
+    }
+
+    /// @inheritdoc IERC4626
+    function previewWithdraw(uint256 assets) public view override returns (uint256) {
+        return _convertToShares(assets, Math.Rounding.Ceil);
+    }
+
+    /// @inheritdoc IERC4626
+    function previewRedeem(uint256 shares) public view override returns (uint256) {
+        return _convertToAssets(shares, Math.Rounding.Floor);
+    }
+
+    // -----------------------------------------------------------------------
+    // Internal conversion helpers (replicating OZ math)
+    // -----------------------------------------------------------------------
+
+    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view returns (uint256) {
+        if (totalSupply() == 0) {
+            return assets; // 1:1 after tax already handled by caller when supply = 0
+        }
+        return assets.mulDiv(totalSupply(), totalAssets() + 1, rounding);
+    }
+
+    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view returns (uint256) {
+        if (totalSupply() == 0) {
+            return shares;
+        }
+        return shares.mulDiv(totalAssets() + 1, totalSupply(), rounding);
     }
 }

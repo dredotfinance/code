@@ -504,4 +504,6 @@ contract AppStaking is
 
         return tokenId1;
     }
+
+    // todo write a function to increase the declared value of a position
 }

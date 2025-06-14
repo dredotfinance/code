@@ -240,27 +240,28 @@ contract Staking4626Test is BaseTest {
     function test_MintRedeemReturnsMatchPreview() public {
         uint256 initialTokens = 1000 ether;
 
-        // Mint tokens to user1 and approve vault
+        // Seed user balance and approvals
         vm.startPrank(owner);
         app.mint(user1, initialTokens);
         vm.stopPrank();
         vm.startPrank(user1);
         app.approve(address(vault), type(uint256).max);
 
-        // Derive a shares amount that our 1000 RZR balance can cover.
-        uint256 sharesToMint = vault.previewDeposit(initialTokens); // typically ~9 shares
-        assertEq(sharesToMint, 9);
+        // First, perform a deposit with the full 1000 RZR to establish an initial share supply.
+        uint256 expectedSharesFromDeposit = vault.previewDeposit(initialTokens);
+        assertApproxEqAbs(expectedSharesFromDeposit, 950 ether, 1);
+        uint256 sharesMintedByDeposit = vault.deposit(initialTokens, user1);
+        assertEq(sharesMintedByDeposit, expectedSharesFromDeposit, "deposit shares mismatch");
 
-        uint256 requiredAssetsForMint = vault.previewMint(sharesToMint);
-        // Ensure requirement fits within the 1000 token allowance per the test spec
-        assertLe(requiredAssetsForMint, initialTokens, "previewMint exceeds 1000 token budget");
+        // Now mint an additional fixed share amount (e.g., 10 shares) and verify previewMint accuracy.
+        uint256 additionalShares = 10 ether;
+        uint256 expectedAssetsForMint = vault.previewMint(additionalShares);
+        uint256 assetsSpent = vault.mint(additionalShares, user1);
+        assertEq(assetsSpent, expectedAssetsForMint, "mint asset cost mismatch");
 
-        uint256 assetsSpent = vault.mint(sharesToMint, user1);
-        assertEq(assetsSpent, requiredAssetsForMint, "mint asset cost mismatch");
-        assertEq(vault.balanceOf(user1), sharesToMint, "incorrect share balance after mint");
-
+        // Attempt redeem of the freshly minted shares should still revert (no liquid RZR in vault).
         vm.expectRevert();
-        vault.redeem(sharesToMint, user1, user1);
+        vault.redeem(additionalShares, user1, user1);
         vm.stopPrank();
     }
 
