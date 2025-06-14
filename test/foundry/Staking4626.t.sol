@@ -444,4 +444,27 @@ contract Staking4626Test is BaseTest {
         uint256 ta = vault.totalAssets();
         assertGe(ta, prevTa);
     }
+
+    function test_TrackingTokenSyncOnTransfer() public {
+        // create second user deposit to give vault shares
+        uint256 dep = 50 ether;
+        _prepareUser(dep);
+        vault.deposit(dep, user1);
+        vm.stopPrank();
+
+        uint256 posId = vault.tokenId();
+        uint256 amt = staking.positions(posId).amount;
+
+        // Transfer NFT to user2
+        vm.startPrank(address(vault)); // vault owns NFT, need to set approvals
+        staking.approve(user2, posId);
+        vm.stopPrank();
+
+        vm.prank(user2);
+        staking.transferFrom(address(vault), user2, posId);
+
+        // tracking token balances
+        assertEq(staking.trackingToken().balanceOf(address(vault)), 0, "vault tracking tokens not burned");
+        assertEq(staking.trackingToken().balanceOf(user2), amt, "receiver not minted correct tracking tokens");
+    }
 }

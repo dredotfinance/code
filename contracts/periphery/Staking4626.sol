@@ -217,7 +217,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     }
 
     /// @dev Increase the amount of the position by `amount`
-    function _increaseAmount(uint256 amount) internal returns (uint256 positionValue) {
+    function _increaseAmount(uint256 amount) internal returns (uint256 val) {
         if (amount == 0) return 0;
 
         // Use the new 10% premium for the declared value
@@ -229,7 +229,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
             taxPaid = staking.increaseAmount(tokenId, amount, declaredValue);
         }
 
-        positionValue = amount - taxPaid;
+        val = amount - taxPaid;
 
         emit Staked(amount);
     }

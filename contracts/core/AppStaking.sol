@@ -268,11 +268,7 @@ contract AppStaking is
         appToken.safeTransfer(seller, sellerAmount);
         appToken.safeTransfer(burner, resellFee);
 
-        // Burn tracking tokens from seller and mint to buyer
-        trackingToken.burn(seller, position.amount);
-        trackingToken.mint(msg.sender, position.amount);
-
-        // Transfer NFT to buyer
+        // Transfer NFT to buyer (tracking tokens are transferred in _update)
         _transfer(seller, msg.sender, tokenId);
 
         // Cancel unstaking and claim any pending rewards to avoid getting sniped
@@ -367,6 +363,7 @@ contract AppStaking is
     /// @return reward The amount of rewards claimed
     function _claimRewards(uint256 tokenId) internal returns (uint256 reward) {
         Position storage position = _positions[tokenId];
+        // todo
         // require(block.timestamp >= position.rewardsUnlockAt, "Rewards in cooldown");
 
         _updateReward(tokenId);
@@ -380,14 +377,22 @@ contract AppStaking is
         }
     }
 
-    /// @notice Overrides the beforeTokenTransfer function to prevent transfers
-    /// @param to The address receiving the token
-    /// @param tokenId The token ID
-    /// @param auth The address authorized to transfer
-    /// @return The address that should be the owner
-    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
-        require(auth == address(0), "Only mints/burns");
-        return super._update(to, tokenId, auth);
+    /// @notice Hooks into ERC721 transfers/mints/burns to keep trackingToken in sync.
+    /// @dev When a position NFT moves between addresses, burn tracking tokens from the sender and mint to the receiver
+    ///      equivalent to the position.amount. Mints and burns keep their existing behaviour.
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address from) {
+        // Call parent which performs the actual state update and returns the previous owner (or zero address on mint).
+        from = super._update(to, tokenId, auth);
+
+        // Skip for mint (from == 0) and burn (to == 0). Only handle transfers between non-zero addresses.
+        if (from != address(0) && to != address(0)) {
+            uint256 amt = _positions[tokenId].amount;
+            if (amt > 0) {
+                // Burn tracking tokens from the sender and mint to the receiver.
+                trackingToken.burn(from, amt);
+                trackingToken.mint(to, amt);
+            }
+        }
     }
 
     /// @notice Distributes the tax to the operations treasury and protocol treasury
