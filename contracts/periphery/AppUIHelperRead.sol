@@ -8,6 +8,32 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 /// @title RZR UI Helper
 /// @author RZR Protocol
 contract AppUIHelperRead is AppUIHelperBase {
+    constructor(
+        address _staking,
+        address _bondDepository,
+        address _treasury,
+        address _dreToken,
+        address _stakingToken,
+        address _rebaseController,
+        address _appOracle,
+        address _shadowLP,
+        address _bootstrapLP,
+        address _odos
+    )
+        AppUIHelperBase(
+            _staking,
+            _bondDepository,
+            _treasury,
+            _dreToken,
+            _stakingToken,
+            _rebaseController,
+            _appOracle,
+            _shadowLP,
+            _bootstrapLP,
+            _odos
+        )
+    {}
+
     /// @notice Get all protocol information for a user
     /// @param user The address of the user
     function getProtocolInfo(address user, address[] memory bondTokens)

@@ -10,6 +10,32 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract AppUIHelperWrite is AppUIHelperBase {
     using SafeERC20 for IERC20;
 
+    constructor(
+        address _staking,
+        address _bondDepository,
+        address _treasury,
+        address _dreToken,
+        address _stakingToken,
+        address _rebaseController,
+        address _appOracle,
+        address _shadowLP,
+        address _bootstrapLP,
+        address _odos
+    )
+        AppUIHelperBase(
+            _staking,
+            _bondDepository,
+            _treasury,
+            _dreToken,
+            _stakingToken,
+            _rebaseController,
+            _appOracle,
+            _shadowLP,
+            _bootstrapLP,
+            _odos
+        )
+    {}
+
     /// @notice Claim all rewards for a staking position
     /// @return amount The amount of rewards claimed
     function claimAllRewards(address user) external returns (uint256 amount) {
