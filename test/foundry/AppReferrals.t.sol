@@ -47,7 +47,7 @@ contract AppReferralsTest is BaseTest {
         vm.label(CHARLIE, "CHARLIE");
     }
 
-    function testReferralCodeGeneration() public {
+    function test_ReferralCodeGeneration() public {
         // Alice generates a referral code
         vm.startPrank(ALICE);
         bytes8 aliceCode = bytes8(bytes20(ALICE));
@@ -62,7 +62,7 @@ contract AppReferralsTest is BaseTest {
         assertEq(referrals.referrerCodes(ALICE), aliceCode);
     }
 
-    function testReferralTracking() public {
+    function test_ReferralTracking() public {
         // Alice generates a referral code
         vm.startPrank(ALICE);
         bytes8 aliceCode = bytes8(bytes20(ALICE));
@@ -87,7 +87,7 @@ contract AppReferralsTest is BaseTest {
         assertEq(referrals.trackedReferrals(BOB), ALICE);
     }
 
-    function testMerkleRewards() public {
+    function test_MerkleRewards() public {
         // Setup: Alice refers Bob and Charlie
         bytes8 aliceCode = bytes8(bytes20(ALICE));
         vm.prank(ALICE);
@@ -142,7 +142,7 @@ contract AppReferralsTest is BaseTest {
         assertEq(app.balanceOf(ALICE), aliceReward);
     }
 
-    function testCannotClaimTwice() public {
+    function test_CannotClaimTwice() public {
         // Setup same as testMerkleRewards
         bytes8 aliceCode = bytes8(bytes20(ALICE));
         vm.prank(ALICE);
@@ -174,7 +174,7 @@ contract AppReferralsTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testCannotExceedMerkleRootAmount() public {
+    function test_CannotExceedMerkleRootAmount() public {
         uint256 totalRewards = 100e18;
         bytes32[] memory proof = new bytes32[](1);
         proof[0] = keccak256(abi.encodePacked("dummy proof"));
@@ -198,7 +198,7 @@ contract AppReferralsTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testBondWithReferral() public {
+    function test_BondWithReferral() public {
         // Alice generates a referral code
         vm.startPrank(ALICE);
         bytes8 aliceCode = bytes8(bytes20(ALICE));

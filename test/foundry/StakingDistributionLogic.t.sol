@@ -15,7 +15,7 @@ contract StakingDistributionLogicTest is Test {
 
     function setUp() public {}
 
-    function testAllocate_ZeroStakingRatio() public pure {
+    function test_Allocate_ZeroStakingRatio() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 0; // No staked tokens
@@ -33,7 +33,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(toBurn, 150e18, "toBurn"); // 15% of 1000
     }
 
-    function testAllocate_FullStakingRatio() public pure {
+    function test_Allocate_FullStakingRatio() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 1000e18; // All tokens staked
@@ -51,7 +51,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(toBurn, 500e18, "toBurn"); // 50% of 1000
     }
 
-    function testAllocate_HalfStakingRatio() public pure {
+    function test_Allocate_HalfStakingRatio() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 500e18; // Half tokens staked
@@ -69,7 +69,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(toBurn, 400e18, "toBurn"); // 40% of 1000
     }
 
-    function testAllocate_ZeroYield() public pure {
+    function test_Allocate_ZeroYield() public pure {
         uint256 yieldTokens = 0; // No yield
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 500e18; // Half tokens staked
@@ -84,7 +84,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(toBurn, 0, "toBurn");
     }
 
-    function testAllocate_Precision() public pure {
+    function test_Allocate_Precision() public pure {
         uint256 yieldTokens = 1e18; // 1 token
         uint256 totalSupply = 1e18; // 1 total supply
         uint256 stakedSupply = 1e17; // 10% staked
@@ -102,7 +102,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(toBurn, 2e17, "toBurn"); // 20% of 1
     }
 
-    function testAllocate_ZeroTotalSupply() public pure {
+    function test_Allocate_ZeroTotalSupply() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 0; // No tokens in circulation
         uint256 stakedSupply = 0; // No staked tokens
@@ -117,7 +117,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(toBurn, 0, "toBurn");
     }
 
-    function testAllocate_CustomRatios() public pure {
+    function test_Allocate_CustomRatios() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 500e18; // Half tokens staked
@@ -141,7 +141,7 @@ contract StakingDistributionLogicTest is Test {
         assertEq(toBurn, 225e18, "toBurn"); // 25% of 1000
     }
 
-    function testAllocate_EdgeCases() public pure {
+    function test_Allocate_EdgeCases() public pure {
         uint256 yieldTokens = 1000e18; // 1000 tokens
         uint256 totalSupply = 1000e18; // 1000 total supply
         uint256 stakedSupply = 1000e18; // All tokens staked

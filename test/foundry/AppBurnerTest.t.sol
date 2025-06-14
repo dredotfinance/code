@@ -8,39 +8,39 @@ contract AppBurnerTest is BaseTest {
         setUpBaseTest();
     }
 
-    function testInitialize() public view {
+    function test_Initialize() public view {
         assertEq(address(burner.appOracle()), address(appOracle));
         assertEq(address(burner.app()), address(app));
     }
 
-    function testCalculateFloorUpdate_ZeroAmount() public view {
+    function test_CalculateFloorUpdate_ZeroAmount() public view {
         uint256 newFloorPrice = burner.calculateFloorUpdate(0, 1000e18, 1e18);
         assertEq(newFloorPrice, 1e18, "Floor price should remain unchanged with zero burn amount");
     }
 
-    function testCalculateFloorUpdate_ZeroFloorPrice() public view {
+    function test_CalculateFloorUpdate_ZeroFloorPrice() public view {
         uint256 newFloorPrice = burner.calculateFloorUpdate(100e18, 1000e18, 0);
         assertEq(newFloorPrice, 0, "Floor price should remain zero with zero initial floor price");
     }
 
-    function testCalculateFloorUpdate_ZeroTotalSupply() public view {
+    function test_CalculateFloorUpdate_ZeroTotalSupply() public view {
         uint256 newFloorPrice = burner.calculateFloorUpdate(100e18, 0, 1e18);
         assertEq(newFloorPrice, 1e18, "Floor price should remain unchanged with zero total supply");
     }
 
-    function testCalculateFloorUpdate_50PercentBurn() public view {
+    function test_CalculateFloorUpdate_50PercentBurn() public view {
         // Test burning 50% of supply
         uint256 newFloorPrice = burner.calculateFloorUpdate(500e18, 1000e18, 1e18);
         assertEq(newFloorPrice, 2e18, "Floor price should double with 50% burn");
     }
 
-    function testCalculateFloorUpdate_90PercentBurn() public view {
+    function test_CalculateFloorUpdate_90PercentBurn() public view {
         // Test burning 90% of supply
         uint256 newFloorPrice = burner.calculateFloorUpdate(900e18, 1000e18, 1e18);
         assertEq(newFloorPrice, 10e18, "Floor price should 10x with 90% burn");
     }
 
-    function testCalculateFloorUpdate_Precision() public view {
+    function test_CalculateFloorUpdate_Precision() public view {
         // Test with small amounts to verify precision
         uint256 newFloorPrice = burner.calculateFloorUpdate(1e18, 1000e18, 1e18);
         // Calculate expected price: 1e18 * (10000 / 9999)
@@ -48,7 +48,7 @@ contract AppBurnerTest is BaseTest {
         assertApproxEqRel(newFloorPrice, expectedPrice, 0.001e18, "Floor price should increase by 0.1% with 0.1% burn");
     }
 
-    function testBurn() public {
+    function test_Burn() public {
         // Setup: Mint RZR tokens to burner
         vm.startPrank(owner);
 
@@ -70,7 +70,7 @@ contract AppBurnerTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testBurn_NoTokens() public {
+    function test_Burn_NoTokens() public {
         vm.startPrank(owner);
         uint256 initialFloorPrice = appOracle.getTokenPrice();
 
@@ -83,14 +83,14 @@ contract AppBurnerTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testBurn_OnlyExecutor() public {
+    function test_Burn_OnlyExecutor() public {
         vm.startPrank(user1); // user1 is not an executor
         vm.expectRevert("UNAUTHORIZED");
         burner.burn();
         vm.stopPrank();
     }
 
-    function testBurn_WithLargeAmount() public {
+    function test_Burn_WithLargeAmount() public {
         vm.startPrank(owner);
         // Mint a large amount to test precision with big numbers
         app.mint(address(owner), 1);

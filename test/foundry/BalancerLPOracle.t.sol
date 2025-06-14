@@ -25,16 +25,16 @@ contract BalancerLPOracleTest is Test {
         oracle = new BalancerLPOracle(VAULT, POOL, APP, IAppOracle(APP_ORACLE));
     }
 
-    function testGetETHPx() public view {
+    function test_GetETHPx() public view {
         // Get price
         uint256 price = oracle.getPrice();
 
         // Basic validation - price should be non-zero
         assertTrue(price > 0, "Price should be greater than 0");
 
-        // Log the price for debugging
-        console.log("LP Token Price:", price);
-        uint256 deposit = 11369988147785217165412;
-        console.log("LP Token Price for deposit:", price * deposit / 1e18);
+        // // Log the price for debugging
+        // console.log("LP Token Price:", price);
+        // uint256 deposit = 11369988147785217165412;
+        // console.log("LP Token Price for deposit:", price * deposit / 1e18);
     }
 }

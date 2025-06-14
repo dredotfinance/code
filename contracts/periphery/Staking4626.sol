@@ -9,17 +9,20 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../core/AppAccessControlled.sol";
 import "../interfaces/IAppStaking.sol";
+import "../interfaces/IStaking4626.sol";
 
 /// @title Staking4626
 /// @notice ERC-4626 compliant staking vault that automatically compounds rewards
-contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled {
+contract Staking4626 is IStaking4626, ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled {
     using SafeERC20 for IERC20;
+    using Math for uint256;
 
     IAppStaking public staking;
     uint256 public tokenId;
 
-    event RewardsCompounded(uint256 amount);
-    event CompoundIntervalUpdated(uint256 oldInterval, uint256 newInterval);
+    /// @dev Percentage (in basis points) above the deposit amount used as the buy-out (declared) value.
+    /// 10% = 1,000 bps.
+    uint256 private constant BUYOUT_PREMIUM_BPS = 1_000; // 10%
 
     function initialize(string memory name, string memory symbol, address _staking, address _authority)
         external
@@ -34,10 +37,12 @@ contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled
         IERC20(asset()).approve(address(staking), type(uint256).max);
     }
 
+    /// @inheritdoc IStaking4626
     function initializePosition(uint256 amount) external {
         _increaseAmount(amount);
     }
 
+    /// @inheritdoc IStaking4626
     function harvest() external {
         _harvest();
     }
@@ -50,11 +55,10 @@ contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled
         emit RewardsCompounded(rewards);
     }
 
-    event Staked(uint256 amount);
-
     function _increaseAmount(uint256 amount) internal {
         if (amount == 0) return;
-        uint256 declaredValue = amount * 105 / 100;
+        // Use the new 10% premium for the declared value
+        uint256 declaredValue = _declaredValue(amount);
         if (tokenId == 0 || staking.ownerOf(tokenId) != address(this)) {
             (tokenId,) = staking.createPosition(address(this), amount, declaredValue, 0);
         } else {
@@ -64,10 +68,7 @@ contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled
         emit Staked(amount);
     }
 
-    /// @notice Deposits assets into the vault and stakes them
-    /// @param assets Amount of assets to deposit
-    /// @param receiver Address to receive the shares
-    /// @return shares Amount of shares minted
+    /// @inheritdoc IERC4626
     function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
         // First deposit the assets into the vault
         shares = super.deposit(assets, receiver);
@@ -76,10 +77,7 @@ contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled
         _increaseAmount(assets);
     }
 
-    /// @notice Mints shares and stakes the underlying assets
-    /// @param shares Amount of shares to mint
-    /// @param receiver Address to receive the shares
-    /// @return assets Amount of assets staked
+    /// @inheritdoc IERC4626
     function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
         // First mint the shares
         assets = super.mint(shares, receiver);
@@ -89,11 +87,7 @@ contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled
         staking.createPosition(address(this), assets, assets, 0);
     }
 
-    /// @notice Withdraws assets from the vault and unstakes them
-    /// @param assets Amount of assets to withdraw
-    /// @param receiver Address to receive the assets
-    /// @param owner Address that owns the shares
-    /// @return shares Amount of shares burned
+    /// @inheritdoc IERC4626
     function withdraw(uint256 assets, address receiver, address owner) public override returns (uint256 shares) {
         uint256 percentage = assets * 1e18 / totalAssets();
 
@@ -105,11 +99,7 @@ contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled
         shares = super.withdraw(assets, receiver, owner);
     }
 
-    /// @notice Redeems shares and unstakes the underlying assets
-    /// @param shares Amount of shares to redeem
-    /// @param receiver Address to receive the assets
-    /// @param owner Address that owns the shares
-    /// @return assets Amount of assets withdrawn
+    /// @inheritdoc IERC4626
     function redeem(uint256 shares, address receiver, address owner) public override returns (uint256 assets) {
         // First calculate how many assets we need to withdraw
         assets = previewRedeem(shares);
@@ -123,12 +113,72 @@ contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled
         assets = super.redeem(shares, receiver, owner);
     }
 
-    /// @notice Returns the total amount of assets in the vault
-    /// @return totalManagedAssets Total assets including staked amount and pending rewards
+    /// @inheritdoc IERC4626
     function totalAssets() public view override returns (uint256 totalManagedAssets) {
         require(tokenId != 0, "No position");
         require(staking.ownerOf(tokenId) == address(this), "Not owner");
         IAppStaking.Position memory position = staking.positions(tokenId);
         totalManagedAssets = position.amount + staking.earned(tokenId);
+    }
+
+    // -----------------------------------------------------------------------
+    // ERC-4626 preview overrides to account for Harberger tax on *incoming* deposits/mints.
+    // -----------------------------------------------------------------------
+
+    /// @inheritdoc IERC4626
+    function previewDeposit(uint256 assets) public view override returns (uint256) {
+        uint256 netAssets = _netStakeAfterTax(assets);
+        return _convertToShares(netAssets, Math.Rounding.Floor);
+    }
+
+    /// @inheritdoc IERC4626
+    function previewMint(uint256 shares) public view override returns (uint256) {
+        // Determine the net assets that need to be added to back the requested shares.
+        uint256 netAssets = _convertToAssets(shares, Math.Rounding.Ceil);
+
+        // Invert the tax equation to compute the gross amount of assets that must be supplied so that
+        // `netAssets` remain after the vault pays Harberger tax.
+        uint256 grossAssets = _grossAssetsFromNet(netAssets);
+        return grossAssets;
+    }
+
+    /// -----------------------------------------------------------------------
+    /// Internal helpers
+    /// -----------------------------------------------------------------------
+
+    /// @dev Given a desired net stake (`netAssets`), returns the gross amount of tokens that must be supplied
+    /// to the vault such that, after paying Harberger tax, exactly `netAssets` remain staked.
+    function _grossAssetsFromNet(uint256 netAssets) internal view returns (uint256) {
+        // factorDenominator = 1e8 (since we multiply two basis-points values of 1e4 each)
+        uint256 factorDenominator = 1e8;
+        uint256 taxRateBps = staking.harbergerTaxRate(); // out of 1e4
+        uint256 subFactor = (10_000 + BUYOUT_PREMIUM_BPS) * taxRateBps; // still in 1e8 scale
+
+        // Prevent division by zero if subFactor >= 1e8 (not expected given current params)
+        require(subFactor < factorDenominator, "Invalid tax parameters");
+
+        uint256 factorNumerator = factorDenominator - subFactor; // scaled 1e8
+
+        // gross = ceil(net * denom / numerator)
+        return Math.mulDiv(netAssets, factorDenominator, factorNumerator, Math.Rounding.Ceil);
+    }
+
+    /// @dev Returns the net amount of assets that will remain staked after the harberger tax is paid.
+    /// This mirrors the logic in `AppStaking.createPosition` and `increaseAmount`.
+    function _netStakeAfterTax(uint256 assets) internal view returns (uint256) {
+        // Calculate the buy-out (declared) value first
+        uint256 declaredValue = _declaredValue(assets);
+
+        // Determine tax using the staking contract parameters (in basis points)
+        uint256 tax = declaredValue * staking.harbergerTaxRate() / 10000;
+
+        // Net assets that actually increase the position amount
+        return assets - tax;
+    }
+
+    /// @dev Computes the declared value given an `amount` of RZR being staked.
+    function _declaredValue(uint256 amount) internal pure returns (uint256) {
+        // declaredValue = amount * (1 + premium)
+        return amount * (10_000 + BUYOUT_PREMIUM_BPS) / 10_000;
     }
 }
