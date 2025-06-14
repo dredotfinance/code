@@ -4,14 +4,14 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "./BaseTest.sol";
-import "../contracts/core/RebaseController.sol";
-import "../contracts/core/RZR.sol";
-import "../contracts/core/sRZR.sol";
-import "../contracts/core/AppTreasury.sol";
-import "../contracts/core/AppStaking.sol";
-import "../contracts/mocks/MockERC20.sol";
-import "../contracts/mocks/MockOracle.sol";
-import "../contracts/interfaces/IAppOracle.sol";
+import "../../contracts/core/RebaseController.sol";
+import "../../contracts/core/RZR.sol";
+import "../../contracts/core/sRZR.sol";
+import "../../contracts/core/AppTreasury.sol";
+import "../../contracts/core/AppStaking.sol";
+import "../../contracts/mocks/MockERC20.sol";
+import "../../contracts/mocks/MockOracle.sol";
+import "../../contracts/interfaces/IAppOracle.sol";
 import "forge-std/console.sol";
 
 contract RebaseControllerTest is BaseTest {

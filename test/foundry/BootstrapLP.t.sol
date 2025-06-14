@@ -2,8 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
-import "../contracts/periphery/BootstrapLP.sol";
-import "../contracts/interfaces/IAppStaking.sol";
+import "../../contracts/periphery/BootstrapLP.sol";
+import "../../contracts/interfaces/IAppStaking.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract BootstrapLPTest is BaseTest {

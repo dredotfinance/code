@@ -2,8 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "../contracts/oracles/AverageCappedOracle.sol";
-import "../contracts/mocks/MockOracle.sol";
+import "../../contracts/oracles/AverageCappedOracle.sol";
+import "../../contracts/mocks/MockOracle.sol";
 
 contract AverageCappedOracleTest is Test {
     AverageCappedOracle public averageOracle;

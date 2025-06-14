@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "../contracts/libraries/YieldLogic.sol";
+import "../../contracts/libraries/YieldLogic.sol";
 
 contract YieldLogicTest is Test {
     using YieldLogic for uint256;

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "../contracts/libraries/StakingDistributionLogic.sol";
+import "../../contracts/libraries/StakingDistributionLogic.sol";
 
 contract StakingDistributionLogicTest is Test {
     using StakingDistributionLogic for uint256;

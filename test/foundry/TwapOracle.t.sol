@@ -2,8 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "../contracts/oracles/TwapOracle.sol";
-import "../contracts/mocks/MockOracle.sol";
+import "../../contracts/oracles/TwapOracle.sol";
+import "../../contracts/mocks/MockOracle.sol";
 
 contract TwapOracleTest is Test {
     TwapOracle public twapOracle;

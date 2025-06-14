@@ -2,9 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
-import "../contracts/core/AppOracle.sol";
-import "../contracts/mocks/MockOracle.sol";
-import "../contracts/mocks/MockERC20.sol";
+import "../../contracts/core/AppOracle.sol";
+import "../../contracts/mocks/MockOracle.sol";
+import "../../contracts/mocks/MockERC20.sol";
 
 contract AppOracleTest is BaseTest {
     MockERC20 public usdc;

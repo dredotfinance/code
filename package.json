@@ -42,7 +42,8 @@
   },
   "scripts": {
     "compile": "hardhat compile && forge build",
-    "test": "forge test"
+    "test": "forge test",
+    "test:halmos": "FOUNDRY_PROFILE=test halmos"
   },
   "repository": {
     "type": "git",

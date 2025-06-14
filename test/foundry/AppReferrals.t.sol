@@ -2,12 +2,12 @@
 pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
-import "../contracts/core/AppReferrals.sol";
-import "../contracts/core/AppBondDepository.sol";
-import "../contracts/core/AppStaking.sol";
-import "../contracts/core/RZR.sol";
-import "../contracts/core/AppTreasury.sol";
-import "../contracts/core/AppAuthority.sol";
+import "../../contracts/core/AppReferrals.sol";
+import "../../contracts/core/AppBondDepository.sol";
+import "../../contracts/core/AppStaking.sol";
+import "../../contracts/core/RZR.sol";
+import "../../contracts/core/AppTreasury.sol";
+import "../../contracts/core/AppAuthority.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract AppReferralsTest is BaseTest {

@@ -3,11 +3,11 @@ pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "../contracts/oracles/BalancerLPOracle.sol";
-import "../contracts/mocks/MockERC20.sol";
-import "../contracts/mocks/MockOracle.sol";
-import "../contracts/core/AppOracle.sol";
-import "../contracts/core/AppAuthority.sol";
+import "../../contracts/oracles/BalancerLPOracle.sol";
+import "../../contracts/mocks/MockERC20.sol";
+import "../../contracts/mocks/MockOracle.sol";
+import "../../contracts/core/AppOracle.sol";
+import "../../contracts/core/AppAuthority.sol";
 
 contract BalancerLPOracleTest is Test {
     BalancerLPOracle public oracle;
