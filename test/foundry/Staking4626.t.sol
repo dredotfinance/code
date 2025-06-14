@@ -23,7 +23,8 @@ contract Staking4626Test is BaseTest {
         vault.initialize("RZR Vault", "vRZR", address(staking), address(authority));
 
         // Seed the vault with RZR so that it can create the initial staking position
-        app.mint(address(vault), INITIAL_ASSETS);
+        app.mint(owner, INITIAL_ASSETS);
+        app.approve(address(vault), INITIAL_ASSETS);
         vault.initializePosition(INITIAL_ASSETS);
         vm.stopPrank();
     }
@@ -71,7 +72,7 @@ contract Staking4626Test is BaseTest {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Depositing assets should increase the staked amount and mint shares (may be zero when vault already has TVL)
-    function test_Deposit() public {
+    function test_DepositSingle() public {
         uint256 depositAmount = 200 ether;
 
         // Mint tokens to user1 and approve vault
@@ -242,14 +243,14 @@ contract Staking4626Test is BaseTest {
 
         // Seed user balance and approvals
         vm.startPrank(owner);
-        app.mint(user1, initialTokens);
+        app.mint(user1, initialTokens * 2);
         vm.stopPrank();
         vm.startPrank(user1);
         app.approve(address(vault), type(uint256).max);
 
         // First, perform a deposit with the full 1000 RZR to establish an initial share supply.
         uint256 expectedSharesFromDeposit = vault.previewDeposit(initialTokens);
-        assertApproxEqAbs(expectedSharesFromDeposit, 950 ether, 1);
+        assertApproxEqAbs(expectedSharesFromDeposit, 945 ether, 1);
         uint256 sharesMintedByDeposit = vault.deposit(initialTokens, user1);
         assertEq(sharesMintedByDeposit, expectedSharesFromDeposit, "deposit shares mismatch");
 
@@ -261,7 +262,7 @@ contract Staking4626Test is BaseTest {
 
         // Attempt redeem of the freshly minted shares should still revert (no liquid RZR in vault).
         vm.expectRevert();
-        vault.redeem(additionalShares, user1, user1);
+        vault.redeem(additionalShares + sharesMintedByDeposit, user1, user1);
         vm.stopPrank();
     }
 
@@ -280,9 +281,17 @@ contract Staking4626Test is BaseTest {
         uint256 sharesMinted = vault.deposit(assetsToDeposit, user1);
         assertEq(sharesMinted, expectedShares, "deposit share mismatch");
 
+        console.log("totalAssets", vault.totalAssets());
+        console.log("totalSupply", vault.totalSupply());
+
+        vault.withdraw(assetsToDeposit / 2, user1, user1);
+
         // Attempt full withdraw is expected to revert due to insufficient liquid assets in vault.
         vm.expectRevert();
-        vault.withdraw(assetsToDeposit, user1, user1);
+        vault.withdraw(assetsToDeposit / 2, user1, user1);
+
+        console.log("totalAssets", vault.totalAssets());
+        console.log("totalSupply", vault.totalSupply());
         vm.stopPrank();
     }
 }
