@@ -722,4 +722,165 @@ contract AppStakingTest is BaseTest {
 
         vm.stopPrank();
     }
+
+    function test_SplitPosition() public {
+        vm.startPrank(owner);
+
+        // Create initial position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Add rewards before splitting
+        app.mint(owner, REWARD_AMOUNT);
+        app.approve(address(staking), REWARD_AMOUNT);
+        staking.notifyRewardAmount(REWARD_AMOUNT);
+
+        // Fast forward to accumulate rewards
+        vm.warp(block.timestamp + staking.EPOCH_DURATION());
+
+        // Get initial position details
+        IAppStaking.Position memory initialPosition = staking.positions(tokenId);
+        uint256 initialEarned = staking.earned(tokenId);
+
+        // Split position 50/50
+        uint256 splitRatio = 0.5e18; // 50%
+        uint256 newTokenId = staking.splitPosition(tokenId, splitRatio, user1);
+
+        // Get final position details
+        IAppStaking.Position memory originalPosition = staking.positions(tokenId);
+        IAppStaking.Position memory newPosition = staking.positions(newTokenId);
+
+        // Verify original position was reduced correctly
+        assertEq(originalPosition.amount, initialPosition.amount - (initialPosition.amount * splitRatio / 1e18));
+        assertEq(
+            originalPosition.declaredValue,
+            initialPosition.declaredValue - (initialPosition.declaredValue * splitRatio / 1e18)
+        );
+
+        // Verify new position was created correctly
+        assertEq(newPosition.amount, initialPosition.amount * splitRatio / 1e18);
+        assertEq(newPosition.declaredValue, initialPosition.declaredValue * splitRatio / 1e18);
+        assertEq(newPosition.rewards, 0);
+        assertEq(newPosition.rewardPerTokenPaid, staking.rewardPerTokenStored());
+
+        // Verify tracking tokens were transferred correctly
+        assertEq(sapp.balanceOf(owner), originalPosition.amount);
+        assertEq(sapp.balanceOf(user1), newPosition.amount);
+
+        // Verify NFT ownership
+        assertEq(staking.ownerOf(tokenId), owner);
+        assertEq(staking.ownerOf(newTokenId), user1);
+
+        vm.stopPrank();
+    }
+
+    function testFail_SplitPositionNotOwner() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        vm.stopPrank();
+
+        // Try to split as non-owner
+        vm.startPrank(user1);
+        staking.splitPosition(tokenId, 0.5e18, user2);
+        vm.stopPrank();
+    }
+
+    function testFail_SplitPositionInCooldown() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Start unstaking
+        staking.startUnstaking(tokenId);
+
+        // Try to split while in cooldown
+        staking.splitPosition(tokenId, 0.5e18, user1);
+
+        vm.stopPrank();
+    }
+
+    function testFail_SplitPositionInvalidRatio() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Try to split with invalid ratio
+        staking.splitPosition(tokenId, 1.1e18, user1); // 110%
+
+        vm.stopPrank();
+    }
+
+    function testFuzz_SplitPosition(
+        uint256 stakeAmount,
+        uint256 declaredValue,
+        uint256 splitRatio,
+        uint256 rewardAmount
+    ) public {
+        // Bound the inputs to reasonable ranges
+        stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
+        declaredValue = bound(declaredValue, stakeAmount, stakeAmount * 2);
+        splitRatio = bound(splitRatio, 1, 0.99e18); // Max 99% split
+        rewardAmount = bound(rewardAmount, 1e18, 1000000e18);
+
+        vm.startPrank(owner);
+
+        // Create initial position
+        app.mint(owner, stakeAmount);
+        app.approve(address(staking), stakeAmount);
+        (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+
+        // Add rewards
+        app.mint(owner, rewardAmount);
+        app.approve(address(staking), rewardAmount);
+        staking.notifyRewardAmount(rewardAmount);
+
+        // Fast forward to accumulate rewards
+        vm.warp(block.timestamp + staking.EPOCH_DURATION());
+
+        // Get initial position details
+        IAppStaking.Position memory initialPosition = staking.positions(tokenId);
+
+        // Split position
+        uint256 newTokenId = staking.splitPosition(tokenId, splitRatio, user1);
+
+        // Get final position details
+        IAppStaking.Position memory originalPosition = staking.positions(tokenId);
+        IAppStaking.Position memory newPosition = staking.positions(newTokenId);
+
+        // Calculate expected split amounts
+        uint256 expectedSplitAmount = (initialPosition.amount * splitRatio) / 1e18;
+        uint256 expectedSplitValue = (initialPosition.declaredValue * splitRatio) / 1e18;
+
+        // Verify amounts were split correctly
+        assertEq(newPosition.amount, expectedSplitAmount);
+        assertEq(newPosition.declaredValue, expectedSplitValue);
+        assertEq(originalPosition.amount, initialPosition.amount - expectedSplitAmount);
+        assertEq(originalPosition.declaredValue, initialPosition.declaredValue - expectedSplitValue);
+
+        // Verify tracking tokens were transferred correctly
+        assertEq(sapp.balanceOf(owner), originalPosition.amount);
+        assertEq(sapp.balanceOf(user1), newPosition.amount);
+
+        // Verify NFT ownership
+        assertEq(staking.ownerOf(tokenId), owner);
+        assertEq(staking.ownerOf(newTokenId), user1);
+
+        // Verify rewards start fresh for new position
+        assertEq(newPosition.rewards, 0);
+        assertEq(newPosition.rewardPerTokenPaid, staking.rewardPerTokenStored());
+
+        vm.stopPrank();
+    }
 }

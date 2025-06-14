@@ -2,6 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title IAppStaking
 /// @notice Interface for the staking system that allows users to stake RZR tokens and earn rewards
@@ -112,6 +113,22 @@ interface IAppStaking is IERC721Enumerable {
     /// @param newValue The new epoch duration
     event EpochDurationUpdated(uint256 oldValue, uint256 newValue);
 
+    /// @notice Emitted when a position is split
+    /// @param originalTokenId The ID of the original position NFT
+    /// @param newTokenId The ID of the new position NFT
+    /// @param owner The address of the position owner
+    /// @param to The address to which the new position is split
+    /// @param splitAmount The amount of tokens split
+    /// @param splitDeclaredValue The declared value of the split position
+    event PositionSplit(
+        uint256 indexed originalTokenId,
+        uint256 indexed newTokenId,
+        address indexed owner,
+        address to,
+        uint256 splitAmount,
+        uint256 splitDeclaredValue
+    );
+
     /// @notice Initializes the staking contract
     /// @param _dreToken The address of the dre token
     /// @param _trackingToken The address of the tracking token
@@ -220,4 +237,15 @@ interface IAppStaking is IERC721Enumerable {
     /// @notice Gets the epoch duration
     /// @return The epoch duration
     function EPOCH_DURATION() external view returns (uint256);
+
+    /// @notice Gets the app token
+    /// @return The app token
+    function appToken() external view returns (IERC20);
+
+    /// @notice Splits a position into two positions, sending the new position to a specified address
+    /// @param tokenId The ID of the position to split
+    /// @param splitRatio The ratio to split the position
+    /// @param to The address to receive the new position
+    /// @return newTokenId The ID of the newly created position
+    function splitPosition(uint256 tokenId, uint256 splitRatio, address to) external returns (uint256 newTokenId);
 }

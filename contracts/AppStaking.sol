@@ -33,7 +33,7 @@ contract AppStaking is
     uint256 public rewardCooldownPeriod;
 
     // State variables
-    IERC20 public appToken;
+    IERC20 public override appToken;
     IPermissionedERC20 public trackingToken;
 
     // Mapping from token ID to Position
@@ -190,7 +190,7 @@ contract AppStaking is
 
         // Create new position
         tokenId = lastId++;
-        _safeMint(to, tokenId);
+        _mint(to, tokenId);
 
         _positions[tokenId] = Position({
             amount: amount,
@@ -408,6 +408,55 @@ contract AppStaking is
             position.rewards = earned(tokenId);
             position.rewardPerTokenPaid = rewardPerTokenStored;
         }
+    }
+
+    /// @inheritdoc IAppStaking
+    function splitPosition(uint256 tokenId, uint256 splitRatio, address to)
+        external
+        override
+        nonReentrant
+        returns (uint256 newTokenId)
+    {
+        require(ownerOf(tokenId) == msg.sender, "Not owner");
+        require(to != address(0), "Invalid recipient address");
+        require(splitRatio > 0, "Split ratio must be greater than 0");
+        require(splitRatio <= 1e18, "Split ratio must be less than or equal to 100%");
+
+        Position storage position = _positions[tokenId];
+        require(position.cooldownEnd == 0, "Position is in cooldown");
+
+        // Update rewards for the original position
+        _updateReward(tokenId);
+
+        // Create new position
+        newTokenId = lastId++;
+        _mint(to, newTokenId);
+
+        uint256 splitAmount = position.amount * splitRatio / 1e18;
+        uint256 splitDeclaredValue = position.declaredValue * splitRatio / 1e18;
+
+        // Create new position with split values
+        _positions[newTokenId] = Position({
+            amount: splitAmount,
+            declaredValue: splitDeclaredValue,
+            rewardPerTokenPaid: rewardPerTokenStored,
+            rewards: 0,
+            cooldownEnd: 0,
+            rewardsUnlockAt: position.rewardsUnlockAt
+        });
+
+        // Update original position
+        position.amount -= splitAmount;
+        position.declaredValue -= splitDeclaredValue;
+
+        // Update tracking tokens for the new position
+        trackingToken.mint(to, splitAmount);
+        trackingToken.burn(msg.sender, splitAmount);
+
+        _updateReward(tokenId);
+        _updateReward(newTokenId);
+
+        emit PositionSplit(tokenId, newTokenId, msg.sender, to, splitAmount, splitDeclaredValue);
     }
 
     /// @notice Returns the base URI for the NFT metadata
