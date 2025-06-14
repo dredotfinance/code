@@ -2,8 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "./AppAccessControlled.sol";
-import "./interfaces/IAppOracle.sol";
-import "./interfaces/IOracle.sol";
+import "../interfaces/IAppOracle.sol";
+import "../interfaces/IOracle.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /**

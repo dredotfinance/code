@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgrad
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "../AppAccessControlled.sol";
+import "../core/AppAccessControlled.sol";
 import "../interfaces/IAppStaking.sol";
 
 /// @title Staking4626

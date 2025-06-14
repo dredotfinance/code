@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Unlicensed
 pragma solidity ^0.8.15;
 
-import "../AppAccessControlled.sol";
+import "../core/AppAccessControlled.sol";
 
 contract AccessControlledMock is AppAccessControlled {
     constructor(address _auth) {

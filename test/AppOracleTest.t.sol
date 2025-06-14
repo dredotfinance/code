@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "forge-std/Test.sol";
 import "./BaseTest.sol";
-import "../contracts/AppOracle.sol";
+import "../contracts/core/AppOracle.sol";
 import "../contracts/mocks/MockOracle.sol";
 import "../contracts/mocks/MockERC20.sol";
 

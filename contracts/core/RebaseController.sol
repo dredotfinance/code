@@ -2,13 +2,13 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./interfaces/IApp.sol";
-import "./interfaces/IAppTreasury.sol";
-import "./interfaces/IAppStaking.sol";
-import "./interfaces/IAppOracle.sol";
-import "./interfaces/IRebaseController.sol";
-import "./libraries/StakingDistributionLogic.sol";
-import "./libraries/YieldLogic.sol";
+import "../interfaces/IApp.sol";
+import "../interfaces/IAppTreasury.sol";
+import "../interfaces/IAppStaking.sol";
+import "../interfaces/IAppOracle.sol";
+import "../interfaces/IRebaseController.sol";
+import "../libraries/StakingDistributionLogic.sol";
+import "../libraries/YieldLogic.sol";
 import "./AppAccessControlled.sol";
 
 /**

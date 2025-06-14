@@ -2,11 +2,12 @@
 pragma solidity ^0.8.15;
 
 import "./AppAccessControlled.sol";
-import "./interfaces/IAppOracle.sol";
-import "./interfaces/IApp.sol";
-import "./interfaces/IAppTreasury.sol";
-import "./interfaces/IAppBondDepository.sol";
-import "./interfaces/IAppStaking.sol";
+import "../interfaces/IAppOracle.sol";
+import "../interfaces/IApp.sol";
+import "../interfaces/IAppTreasury.sol";
+import "../interfaces/IAppBondDepository.sol";
+import "../interfaces/IAppStaking.sol";
+import "../interfaces/IAppReferrals.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -16,7 +17,7 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 /// @title AppReferrals
 /// @notice This contract is used to track referrals and rewards
 /// @dev Reward calculations are done off-chain in future yields
-contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
+contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppReferrals {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
     using MerkleProof for bytes32[];
@@ -26,29 +27,6 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
     IAppStaking public staking;
     IApp public app;
     IAppTreasury public treasury;
-
-    // Merkle roots for rewards
-    struct MerkleRootInfo {
-        bytes32 root;
-        uint256 amount;
-        uint256 claimed;
-    }
-
-    // Events
-    event ReferralCodeRegistered(address indexed referrer, bytes8 code);
-    event ReferralRegistered(address indexed referred, address indexed referrer, bytes8 code);
-    event RewardsClaimed(address indexed user, uint256 amount, bytes32 root);
-    event ReferralStaked(address indexed user, uint256 amount, uint256 declaredValue, bytes8 referralCode);
-    event ReferralBondBought(
-        address indexed user, uint256 id, uint256 amount, uint256 maxPrice, uint256 minPayout, bytes8 referralCode
-    );
-
-    struct ClaimRewardsInput {
-        bytes32 root;
-        address user;
-        uint256 amount;
-        bytes32[] proofs;
-    }
 
     bytes32[] public merkleRoots;
 
@@ -65,6 +43,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
     address public odos;
     address public merkleServer;
 
+    /// @inheritdoc IAppReferrals
     function initialize(
         address _bondDepository,
         address _staking,
@@ -84,15 +63,12 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         app.approve(address(staking), type(uint256).max);
     }
 
-    /// @notice Sets the merkle server
-    /// @param _merkleServer The merkle server address
+    /// @inheritdoc IAppReferrals
     function setMerkleServer(address _merkleServer) external onlyGovernor {
         merkleServer = _merkleServer;
     }
 
-    /// @notice Adds a new merkle root for the current week
-    /// @param _merkleRoot The merkle root for the week
-    /// @param amount The amount of rewards to claim
+    /// @inheritdoc IAppReferrals
     function addMerkleRoot(bytes32 _merkleRoot, uint256 amount) external {
         require(msg.sender == merkleServer, "Only merkle server can add merkle roots");
 
@@ -103,31 +79,25 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         merkleRoots.push(_merkleRoot);
     }
 
-    /// @notice Claims rewards using a merkle proof
-    /// @param inputs The inputs for the rewards to claim
-    /// @dev The proofs are the two parts of the merkle proof
+    /// @inheritdoc IAppReferrals
     function claimRewards(ClaimRewardsInput[] calldata inputs) external {
         for (uint256 i = 0; i < inputs.length; i++) {
             _claimRewards(inputs[i]);
         }
     }
 
-    /// @notice Gets the number of merkle roots
-    /// @return The number of merkle roots
+    /// @inheritdoc IAppReferrals
     function getMerkleRootCount() external view returns (uint256) {
         return merkleRoots.length;
     }
 
-    /// @notice Gets the merkle root info
-    /// @param root The merkle root
-    /// @return amount The amount of rewards
-    /// @return claimed The amount of rewards claimed
+    /// @inheritdoc IAppReferrals
     function getMerkleRootInfo(bytes32 root) external view returns (uint256 amount, uint256 claimed) {
         MerkleRootInfo storage info = merkleRootInfo[root];
         return (info.amount, info.claimed);
     }
 
-    /// @notice Registers a referral code for the caller
+    /// @inheritdoc IAppReferrals
     function registerReferralCode(bytes8 code) external {
         require(referralCodes[code] == address(0), "Code already exists");
         require(referrerCodes[msg.sender] == bytes8(0), "Referral code already registered");
@@ -139,9 +109,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         emit ReferralCodeRegistered(msg.sender, code);
     }
 
-    /// @notice Gets all referrals for a referrer
-    /// @param referrer The referrer to get referrals for
-    /// @return referrals Array of addresses that were referred
+    /// @inheritdoc IAppReferrals
     function getReferrals(address referrer) external view returns (address[] memory referrals) {
         EnumerableSet.AddressSet storage refs = _referrals[referrer];
         referrals = new address[](refs.length());
@@ -150,10 +118,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         }
     }
 
-    /// @notice Stakes RZR tokens with a referral code
-    /// @param amount The amount of RZR tokens to stake
-    /// @param declaredValue The declared value of the stake
-    /// @param referralCode The referral code to use
+    /// @inheritdoc IAppReferrals
     function stakeWithReferral(uint256 amount, uint256 declaredValue, bytes8 referralCode) external nonReentrant {
         app.transferFrom(msg.sender, address(this), amount);
 
@@ -166,6 +131,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         emit ReferralStaked(msg.sender, amount, declaredValue, referralCode);
     }
 
+    /// @inheritdoc IAppReferrals
     function stakeWithReferralOdos(
         uint256 amount,
         uint256 declaredValue,
@@ -196,12 +162,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         emit ReferralStaked(msg.sender, amount, declaredValue, referralCode);
     }
 
-    /// @notice Buys a bond with a referral code
-    /// @param _id The ID of the bond to buy
-    /// @param _amount The amount of quote tokens to pay
-    /// @param _maxPrice The maximum price to pay
-    /// @param _minPayout The minimum payout to receive
-    /// @param referralCode The referral code to use
+    /// @inheritdoc IAppReferrals
     function bondWithReferral(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, bytes8 referralCode)
         external
         nonReentrant
@@ -220,6 +181,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable {
         emit ReferralBondBought(msg.sender, _id, _amount, _maxPrice, _minPayout, referralCode);
     }
 
+    /// @inheritdoc IAppReferrals
     function bondWithReferralOdos(
         uint256 _id,
         uint256 _amountIn,

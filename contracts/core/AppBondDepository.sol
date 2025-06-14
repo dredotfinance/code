@@ -6,10 +6,10 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./AppAccessControlled.sol";
-import "./interfaces/IAppStaking.sol";
-import "./interfaces/IApp.sol";
-import "./interfaces/IAppBondDepository.sol";
-import "./interfaces/IAppTreasury.sol";
+import "../interfaces/IAppStaking.sol";
+import "../interfaces/IApp.sol";
+import "../interfaces/IAppBondDepository.sol";
+import "../interfaces/IAppTreasury.sol";
 
 /// @title RZR Bond Depository
 /// @author RZR Protocol

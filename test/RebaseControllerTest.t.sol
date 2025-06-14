@@ -4,11 +4,11 @@ pragma abicoder v2;
 
 import "forge-std/Test.sol";
 import "./BaseTest.sol";
-import "../contracts/RebaseController.sol";
-import "../contracts/RZR.sol";
-import "../contracts/sRZR.sol";
-import "../contracts/AppTreasury.sol";
-import "../contracts/AppStaking.sol";
+import "../contracts/core/RebaseController.sol";
+import "../contracts/core/RZR.sol";
+import "../contracts/core/sRZR.sol";
+import "../contracts/core/AppTreasury.sol";
+import "../contracts/core/AppStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockOracle.sol";
 import "../contracts/interfaces/IAppOracle.sol";

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "./AppAccessControlled.sol";
-import "./interfaces/IAppOracle.sol";
-import "./interfaces/IApp.sol";
+import "../interfaces/IAppOracle.sol";
+import "../interfaces/IApp.sol";
 
 /// @title AppBurner
 /// @notice This contract is used to burn the balance of the App contract

@@ -7,8 +7,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "./interfaces/IAppStaking.sol";
-import "./interfaces/IPermissionedERC20.sol";
+import "../interfaces/IAppStaking.sol";
+import "../interfaces/IPermissionedERC20.sol";
 import "./AppAccessControlled.sol";
 
 /// @title AppStaking

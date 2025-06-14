@@ -352,7 +352,7 @@
             "type": "bytes32[]"
           }
         ],
-        "internalType": "struct AppReferrals.ClaimRewardsInput[]",
+        "internalType": "struct IAppReferrals.ClaimRewardsInput[]",
         "name": "inputs",
         "type": "tuple[]"
       }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "./AppAccessControlled.sol";
-import "./interfaces/IApp.sol";
+import "../interfaces/IApp.sol";
 import "@layerzerolabs/oft-evm/contracts/OFT.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";

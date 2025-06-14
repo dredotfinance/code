@@ -2,12 +2,12 @@
 pragma solidity ^0.8.15;
 
 import "./BaseTest.sol";
-import "../contracts/AppReferrals.sol";
-import "../contracts/AppBondDepository.sol";
-import "../contracts/AppStaking.sol";
-import "../contracts/RZR.sol";
-import "../contracts/AppTreasury.sol";
-import "../contracts/AppAuthority.sol";
+import "../contracts/core/AppReferrals.sol";
+import "../contracts/core/AppBondDepository.sol";
+import "../contracts/core/AppStaking.sol";
+import "../contracts/core/RZR.sol";
+import "../contracts/core/AppTreasury.sol";
+import "../contracts/core/AppAuthority.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract AppReferralsTest is BaseTest {
@@ -126,9 +126,9 @@ contract AppReferralsTest is BaseTest {
 
         // Alice claims her rewards
         vm.startPrank(ALICE);
-        AppReferrals.ClaimRewardsInput[] memory inputs = new AppReferrals.ClaimRewardsInput[](1);
+        IAppReferrals.ClaimRewardsInput[] memory inputs = new IAppReferrals.ClaimRewardsInput[](1);
         inputs[0] =
-            AppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: aliceReward, proofs: aliceProof});
+            IAppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: aliceReward, proofs: aliceProof});
 
         vm.expectEmit(true, false, false, true);
         emit RewardsClaimed(ALICE, aliceReward, merkleRoot);
@@ -163,9 +163,9 @@ contract AppReferralsTest is BaseTest {
 
         // First claim succeeds
         vm.startPrank(ALICE);
-        AppReferrals.ClaimRewardsInput[] memory inputs = new AppReferrals.ClaimRewardsInput[](1);
+        IAppReferrals.ClaimRewardsInput[] memory inputs = new IAppReferrals.ClaimRewardsInput[](1);
         inputs[0] =
-            AppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: aliceReward, proofs: aliceProof});
+            IAppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: aliceReward, proofs: aliceProof});
         referrals.claimRewards(inputs);
 
         // Second claim should fail
@@ -189,9 +189,9 @@ contract AppReferralsTest is BaseTest {
         vm.stopPrank();
 
         vm.startPrank(ALICE);
-        AppReferrals.ClaimRewardsInput[] memory inputs = new AppReferrals.ClaimRewardsInput[](1);
+        IAppReferrals.ClaimRewardsInput[] memory inputs = new IAppReferrals.ClaimRewardsInput[](1);
         inputs[0] =
-            AppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: totalRewards + 1, proofs: proof});
+            IAppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: totalRewards + 1, proofs: proof});
 
         vm.expectRevert("Not enough rewards to claim");
         referrals.claimRewards(inputs);

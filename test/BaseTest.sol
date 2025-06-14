@@ -3,18 +3,18 @@ pragma solidity ^0.8.15;
 pragma abicoder v2;
 
 import "forge-std/Test.sol";
-import "../contracts/RebaseController.sol";
-import "../contracts/RZR.sol";
-import "../contracts/sRZR.sol";
-import "../contracts/AppTreasury.sol";
-import "../contracts/AppStaking.sol";
+import "../contracts/core/RebaseController.sol";
+import "../contracts/core/RZR.sol";
+import "../contracts/core/sRZR.sol";
+import "../contracts/core/AppTreasury.sol";
+import "../contracts/core/AppStaking.sol";
 import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockOracle.sol";
 import "../contracts/mocks/MockEndpoint.sol";
-import "../contracts/AppAuthority.sol";
-import "../contracts/AppBondDepository.sol";
-import "../contracts/AppOracle.sol";
-import "../contracts/AppBurner.sol";
+import "../contracts/core/AppAuthority.sol";
+import "../contracts/core/AppBondDepository.sol";
+import "../contracts/core/AppOracle.sol";
+import "../contracts/core/AppBurner.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;

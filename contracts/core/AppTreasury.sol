@@ -2,9 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./AppAccessControlled.sol";
-import "./interfaces/IAppOracle.sol";
-import "./interfaces/IApp.sol";
-import "./interfaces/IAppTreasury.sol";
+import "../interfaces/IAppOracle.sol";
+import "../interfaces/IApp.sol";
+import "../interfaces/IAppTreasury.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";

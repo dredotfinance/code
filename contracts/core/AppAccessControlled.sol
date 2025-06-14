@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./interfaces/IAppAuthority.sol";
+import "../interfaces/IAppAuthority.sol";
 
 interface ISonicFeeMRegistry {
     function selfRegister(uint256 projectID) external;

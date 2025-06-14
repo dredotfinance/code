@@ -2,11 +2,12 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
+import "forge-std/console.sol";
 import "../contracts/oracles/BalancerLPOracle.sol";
 import "../contracts/mocks/MockERC20.sol";
 import "../contracts/mocks/MockOracle.sol";
-import "../contracts/AppOracle.sol";
-import "../contracts/AppAuthority.sol";
+import "../contracts/core/AppOracle.sol";
+import "../contracts/core/AppAuthority.sol";
 
 contract BalancerLPOracleTest is Test {
     BalancerLPOracle public oracle;
@@ -24,7 +25,7 @@ contract BalancerLPOracleTest is Test {
         oracle = new BalancerLPOracle(VAULT, POOL, APP, IAppOracle(APP_ORACLE));
     }
 
-    function testGetETHPx() public {
+    function testGetETHPx() public view {
         // Get price
         uint256 price = oracle.getPrice();
 

@@ -1,22 +1,124 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.15;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 interface IAppReferrals {
+    // Merkle roots for rewards
+    struct MerkleRootInfo {
+        bytes32 root;
+        uint256 amount;
+        uint256 claimed;
+    }
+
+    struct ClaimRewardsInput {
+        bytes32 root;
+        address user;
+        uint256 amount;
+        bytes32[] proofs;
+    }
+
     // Events
-    event ReferralCodeGenerated(address indexed referrer, bytes21 code);
-    event ReferralUsed(address indexed referrer, address indexed referee, uint256 rewardAmount);
-    event RewardsClaimed(address indexed referrer, uint256 amount);
+    event ReferralCodeRegistered(address indexed referrer, bytes8 code);
+    event ReferralRegistered(address indexed referred, address indexed referrer, bytes8 code);
+    event RewardsClaimed(address indexed user, uint256 amount, bytes32 root);
+    event ReferralStaked(address indexed user, uint256 amount, uint256 declaredValue, bytes8 referralCode);
+    event ReferralBondBought(
+        address indexed user, uint256 id, uint256 amount, uint256 maxPrice, uint256 minPayout, bytes8 referralCode
+    );
 
     // Functions
-    function initialize(address _bondDepository, address _staking, address _app, address _treasury, address _authority)
+    /// @notice Initializes the contract
+    /// @param _bondDepository The address of the bond depository
+    /// @param _staking The address of the staking contract
+    /// @param _app The address of the app
+    /// @param _treasury The address of the treasury
+    /// @param _authority The address of the authority
+    /// @param _odos The address of the ODOs
+    function initialize(
+        address _bondDepository,
+        address _staking,
+        address _app,
+        address _treasury,
+        address _authority,
+        address _odos
+    ) external;
+
+    /// @notice Sets the merkle server
+    /// @param _merkleServer The merkle server address
+    function setMerkleServer(address _merkleServer) external;
+
+    /// @notice Adds a new merkle root for the current week
+    /// @param _merkleRoot The merkle root for the week
+    /// @param amount The amount of rewards to claim
+    function addMerkleRoot(bytes32 _merkleRoot, uint256 amount) external;
+
+    /// @notice Claims rewards using a merkle proof
+    /// @param inputs The inputs for the rewards to claim
+    /// @dev The proofs are the two parts of the merkle proof
+    function claimRewards(ClaimRewardsInput[] calldata inputs) external;
+
+    /// @notice Gets the number of merkle roots
+    /// @return The number of merkle roots
+    function getMerkleRootCount() external view returns (uint256);
+
+    /// @notice Gets the merkle root info
+    /// @param root The merkle root
+    /// @return amount The amount of rewards
+    /// @return claimed The amount of rewards claimed
+    function getMerkleRootInfo(bytes32 root) external view returns (uint256 amount, uint256 claimed);
+
+    /// @notice Registers a referral code for the caller
+    function registerReferralCode(bytes8 code) external;
+
+    /// @notice Gets all referrals for a referrer
+    /// @param referrer The referrer to get referrals for
+    /// @return referrals Array of addresses that were referred
+    function getReferrals(address referrer) external view returns (address[] memory referrals);
+
+    /// @notice Stakes RZR tokens with a referral code
+    /// @param amount The amount of RZR tokens to stake
+    /// @param declaredValue The declared value of the stake
+    /// @param referralCode The referral code to use
+    function stakeWithReferral(uint256 amount, uint256 declaredValue, bytes8 referralCode) external;
+
+    /// @notice Stakes RZR tokens with a referral code using ODOs
+    /// @param amount The amount of RZR tokens to stake
+    /// @param declaredValue The declared value of the stake
+    /// @param _tokenIn The token to use for the stake
+    /// @param _odosData The data to pass to the ODOs
+    /// @param referralCode The referral code to use
+    function stakeWithReferralOdos(
+        uint256 amount,
+        uint256 declaredValue,
+        IERC20 _tokenIn,
+        bytes memory _odosData,
+        bytes8 referralCode
+    ) external payable returns (uint256 tokenId, uint256 totalStaked, uint256 taxPaid);
+
+    /// @notice Buys a bond with a referral code
+    /// @param _id The ID of the bond to buy
+    /// @param _amount The amount of quote tokens to pay
+    /// @param _maxPrice The maximum price to pay
+    /// @param _minPayout The minimum payout to receive
+    /// @param referralCode The referral code to use
+    function bondWithReferral(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, bytes8 referralCode)
         external;
 
-    function generateReferralCode() external returns (bytes21 code);
-    function getReferralCode(address referrer) external view returns (bytes21 code);
-    function getReferrals(address referrer) external view returns (address[] memory referrals);
-    function claimRewards() external;
-    function recordBondReferral(address referee, uint256 bondId, uint256 amount) external;
-    function recordStakingReferral(address referee, uint256 amount) external;
-    function getTotalRewards(address referrer) external view returns (uint256 rewards);
-    function getReferralCount(address referrer) external view returns (uint256 count);
+    /// @notice Buys a bond with a referral code using ODOs
+    /// @param _id The ID of the bond to buy
+    /// @param _amountIn The amount of quote tokens to pay
+    /// @param _tokenIn The token to use for the bond
+    /// @param _odosData The data to pass to the ODOs
+    /// @param _maxPrice The maximum price to pay
+    /// @param _minPayout The minimum payout to receive
+    function bondWithReferralOdos(
+        uint256 _id,
+        uint256 _amountIn,
+        IERC20 _tokenIn,
+        bytes memory _odosData,
+        uint256 _maxPrice,
+        uint256 _minPayout,
+        bytes8 referralCode
+    ) external payable returns (uint256 payout_, uint256 tokenId_);
 }
