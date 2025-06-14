@@ -27,3 +27,4 @@ script = "/dev/null"
 
 [profile.test]
 via-ir = false
+out = "out"

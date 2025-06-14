@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.15;
+pragma solidity 0.8.28;
 
 import "forge-std/Test.sol";
 import {SymTest} from "halmos-cheatcodes/SymTest.sol";
@@ -36,7 +36,7 @@ contract TreasuryInvariantTest is Test, SymTest {
         }
     }
 
-    function checkBalanceUpdate() public {
+    function check_BalanceUpdate() public {
         // consider two arbitrary distinct accounts
         address caller = svm.createAddress("caller"); // create a symbolic address
         address others = svm.createAddress("others"); // create another symbolic address

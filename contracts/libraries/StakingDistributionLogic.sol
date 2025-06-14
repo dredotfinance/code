@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.15;
+pragma solidity 0.8.28;
 
 /**
  * @notice Library‐style contract that, given one epoch's inputs, returns:

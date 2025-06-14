@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (access/IAccessControlEnumerable.sol)
 
-pragma solidity ^0.8.15;
+pragma solidity 0.8.28;
 
 /**
  * @dev External interface of AccessControlEnumerable declared to support ERC165 detection.
