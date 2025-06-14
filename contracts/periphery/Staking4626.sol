@@ -148,6 +148,12 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
         return _grossAssetsFromNet(netAssets);
     }
 
+    /// @dev Returns the value of the position in the vault
+    /// @return value The value of the position in the vault
+    function positionValue() public view returns (uint256 value) {
+        value = _positionValue() + initialAmount;
+    }
+
     /// -----------------------------------------------------------------------
     /// Internal helpers
     /// -----------------------------------------------------------------------
@@ -160,8 +166,9 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     function _withdraw(uint256 assets, uint256 shares, address receiver, address owner) internal {
         _burn(owner, shares);
 
-        uint256 percentage = assets * 1e18 / totalAssets();
-        _harvest();
+        IAppStaking.Position memory position = staking.positions(tokenId);
+        uint256 percentage = assets * 1e18 / position.amount;
+
         staking.splitPosition(tokenId, percentage, receiver);
 
         // invariant; keep at least one share in the vault forever
@@ -178,9 +185,11 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
         appToken.safeTransferFrom(msg.sender, address(this), assets);
         _mint(receiver, shares);
 
-        uint256 positionValue = _increaseAmount(assets);
-        // require(positionValue == assets, "Position value mismatch"); // todo fix this
+        uint256 posValue = _increaseAmount(assets);
+        uint256 amountAfterTax = _netStakeAfterTax(assets);
+        require(posValue == amountAfterTax, "Position value mismatch");
 
+        _harvest();
         emit Deposit(msg.sender, receiver, assets, shares);
     }
 
@@ -199,11 +208,14 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
 
         // Use the new 10% premium for the declared value
         uint256 declaredValue = _declaredValue(amount);
+        uint256 taxPaid;
         if (tokenId == 0 || staking.ownerOf(tokenId) != address(this)) {
-            (tokenId,) = staking.createPosition(address(this), amount, declaredValue, 0);
+            (tokenId, taxPaid) = staking.createPosition(address(this), amount, declaredValue, 0);
         } else {
-            staking.increaseAmount(tokenId, amount, declaredValue);
+            taxPaid = staking.increaseAmount(tokenId, amount, declaredValue);
         }
+
+        positionValue = amount - taxPaid;
 
         emit Staked(amount);
     }
@@ -242,6 +254,10 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     function _declaredValue(uint256 amount) internal view returns (uint256) {
         // declaredValue = amount * (1 + premium)
         return amount * (10_000 + buyoutPremiumBps) / 10_000;
+    }
+
+    function _positionValue() internal view returns (uint256) {
+        return staking.earned(tokenId);
     }
 
     // -----------------------------------------------------------------------

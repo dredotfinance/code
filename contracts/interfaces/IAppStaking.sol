@@ -205,7 +205,10 @@ interface IAppStaking is IERC721Enumerable {
     /// @param tokenId The ID of the position NFT
     /// @param additionalAmount The additional amount of tokens to stake
     /// @param addtionalDeclaredValue The additional declared value
-    function increaseAmount(uint256 tokenId, uint256 additionalAmount, uint256 addtionalDeclaredValue) external;
+    /// @return taxPaid The amount of tax paid for the additional amount
+    function increaseAmount(uint256 tokenId, uint256 additionalAmount, uint256 addtionalDeclaredValue)
+        external
+        returns (uint256 taxPaid);
 
     /// @notice Cancels the unstaking process for a position
     /// @param tokenId The ID of the position NFT

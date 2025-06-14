@@ -182,28 +182,6 @@ contract Staking4626Test is BaseTest {
         assertApproxEqAbs(maxWithdraw, vault.convertToAssets(shares), 1e9);
     }
 
-    // /// @notice Depositing a very small amount may mint 0 shares because of rounding down. Ensure no shares are issued while the staked
-    // /// amount still increases so the user does not receive an unfair amount of vault shares.
-    // function test_SmallDepositMintsZeroShares() public {
-    //     uint256 smallAmount = 1; // 1 wei of the asset token
-
-    //     uint256 beforeStaked = staking.positions(vault.tokenId()).amount;
-
-    //     // Give `user1` the minimal amount and approve the vault
-    //     _prepareUser(smallAmount);
-
-    //     // Still in user1 context after _prepareUser
-    //     uint256 mintedShares = vault.deposit(smallAmount, user1);
-    //     vm.stopPrank();
-
-    //     uint256 afterStaked = staking.positions(vault.tokenId()).amount;
-
-    //     // No shares should have been minted due to rounding, but the position amount must have grown
-    //     assertEq(mintedShares, 0, "non-zero shares minted for tiny deposit");
-    //     assertEq(vault.balanceOf(user1), 0, "user received shares for tiny deposit");
-    //     assertGt(afterStaked, beforeStaked, "staking amount did not increase");
-    // }
-
     /// @notice After an initial supply exists, previewMint should accurately predict the assets required to mint shares.
     function test_PreviewMintMatchesMintAfterSupply() public {
         // Create an initial deposit so that totalSupply is non-zero
@@ -286,6 +264,151 @@ contract Staking4626Test is BaseTest {
         vm.expectRevert();
         vault.withdraw(assetsToDeposit / 2, user1, user1);
 
+        vm.stopPrank();
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                               TAX RATE TESTS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Test previewDeposit with 0% Harberger tax
+    function test_PreviewDepositZeroTax() public {
+        // Set tax rate to 0%
+        vm.startPrank(owner);
+        staking.setHarbergerTaxRate(0);
+        vm.stopPrank();
+
+        uint256 assets = 100 ether;
+        uint256 expectedShares = vault.previewDeposit(assets);
+
+        // With 0% tax and 10% buyout premium, the declared value is 110% of assets
+        // But since tax is 0%, all assets should be converted to shares
+        assertEq(expectedShares, assets, "previewDeposit should return full amount with 0% tax");
+    }
+
+    /// @notice Test previewDeposit with 10% Harberger tax
+    function test_PreviewDepositTenPercentTax() public {
+        // Set tax rate to 10%
+        vm.startPrank(owner);
+        staking.setHarbergerTaxRate(1000);
+        vm.stopPrank();
+
+        uint256 assets = 100 ether;
+        uint256 expectedShares = vault.previewDeposit(assets);
+
+        // With 10% tax and 10% buyout premium:
+        // Declared value = 110% of assets = 110 ether
+        // Tax = 10% of declared value = 11 ether
+        // Net assets = 100 - 11 = 89 ether
+        assertApproxEqAbs(expectedShares, 89 ether, 1, "previewDeposit should account for 10% tax correctly");
+    }
+
+    /// @notice Test previewMint with 0% Harberger tax
+    function test_PreviewMintZeroTax() public {
+        // Set tax rate to 0%
+        vm.startPrank(owner);
+        staking.setHarbergerTaxRate(0);
+        vm.stopPrank();
+
+        uint256 shares = 100 ether;
+        uint256 expectedAssets = vault.previewMint(shares);
+
+        // With 0% tax, the assets required should equal the shares
+        assertEq(expectedAssets, shares, "previewMint should return equal amount with 0% tax");
+    }
+
+    /// @notice Test previewMint with 10% Harberger tax
+    function test_PreviewMintTenPercentTax() public {
+        // Set tax rate to 10%
+        vm.startPrank(owner);
+        staking.setHarbergerTaxRate(1000);
+        vm.stopPrank();
+
+        uint256 shares = 100 ether;
+        uint256 expectedAssets = vault.previewMint(shares);
+
+        // With 10% tax and 10% buyout premium:
+        // To get 100 shares after tax, we need:
+        // Let x be the gross assets needed
+        // Declared value = 1.1x
+        // Tax = 0.1 * 1.1x = 0.11x
+        // Net assets = x - 0.11x = 0.89x = 100
+        // Therefore x = 100/0.89 ≈ 112.36
+        assertApproxEqAbs(expectedAssets, 112.36 ether, 0.01 ether, "previewMint should account for 10% tax correctly");
+    }
+
+    /// @notice Test that previewDeposit and previewMint are consistent with each other
+    function test_PreviewDepositMintConsistency() public {
+        // Set tax rate to 5%
+        vm.startPrank(owner);
+        staking.setHarbergerTaxRate(500);
+        vm.stopPrank();
+
+        uint256 assets = 100 ether;
+        uint256 shares = vault.previewDeposit(assets);
+        uint256 assetsRoundtrip = vault.previewMint(shares);
+
+        // The roundtrip should be approximately equal to the original assets
+        // (allowing for small rounding differences)
+        assertApproxEqAbs(assetsRoundtrip, assets, 0.01 ether, "previewDeposit and previewMint should be consistent");
+    }
+
+    /// @notice After rewards are harvested, redeeming should return more assets than initially deposited (net of tax).
+    function test_RedeemAfterHarvestYieldsProfit() public {
+        uint256 depositAssets = 100 ether;
+
+        // Prepare user and deposit
+        _prepareUser(depositAssets);
+        uint256 userShares = vault.deposit(depositAssets, user1);
+        vm.stopPrank();
+
+        // Provide rewards to staking and harvest
+        vm.startPrank(owner);
+        app.mint(owner, REWARD_AMOUNT);
+        app.approve(address(staking), REWARD_AMOUNT);
+        staking.notifyRewardAmount(REWARD_AMOUNT);
+        vm.stopPrank();
+
+        vm.warp(block.timestamp + 4 hours);
+
+        // Anyone can harvest (use owner)
+        vm.startPrank(owner);
+        vault.harvest();
+        vm.stopPrank();
+
+        // Perform an extra tiny deposit so vault will retain some shares after user1 redeems
+        uint256 extraAssets = 10 ether;
+        vm.startPrank(owner);
+        app.mint(owner, extraAssets);
+        app.approve(address(vault), extraAssets);
+        vault.deposit(extraAssets, owner);
+        vm.stopPrank();
+
+        // User redeems all shares
+        vm.startPrank(user1);
+        uint256 previewAssets = vault.previewRedeem(userShares);
+        uint256 assetsReturned = vault.redeem(userShares, user1, user1);
+        assertGt(assetsReturned, depositAssets, "redeem did not return profit");
+
+        // preview should be close to actual
+        assertApproxEqAbs(assetsReturned, previewAssets, 1e9);
+
+        // User receives a new staking NFT (lastId in staking)
+        uint256 newTokenId = staking.lastId() - 1;
+        assertEq(staking.ownerOf(newTokenId), user1, "user did not receive NFT");
+
+        // Schedule unstaking
+        staking.startUnstaking(newTokenId);
+
+        // Fast forward cooldown period and complete unstaking
+        uint256 cooldown = staking.withdrawCooldownPeriod();
+        vm.warp(block.timestamp + cooldown + 1);
+        uint256 userBalanceBefore = app.balanceOf(user1);
+        staking.completeUnstaking(newTokenId);
+        uint256 userBalanceAfter = app.balanceOf(user1);
+
+        // User should have received at least 'assetsReturned' tokens
+        assertApproxEqAbs(userBalanceAfter - userBalanceBefore, assetsReturned, 1e9);
         vm.stopPrank();
     }
 }

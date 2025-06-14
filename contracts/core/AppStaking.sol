@@ -303,6 +303,7 @@ contract AppStaking is
         external
         override
         nonReentrant
+        returns (uint256 taxPaid)
     {
         require(ownerOf(tokenId) != address(0), "Position does not exist");
         require(additionalAmount > 0, "Amount must be greater than 0");
@@ -317,7 +318,7 @@ contract AppStaking is
         }
 
         // Calculate harberger tax on the additional amount
-        uint256 taxPaid = _distributeTax(addtionalDeclaredValue);
+        taxPaid = _distributeTax(addtionalDeclaredValue);
         additionalAmount -= taxPaid;
         _updateReward(tokenId);
 
