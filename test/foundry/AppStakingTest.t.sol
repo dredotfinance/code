@@ -741,7 +741,6 @@ contract AppStakingTest is BaseTest {
 
         // Get initial position details
         IAppStaking.Position memory initialPosition = staking.positions(tokenId);
-        uint256 initialEarned = staking.earned(tokenId);
 
         // Split position 50/50
         uint256 splitRatio = 0.5e18; // 50%

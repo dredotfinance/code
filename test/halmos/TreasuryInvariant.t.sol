@@ -3,57 +3,51 @@ pragma solidity 0.8.28;
 
 import "forge-std/Test.sol";
 import {SymTest} from "halmos-cheatcodes/SymTest.sol";
+import "../foundry/BaseTest.sol";
 
-/// @notice This is a buggy token contract. DO NOT use it in production.
-contract Token {
-    mapping(address => uint256) public balanceOf;
+/// @title TreasuryInvariant – Halmos invariant test for collateralization
+/// @notice Ensures `totalReserves()` is always ≥ `totalSupply()` (excluding `unbackedSupply`).
+///         Assumptions:
+///           1. Oracle prices stay constant.
+///           2. New RZR tokens can only be minted via `deposit` (treasury) or `executeEpoch` (rebase controller).
+contract TreasuryInvariant is BaseTest, SymTest {
+    /// @dev Halmos entry point. Symbolically explores the sequence:
+    ///      1. A reserve depositor deposits an arbitrary amount of quote token.
+    ///      2. Optionally (if possible) a rebase epoch is executed.
+    ///      3. Invariant ‑ totalReserves ≥ totalSupply ‑ must hold.
+    function check_treasury_overcollateralized() public {
+        // ───────────────────────  Setup  ──────────────────────────
+        setUpBaseTest();
 
-    constructor() public {
-        balanceOf[msg.sender] = 1e27;
-    }
+        // Grant this test contract RESERVE_DEPOSITOR role so it can call `deposit`.
+        authority.addReserveDepositor(address(this));
 
-    function transfer(address to, uint256 amount) public {
-        _transfer(msg.sender, to, amount);
-    }
+        // ───────────────  Symbolic deposit amount  ───────────────
+        uint256 depositAmount = svm.createUint256("depositAmount");
+        // Apply practical bounds so Halmos search space is finite & avoids overflow.
+        vm.assume(depositAmount > 0 && depositAmount < 1e24);
 
-    function _transfer(address from, address to, uint256 amount) public {
-        balanceOf[from] -= amount;
-        balanceOf[to] += amount;
-    }
-}
+        // Mint quote tokens and approve Treasury.
+        mockQuoteToken.mint(address(this), depositAmount);
+        mockQuoteToken.approve(address(treasury), depositAmount);
 
-contract TreasuryInvariantTest is Test, SymTest {
-    Token token;
+        // Perform the deposit (profit = 0 for simplicity).
+        treasury.deposit(depositAmount, address(mockQuoteToken), 0);
 
-    function setUp() public {
-        token = new Token();
-
-        // set the balances of three arbitrary accounts to arbitrary symbolic values
-        for (uint256 i = 0; i < 3; i++) {
-            address receiver = svm.createAddress("receiver"); // create a new symbolic address
-            uint256 amount = svm.createUint256("amount"); // create a new symbolic uint256 value
-            token.transfer(receiver, amount);
+        // ─────────────  Optional symbolic rebase step  ────────────
+        // Advance time so an epoch is eligible.
+        vm.warp(block.timestamp + 9 hours);
+        // Try to execute an epoch; if it reverts due to lack of excess reserves,
+        // we simply continue – the invariant is still required to hold.
+        try RebaseController(address(rebaseController)).executeEpoch() {
+            // execution succeeded – nothing else to do.
+        } catch {
+            // ignore reverts; assumption permits epochs only when executable.
         }
-    }
 
-    function check_BalanceUpdate() public {
-        // consider two arbitrary distinct accounts
-        address caller = svm.createAddress("caller"); // create a symbolic address
-        address others = svm.createAddress("others"); // create another symbolic address
-        vm.assume(others != caller); // assume the two addresses are different
-
-        // record their current balances
-        uint256 oldBalanceCaller = token.balanceOf(caller);
-        uint256 oldBalanceOthers = token.balanceOf(others);
-
-        // execute an arbitrary function call to the token from the caller
-        vm.prank(caller);
-        uint256 dataSize = 100; // the max calldata size for the public functions in the token
-        bytes memory data = svm.createBytes(dataSize, "data"); // create a symbolic calldata
-        address(token).call(data);
-
-        // ensure that the caller cannot spend others' tokens
-        assert(token.balanceOf(caller) <= oldBalanceCaller); // cannot increase their own balance
-        assert(token.balanceOf(others) >= oldBalanceOthers); // cannot decrease others' balance
+        // ─────────────────  Invariant assertion  ──────────────────
+        uint256 reserves = treasury.totalReserves();
+        uint256 supply = treasury.totalSupply(); // already excludes unbackedSupply
+        assertGe(reserves, supply);
     }
 }

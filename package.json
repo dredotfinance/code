@@ -1,10 +1,12 @@
 {
-  "name": "drefinance-code",
+  "name": "rezerve-code",
   "version": "1.0.0",
-  "description": "Smart Contracts for App Finance",
+  "description": "Smart Contracts for Rezerve Money",
   "directories": {
     "test": "test",
-    "contracts": "contracts"
+    "contracts": "contracts",
+    "abi": "abi",
+    "types": "types"
   },
   "devDependencies": {
     "@layerzerolabs/lz-evm-protocol-v2": "^3.0.100",
@@ -43,7 +45,8 @@
   "scripts": {
     "compile": "hardhat compile && forge build",
     "test": "forge test",
-    "test:halmos": "FOUNDRY_PROFILE=test halmos"
+    "test:foundry": "forge test",
+    "test:halmos": "halmos"
   },
   "repository": {
     "type": "git",
