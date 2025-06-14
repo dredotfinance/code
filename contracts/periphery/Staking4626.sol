@@ -43,18 +43,25 @@ contract Staking4626 is ERC4626Upgradeable, ReentrancyGuard, AppAccessControlled
     }
 
     function _harvest() internal {
-        uint256 rewards = staking.claimRewards(tokenId);
         uint256 balance = IERC20(asset()).balanceOf(address(this));
+        uint256 rewards = staking.claimRewards(tokenId);
         _increaseAmount(rewards + balance);
+
+        emit RewardsCompounded(rewards);
     }
 
+    event Staked(uint256 amount);
+
     function _increaseAmount(uint256 amount) internal {
+        if (amount == 0) return;
         uint256 declaredValue = amount * 105 / 100;
         if (tokenId == 0 || staking.ownerOf(tokenId) != address(this)) {
             (tokenId,) = staking.createPosition(address(this), amount, declaredValue, 0);
         } else {
             staking.increaseAmount(tokenId, amount, declaredValue);
         }
+
+        emit Staked(amount);
     }
 
     /// @notice Deposits assets into the vault and stakes them
