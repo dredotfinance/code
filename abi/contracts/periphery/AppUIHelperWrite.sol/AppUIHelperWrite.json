@@ -18,7 +18,7 @@
       },
       {
         "internalType": "address",
-        "name": "_dreToken",
+        "name": "_appToken",
         "type": "address"
       },
       {

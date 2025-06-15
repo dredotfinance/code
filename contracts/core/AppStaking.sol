@@ -62,13 +62,14 @@ contract AppStaking is
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(2)
+        reinitializer(3)
     {
         if (lastId == 0) lastId = 1;
 
         __ERC721_init("RZR Staking Position", "RZR-POS");
         __ReentrancyGuard_init();
         __AppAccessControlled_init(_authority);
+        __Multicall_init();
 
         uint256 _harbergerTaxRate = 500;
         uint256 _resellFeeRate = 100;

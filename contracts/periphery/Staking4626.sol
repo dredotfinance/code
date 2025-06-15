@@ -27,7 +27,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
 
     function initialize(string memory name, string memory symbol, address _staking, address _authority)
         external
-        initializer
+        reinitializer(4)
     {
         staking = IAppStaking(_staking);
 
@@ -363,48 +363,35 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
         // Only accept NFTs coming from the official staking contract
         require(msg.sender == address(staking), "Unsupported NFT sender");
 
-        require(false, "feature in beta");
+        require(false, "this feature is currently disabled");
+
+        // Ensure the vault is already the owner of a position
+        require(tokenId != 0 && staking.ownerOf(tokenId) == address(this), "Already owner");
 
         // Fetch position details
         IAppStaking.Position memory pos = staking.positions(_tokenId);
+        IAppStaking.Position memory currentPos = staking.positions(tokenId);
+
+        require(pos.amount > 0, "Position does not exist");
+        require(pos.declaredValue > 0, "Position does not have a declared value");
+        require(pos.cooldownEnd == 0, "Position is in cooldown");
+        require(pos.rewardsUnlockAt <= block.timestamp, "Position is locked");
 
         // Ensure the declared value meets the vault's buy-out premium requirement.
         uint256 requiredDeclaredValue = _declaredValue(pos.amount);
         if (pos.declaredValue < requiredDeclaredValue) {
-            uint256 additionalDeclaredValue = requiredDeclaredValue - pos.declaredValue;
-
-            // Compute the tax that must be paid for the additional declared value
-            uint256 taxRateBps = staking.harbergerTaxRate();
-            uint256 taxDue = additionalDeclaredValue * taxRateBps / 10_000;
-
-            // Pull the tax from the user (must have approved the vault beforehand)
-            appToken.safeTransferFrom(from, address(this), taxDue);
-
-            // Forward the tax to the staking contract where it will be burned via `_distributeTax`
-            appToken.safeTransfer(address(staking), taxDue);
-
-            // Approve in case it's needed (safety for non-infinite approvals)
-            appToken.approve(address(staking), taxDue);
-
-            // Increase the declared value and pay the tax
-            staking.increaseDeclaredValue(_tokenId, additionalDeclaredValue);
+            staking.increaseDeclaredValue(_tokenId, requiredDeclaredValue - pos.declaredValue);
         }
-
-        uint256 sharesToMint;
-
-        require(tokenId != 0 && staking.ownerOf(tokenId) == address(this), "Already owner");
 
         // Existing vault position present – merge the new NFT into it.
         uint256 prevAmount = staking.positions(tokenId).amount;
 
         // This call burns `_tokenId` and adds its amount to `tokenId`.
         staking.mergePositions(tokenId, _tokenId);
-
-        uint256 newAmount = staking.positions(tokenId).amount;
-        uint256 addedAssets = newAmount - prevAmount;
+        uint256 addedAssets = staking.positions(tokenId).amount - prevAmount;
 
         // Mint shares proportionally to the added assets
-        sharesToMint = _convertToShares(addedAssets, Math.Rounding.Floor);
+        uint256 sharesToMint = _convertToShares(addedAssets, Math.Rounding.Floor);
 
         // Emit event with only the added assets portion
         emit Deposit(operator, from, addedAssets, sharesToMint);

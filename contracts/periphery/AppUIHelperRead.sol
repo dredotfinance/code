@@ -190,6 +190,8 @@ contract AppUIHelperRead is AppUIHelperBase {
         for (uint256 i = startingIndex; i < endingIndex; i++) {
             IAppStaking.Position memory position = staking.positions(i);
 
+            if (position.amount == 0) continue;
+
             positions[i - startingIndex] = StakingPositionInfo({
                 id: i,
                 owner: staking.ownerOf(i),

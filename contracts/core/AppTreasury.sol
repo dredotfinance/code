@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
+    using SafeERC20 for IApp;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @inheritdoc IAppTreasury
@@ -34,13 +35,14 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     /// @inheritdoc IAppTreasury
     uint256 public override unbackedSupply;
 
-    function initialize(address _dre, address _appOracle, address _authority) public initializer {
-        require(_dre != address(0), "Zero address: app");
+    function initialize(address _app, address _appOracle, address _authority) public initializer {
+        require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
-        app = IApp(_dre);
+        app = IApp(_app);
         appOracle = IAppOracle(_appOracle);
         __Pausable_init();
         __AppAccessControlled_init(_authority);
+        __ReentrancyGuard_init();
         _updateReserves();
     }
 
@@ -109,7 +111,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         require(_tokens.contains(_token), "Treasury: not accepted");
 
         uint256 value = tokenValueE18(_token, _amount);
-        app.transferFrom(msg.sender, address(this), value);
+        app.safeTransferFrom(msg.sender, address(this), value);
         app.burn(value);
 
         _totalReserves = _totalReserves - value;
