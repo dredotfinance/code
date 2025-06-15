@@ -511,5 +511,28 @@ contract AppStaking is
         return tokenId1;
     }
 
-    // todo write a function to increase the declared value of a position
+    function increaseDeclaredValue(uint256 tokenId, uint256 additionalDeclaredValue)
+        external
+        nonReentrant
+        returns (uint256 taxPaid)
+    {
+        require(ownerOf(tokenId) != address(0), "Position does not exist");
+        require(additionalDeclaredValue > 0, "Additional value must be greater than 0");
+
+        // Update rewards before mutation to keep accounting correct
+        _updateReward(tokenId);
+
+        // Calculate and collect Harberger tax on the new declared value increment.
+        // Caller MUST have already transferred the required tax tokens to this contract before calling.
+        taxPaid = _distributeTax(additionalDeclaredValue);
+
+        // Increase the declared value for the position
+        Position storage position = _positions[tokenId];
+        position.declaredValue += additionalDeclaredValue;
+        position.amount -= taxPaid;
+
+        _updateReward(tokenId);
+
+        emit PositionUpdated(tokenId, ownerOf(tokenId), position.amount, position.declaredValue);
+    }
 }

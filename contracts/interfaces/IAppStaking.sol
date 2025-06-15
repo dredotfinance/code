@@ -271,4 +271,12 @@ interface IAppStaking is IERC721Enumerable {
     /// @param tokenId2 The ID of the second position NFT (this one will be burned).
     /// @return mergedTokenId The ID of the resulting merged position (equals tokenId1)
     function mergePositions(uint256 tokenId1, uint256 tokenId2) external returns (uint256 mergedTokenId);
+
+    /// @notice Increases only the declared (buy-out) value of a position and pays the corresponding Harberger tax.
+    /// @param tokenId The ID of the position NFT
+    /// @param additionalDeclaredValue The additional declared value to add (in RZR)
+    /// @return taxPaid The amount of tax paid for the declared value increment
+    function increaseBuyoutAmount(uint256 tokenId, uint256 additionalDeclaredValue)
+        external
+        returns (uint256 taxPaid);
 }
