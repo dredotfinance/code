@@ -144,11 +144,11 @@ interface IAppStaking is IERC721Enumerable {
     );
 
     /// @notice Initializes the staking contract
-    /// @param _dreToken The address of the dre token
+    /// @param _appToken The address of the dre token
     /// @param _trackingToken The address of the tracking token
     /// @param _authority The address of the authority contract
     /// @param _burner The address of the burner contract
-    function initialize(address _dreToken, address _trackingToken, address _authority, address _burner) external;
+    function initialize(address _appToken, address _trackingToken, address _authority, address _burner) external;
 
     // View functions
     /// @notice Gets the last time rewards were applicable

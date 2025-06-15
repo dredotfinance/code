@@ -28,7 +28,7 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
     uint256 public usdcAquired;
 
     constructor(
-        address _dreToken,
+        address _appToken,
         address _usdcToken,
         address _lpToken,
         address _staking,
@@ -38,7 +38,7 @@ contract BootstrapLP is IBootstrapLP, Ownable, ReentrancyGuard, Pausable {
         uint256 _bonus,
         uint256 _filled
     ) Ownable(msg.sender) {
-        appToken = IApp(_dreToken);
+        appToken = IApp(_appToken);
         usdcToken = IERC20(_usdcToken);
         lpToken = IERC20(_lpToken);
         staking = IAppStaking(_staking);

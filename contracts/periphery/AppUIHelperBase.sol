@@ -102,7 +102,7 @@ abstract contract AppUIHelperBase {
         address _staking,
         address _bondDepository,
         address _treasury,
-        address _dreToken,
+        address _appToken,
         address _stakingToken,
         address _rebaseController,
         address _appOracle,
@@ -113,7 +113,7 @@ abstract contract AppUIHelperBase {
         staking = IAppStaking(_staking);
         bondDepository = IAppBondDepository(_bondDepository);
         treasury = IAppTreasury(_treasury);
-        appToken = IERC20(_dreToken);
+        appToken = IERC20(_appToken);
         stakingToken = IERC20(_stakingToken);
         appOracle = IAppOracle(_appOracle);
         shadowLP = IOracle(_shadowLP);

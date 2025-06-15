@@ -60,7 +60,7 @@ contract AppStaking is
     address public burner;
 
     /// @inheritdoc IAppStaking
-    function initialize(address _dreToken, address _trackingToken, address _authority, address _burner)
+    function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
         reinitializer(2)
     {
@@ -75,14 +75,14 @@ contract AppStaking is
         uint256 _withdrawCooldownPeriod = 3 days;
         uint256 _rewardCooldownPeriod = 1 days;
 
-        require(_dreToken != address(0), "Invalid RZR token address");
+        require(_appToken != address(0), "Invalid RZR token address");
         require(_trackingToken != address(0), "Invalid tracking token address");
         require(_harbergerTaxRate <= BASIS_POINTS, "Invalid harberger tax rate");
         require(_resellFeeRate <= BASIS_POINTS, "Invalid resell fee rate");
         require(_withdrawCooldownPeriod > 0, "Invalid withdraw cooldown period");
         require(_rewardCooldownPeriod > 0, "Invalid reward cooldown period");
 
-        appToken = IERC20(_dreToken);
+        appToken = IERC20(_appToken);
         trackingToken = IPermissionedERC20(_trackingToken);
         burner = _burner;
 
@@ -343,6 +343,122 @@ contract AppStaking is
         _cancelUnstaking(tokenId);
     }
 
+    /// @inheritdoc IAppStaking
+    function splitPosition(uint256 tokenId, uint256 splitRatio, address to)
+        external
+        override
+        nonReentrant
+        returns (uint256 newTokenId)
+    {
+        require(ownerOf(tokenId) == msg.sender, "Not owner");
+        require(to != address(0), "Invalid recipient address");
+        require(splitRatio > 0, "Split ratio must be greater than 0");
+        require(splitRatio <= 1e18, "Split ratio must be less than or equal to 100%");
+
+        Position storage position = _positions[tokenId];
+        require(position.cooldownEnd == 0, "Position is in cooldown");
+
+        // Update rewards for the original position
+        _updateReward(tokenId);
+
+        // Create new position
+        newTokenId = lastId++;
+        _mint(to, newTokenId);
+
+        uint256 splitAmount = position.amount * splitRatio / 1e18;
+        uint256 splitDeclaredValue = position.declaredValue * splitRatio / 1e18;
+
+        // Create new position with split values
+        _positions[newTokenId] = Position({
+            amount: splitAmount,
+            declaredValue: splitDeclaredValue,
+            rewardPerTokenPaid: rewardPerTokenStored,
+            rewards: 0,
+            cooldownEnd: 0,
+            rewardsUnlockAt: position.rewardsUnlockAt
+        });
+
+        // Update original position
+        position.amount -= splitAmount;
+        position.declaredValue -= splitDeclaredValue;
+
+        // Update tracking tokens for the new position
+        trackingToken.mint(to, splitAmount);
+        trackingToken.burn(msg.sender, splitAmount);
+
+        _updateReward(tokenId);
+        _updateReward(newTokenId);
+
+        emit PositionSplit(tokenId, newTokenId, msg.sender, to, splitAmount, splitDeclaredValue);
+    }
+
+    /// @inheritdoc IAppStaking
+    function mergePositions(uint256 tokenId1, uint256 tokenId2)
+        external
+        override
+        nonReentrant
+        returns (uint256 mergedTokenId)
+    {
+        require(tokenId1 != tokenId2, "Token IDs must differ");
+        require(ownerOf(tokenId1) == msg.sender && ownerOf(tokenId2) == msg.sender, "Not owner of both tokens");
+
+        // Ensure neither position is in cooldown
+        Position storage position1 = _positions[tokenId1];
+        Position storage position2 = _positions[tokenId2];
+        require(position1.cooldownEnd == 0 && position2.cooldownEnd == 0, "Position in cooldown");
+
+        // Update rewards for both positions so that their rewards are up to date before merging
+        _updateReward(tokenId1);
+        _updateReward(tokenId2);
+
+        // Aggregate values
+        position1.amount += position2.amount;
+        position1.declaredValue += position2.declaredValue;
+        position1.rewards += position2.rewards;
+        // Keep the strictest rewards unlock schedule (the furthest date)
+        position1.rewardsUnlockAt = Math.max(position1.rewardsUnlockAt, position2.rewardsUnlockAt);
+
+        // Burn the second token and delete its storage
+        _burn(tokenId2);
+        delete _positions[tokenId2];
+
+        // No change in totalStaked or tracking tokens is required since the overall amount stays the same
+
+        // Refresh accounting for the merged position
+        _updateReward(tokenId1);
+
+        emit PositionMerged(tokenId1, tokenId2, msg.sender, position1.amount, position1.declaredValue);
+
+        return tokenId1;
+    }
+
+    function increaseDeclaredValue(uint256 tokenId, uint256 additionalDeclaredValue)
+        external
+        nonReentrant
+        returns (uint256 taxPaid)
+    {
+        require(ownerOf(tokenId) != address(0), "Position does not exist");
+        require(ownerOf(tokenId) == msg.sender, "Not owner");
+        require(_positions[tokenId].cooldownEnd == 0, "Position is in cooldown");
+        require(additionalDeclaredValue > 0, "Additional value must be greater than 0");
+
+        // Update rewards before mutation to keep accounting correct
+        _updateReward(tokenId);
+
+        // Calculate and collect Harberger tax on the new declared value increment.
+        // Caller MUST have already transferred the required tax tokens to this contract before calling.
+        taxPaid = _distributeTax(additionalDeclaredValue);
+
+        // Increase the declared value for the position
+        Position storage position = _positions[tokenId];
+        position.declaredValue += additionalDeclaredValue;
+        position.amount -= taxPaid;
+
+        _updateReward(tokenId);
+
+        emit PositionUpdated(tokenId, ownerOf(tokenId), position.amount, position.declaredValue);
+    }
+
     /// @notice Cancels the unstaking process and resets cooldown variables
     /// @param tokenId The position ID
     function _cancelUnstaking(uint256 tokenId) internal {
@@ -416,125 +532,9 @@ contract AppStaking is
         }
     }
 
-    /// @inheritdoc IAppStaking
-    function splitPosition(uint256 tokenId, uint256 splitRatio, address to)
-        external
-        override
-        nonReentrant
-        returns (uint256 newTokenId)
-    {
-        require(ownerOf(tokenId) == msg.sender, "Not owner");
-        require(to != address(0), "Invalid recipient address");
-        require(splitRatio > 0, "Split ratio must be greater than 0");
-        require(splitRatio <= 1e18, "Split ratio must be less than or equal to 100%");
-
-        Position storage position = _positions[tokenId];
-        require(position.cooldownEnd == 0, "Position is in cooldown");
-
-        // Update rewards for the original position
-        _updateReward(tokenId);
-
-        // Create new position
-        newTokenId = lastId++;
-        _mint(to, newTokenId);
-
-        uint256 splitAmount = position.amount * splitRatio / 1e18;
-        uint256 splitDeclaredValue = position.declaredValue * splitRatio / 1e18;
-
-        // Create new position with split values
-        _positions[newTokenId] = Position({
-            amount: splitAmount,
-            declaredValue: splitDeclaredValue,
-            rewardPerTokenPaid: rewardPerTokenStored,
-            rewards: 0,
-            cooldownEnd: 0,
-            rewardsUnlockAt: position.rewardsUnlockAt
-        });
-
-        // Update original position
-        position.amount -= splitAmount;
-        position.declaredValue -= splitDeclaredValue;
-
-        // Update tracking tokens for the new position
-        trackingToken.mint(to, splitAmount);
-        trackingToken.burn(msg.sender, splitAmount);
-
-        _updateReward(tokenId);
-        _updateReward(newTokenId);
-
-        emit PositionSplit(tokenId, newTokenId, msg.sender, to, splitAmount, splitDeclaredValue);
-    }
-
     /// @notice Returns the base URI for the NFT metadata
     /// @return The base URI string
     function _baseURI() internal view virtual override returns (string memory) {
         return "https://uri.rezerve.money/api/staking/";
-    }
-
-    /// @inheritdoc IAppStaking
-    function mergePositions(uint256 tokenId1, uint256 tokenId2)
-        external
-        override
-        nonReentrant
-        returns (uint256 mergedTokenId)
-    {
-        require(tokenId1 != tokenId2, "Token IDs must differ");
-        require(ownerOf(tokenId1) == msg.sender && ownerOf(tokenId2) == msg.sender, "Not owner of both tokens");
-
-        // Ensure neither position is in cooldown
-        Position storage position1 = _positions[tokenId1];
-        Position storage position2 = _positions[tokenId2];
-        require(position1.cooldownEnd == 0 && position2.cooldownEnd == 0, "Position in cooldown");
-
-        // Update rewards for both positions so that their rewards are up to date before merging
-        _updateReward(tokenId1);
-        _updateReward(tokenId2);
-
-        // Aggregate values
-        position1.amount += position2.amount;
-        position1.declaredValue += position2.declaredValue;
-        position1.rewards += position2.rewards;
-        // Keep the strictest rewards unlock schedule (the furthest date)
-        position1.rewardsUnlockAt = Math.max(position1.rewardsUnlockAt, position2.rewardsUnlockAt);
-
-        // Burn the second token and delete its storage
-        _burn(tokenId2);
-        delete _positions[tokenId2];
-
-        // No change in totalStaked or tracking tokens is required since the overall amount stays the same
-
-        // Refresh accounting for the merged position
-        _updateReward(tokenId1);
-
-        emit PositionMerged(tokenId1, tokenId2, msg.sender, position1.amount, position1.declaredValue);
-
-        return tokenId1;
-    }
-
-    function increaseDeclaredValue(uint256 tokenId, uint256 additionalDeclaredValue)
-        external
-        nonReentrant
-        returns (uint256 taxPaid)
-    {
-        require(ownerOf(tokenId) != address(0), "Position does not exist");
-        require(ownerOf(tokenId) == msg.sender, "Not owner");
-        require(_positions[tokenId].cooldownEnd == 0, "Position is in cooldown");
-        require(additionalDeclaredValue > 0, "Additional value must be greater than 0");
-
-        // Update rewards before mutation to keep accounting correct
-        _updateReward(tokenId);
-
-        // Calculate and collect Harberger tax on the new declared value increment.
-        // Caller MUST have already transferred the required tax tokens to this contract before calling.
-        taxPaid = _distributeTax(additionalDeclaredValue);
-
-        // Increase the declared value for the position
-        Position storage position = _positions[tokenId];
-        position.declaredValue += additionalDeclaredValue;
-        position.amount -= taxPaid;
-
-        _updateReward(tokenId);
-
-        emit PositionUpdated(tokenId, ownerOf(tokenId), position.amount, position.declaredValue);
     }
 }
