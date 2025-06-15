@@ -4,6 +4,6 @@ Welcome to the Rezerve Money. Here you’ll find everything you need to know abo
 
 To learn more about the protocol, deep dive into the
 
-- Documentation: [https://rezerve.gitbook.io/protocol](https://drefinance.gitbook.io/protocol)
-- Discord: [https://discord.app.finance](https://discord.app.finance)
-- Website: [https://app.finance](https://app.finance)
+- Documentation: [https://rezerve.gitbook.io/protocol](https://rezerve.gitbook.io/protocol)
+- Discord: [https://discord.rezerve.money](https://discord.rezerve.money)
+- Website: [https://rezerve.money](https://rezerve.money)
