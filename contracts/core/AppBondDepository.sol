@@ -23,6 +23,8 @@ contract AppBondDepository is
 {
     using SafeERC20 for IERC20;
 
+    uint256 public immutable BASIS_POINTS = 10000; // 100%
+
     /// @inheritdoc IAppBondDepository
     uint256 public immutable override VESTING_PERIOD = 12 days;
 
@@ -44,6 +46,9 @@ contract AppBondDepository is
 
     /// @inheritdoc IAppBondDepository
     uint256 public override lastId = 1;
+
+    /// @inheritdoc IAppBondDepository
+    mapping(uint256 => bool) public override blacklisted;
 
     /// @inheritdoc IAppBondDepository
     function initialize(address _dre, address _staking, address _treasury, address _authority)
@@ -124,7 +129,8 @@ contract AppBondDepository is
         require(currentPrice_ <= _maxPrice, "Price too high");
 
         // Calculate payout
-        payout_ = (_amount * 1e18) / currentPrice_;
+        uint256 profit_;
+        (payout_, profit_) = _calculatePayoutAndProfit(bond.quoteToken, currentPrice_, _amount);
         require(payout_ <= bond.maxPayout, "Amount too large");
         require(payout_ >= _minPayout, "Slippage too high");
 
@@ -138,7 +144,7 @@ contract AppBondDepository is
         bond.quoteToken.safeTransferFrom(msg.sender, address(this), _amount);
 
         // Deposit to treasury and mint RZR tokens
-        treasury.deposit(_amount, address(bond.quoteToken), 0);
+        treasury.deposit(_amount, address(bond.quoteToken), profit_);
 
         // Create bond position NFT
         tokenId_ = lastId++;
@@ -160,6 +166,7 @@ contract AppBondDepository is
     /// @inheritdoc IAppBondDepository
     function claim(uint256 _tokenId) external override nonReentrant {
         require(ownerOf(_tokenId) == msg.sender, "Not owner");
+        require(!blacklisted[_tokenId], "blacklisted");
         BondPosition storage position = _positions[_tokenId];
         require(!position.isStaked, "Position is staked");
 
@@ -177,6 +184,7 @@ contract AppBondDepository is
     /// @inheritdoc IAppBondDepository
     function stake(uint256 _tokenId, uint256 _declaredValue) external override nonReentrant {
         require(ownerOf(_tokenId) == msg.sender, "Not owner");
+        require(!blacklisted[_tokenId], "blacklisted");
         BondPosition storage position = _positions[_tokenId];
         require(!position.isStaked, "Already staked");
 
@@ -257,9 +265,31 @@ contract AppBondDepository is
         return _bonds.length;
     }
 
+    /// @inheritdoc IAppBondDepository
+    function toggleBlacklist(uint256 _id) external onlyGuardian {
+        require(_id < _bonds.length, "Invalid bond ID");
+        blacklisted[_id] = !blacklisted[_id];
+        emit Blacklisted(_id, blacklisted[_id]);
+    }
+
     /// @notice Returns the base URI for the NFT metadata
     /// @return The base URI string
     function _baseURI() internal view virtual override returns (string memory) {
         return "https://uri.rezerve.money/api/bonds/";
+    }
+
+    function _calculatePayoutAndProfit(IERC20 _token, uint256 _price, uint256 _amount)
+        internal
+        view
+        returns (uint256 payout, uint256 profit)
+    {
+        payout = (_amount * 1e18) / _price;
+
+        uint256 fee = _amount * treasury.reserveFee() / BASIS_POINTS;
+        uint256 expectedPayout = treasury.tokenValueE18(address(_token), _amount - fee);
+
+        if (expectedPayout > payout) {
+            profit = expectedPayout - payout;
+        }
     }
 }

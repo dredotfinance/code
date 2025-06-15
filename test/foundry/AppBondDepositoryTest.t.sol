@@ -658,4 +658,104 @@ contract AppBondDepositoryTest is BaseTest {
 
         vm.stopPrank();
     }
+
+    // Tests to ensure treasury captures profit correctly when depositing at different price levels
+    function test_TreasuryProfitCaptured_PremiumPrice() public {
+        vm.startPrank(owner);
+
+        // Price is higher than oracle price (premium)
+        uint256 premiumPrice = 1.5e18; // 1.5 RZR per quote token
+        uint256 finalPrice = 1e18; // Ensure initial > final
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, premiumPrice, finalPrice, BOND_DURATION);
+        vm.stopPrank();
+
+        // Prepare depositor
+        vm.startPrank(user1);
+        mockQuoteToken.mint(user1, BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+
+        // Record treasury stats before deposit
+        uint256 initialExcessReserves = treasury.excessReserves();
+        uint256 initialTotalReserves = treasury.totalReserves();
+        uint256 initialTotalSupply = app.totalSupply();
+
+        // Deposit
+        (uint256 payout,) = bondDepository.deposit(bondId, BOND_AMOUNT, premiumPrice, 0, user1);
+
+        // Expected calculations
+        uint256 expectedReservesIncrease = BOND_AMOUNT; // 1:1 value in RZR terms since token price == RZR price
+        uint256 expectedProfit = BOND_AMOUNT - payout; // Profit captured by treasury
+
+        // Validate treasury state
+        assertEq(
+            treasury.totalReserves(), initialTotalReserves + expectedReservesIncrease, "Incorrect reserve increase"
+        );
+        assertEq(app.totalSupply(), initialTotalSupply + payout, "Incorrect total supply increase");
+        assertApproxEqRel(
+            treasury.excessReserves() - initialExcessReserves,
+            expectedProfit,
+            0.0001e18,
+            "Treasury did not capture expected profit"
+        );
+
+        vm.stopPrank();
+    }
+
+    function test_TreasuryProfitCaptured_ParPrice() public {
+        vm.startPrank(owner);
+
+        // Price equal to oracle price (par) – expect zero profit
+        uint256 parPrice = 1e18; // 1 RZR per quote token (matches oracle)
+        uint256 finalPrice = 0.5e18; // Ensure initial > final
+        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, parPrice, finalPrice, BOND_DURATION);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        mockQuoteToken.mint(user1, BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+
+        uint256 initialExcessReserves = treasury.excessReserves();
+
+        // Deposit at par price
+        bondDepository.deposit(bondId, BOND_AMOUNT, parPrice, 0, user1);
+
+        // Since price equals oracle value, profit should be zero
+        assertEq(treasury.excessReserves(), initialExcessReserves, "Unexpected profit captured at par price");
+
+        vm.stopPrank();
+    }
+
+    function test_TreasuryProfitCaptured_DiscountPrice() public {
+        vm.startPrank(owner);
+
+        // Initial price above oracle, final below, we'll deposit near the end to get a discount price (< oracle)
+        uint256 initialPrice = 1.1e18;
+        uint256 finalPrice = 0.8e18;
+        uint256 capacity = BOND_AMOUNT * 2; // Ensure sufficient capacity for larger payout
+        uint256 bondId = bondDepository.create(mockQuoteToken, capacity, initialPrice, finalPrice, BOND_DURATION);
+
+        // Fast-forward to just before bond end so current price ≈ finalPrice (< oracle)
+        vm.warp(block.timestamp + BOND_DURATION - 1);
+
+        uint256 currentPrice = bondDepository.currentPrice(bondId);
+        assertTrue(currentPrice < 1e18, "Price should be below oracle for discount scenario");
+
+        vm.stopPrank();
+
+        // Depositor actions
+        vm.startPrank(user1);
+        mockQuoteToken.mint(user1, BOND_AMOUNT);
+        mockQuoteToken.approve(address(bondDepository), BOND_AMOUNT);
+
+        uint256 initialExcessReserves = treasury.excessReserves();
+
+        // Expect no profit since payout > reserves value when price < oracle
+        bondDepository.deposit(bondId, BOND_AMOUNT, currentPrice, 0, user1);
+
+        assertEq(
+            treasury.excessReserves(), initialExcessReserves, "Profit should be zero when depositing at discount price"
+        );
+
+        vm.stopPrank();
+    }
 }

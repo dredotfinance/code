@@ -44,6 +44,11 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @param id The unique identifier of the bond
     event DisableBond(uint256 indexed id);
 
+    /// @notice Emitted when a bond is blacklisted
+    /// @param id The unique identifier of the bond
+    /// @param blacklisted Whether the bond is blacklisted
+    event Blacklisted(uint256 indexed id, bool blacklisted);
+
     /* ======== STRUCTS ======== */
     /// @notice Represents a bond offering
     /// @param enabled Whether the bond is currently enabled
@@ -190,4 +195,13 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @notice Gets the last used bond ID
     /// @return uint256 The last used bond ID
     function lastId() external view returns (uint256);
+
+    /// @notice Gets whether a bond is blacklisted
+    /// @param _id The ID of the bond
+    /// @return bool True if the bond is blacklisted, false otherwise
+    function blacklisted(uint256 _id) external view returns (bool);
+
+    /// @notice Toggles the blacklist status of a bond
+    /// @param _id The ID of the bond
+    function toggleBlacklist(uint256 _id) external;
 }
