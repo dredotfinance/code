@@ -363,7 +363,7 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
         // Only accept NFTs coming from the official staking contract
         require(msg.sender == address(staking), "Unsupported NFT sender");
 
-        require(false, "feature in beta")
+        require(false, "feature in beta");
 
         // Fetch position details
         IAppStaking.Position memory pos = staking.positions(_tokenId);

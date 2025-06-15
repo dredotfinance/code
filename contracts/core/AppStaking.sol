@@ -517,6 +517,8 @@ contract AppStaking is
         returns (uint256 taxPaid)
     {
         require(ownerOf(tokenId) != address(0), "Position does not exist");
+        require(ownerOf(tokenId) == msg.sender, "Not owner");
+        require(_positions[tokenId].cooldownEnd == 0, "Position is in cooldown");
         require(additionalDeclaredValue > 0, "Additional value must be greater than 0");
 
         // Update rewards before mutation to keep accounting correct

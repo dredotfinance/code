@@ -276,7 +276,7 @@ interface IAppStaking is IERC721Enumerable {
     /// @param tokenId The ID of the position NFT
     /// @param additionalDeclaredValue The additional declared value to add (in RZR)
     /// @return taxPaid The amount of tax paid for the declared value increment
-    function increaseBuyoutAmount(uint256 tokenId, uint256 additionalDeclaredValue)
+    function increaseDeclaredValue(uint256 tokenId, uint256 additionalDeclaredValue)
         external
         returns (uint256 taxPaid);
 }

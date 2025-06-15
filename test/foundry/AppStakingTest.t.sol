@@ -882,4 +882,69 @@ contract AppStakingTest is BaseTest {
 
         vm.stopPrank();
     }
+
+    function test_IncreaseDeclaredValue() public {
+        vm.startPrank(owner);
+
+        // Create initial position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        IAppStaking.Position memory initialPosition = staking.positions(tokenId);
+        uint256 initialBurnerBalance = app.balanceOf(address(burner));
+
+        // Top-up declared value without adding more stake
+        uint256 additionalDeclaredValue = 200e18;
+        uint256 expectedTax = additionalDeclaredValue * staking.harbergerTaxRate() / 10_000; // 5% default
+        staking.increaseDeclaredValue(tokenId, additionalDeclaredValue);
+
+        // Fetch updated state
+        IAppStaking.Position memory updatedPosition = staking.positions(tokenId);
+
+        // Declared value should grow by the additional amount
+        assertEq(
+            updatedPosition.declaredValue,
+            initialPosition.declaredValue + additionalDeclaredValue,
+            "Declared value not increased correctly"
+        );
+
+        // Position amount should be reduced by the tax paid
+        assertEq(updatedPosition.amount, initialPosition.amount - expectedTax, "Position amount not reduced by tax");
+
+        // Burner should receive the tax
+        assertEq(app.balanceOf(address(burner)), initialBurnerBalance + expectedTax, "Tax not transferred to burner");
+
+        vm.stopPrank();
+    }
+
+    function testFail_IncreaseDeclaredValue_NotOwner() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        vm.stopPrank();
+
+        // Attempt to increase declared value from non-owner
+        vm.startPrank(user1);
+        staking.increaseDeclaredValue(tokenId, 100e18);
+        vm.stopPrank();
+    }
+
+    function testFail_IncreaseDeclaredValue_Zero() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Attempt to call with zero additional value
+        staking.increaseDeclaredValue(tokenId, 0);
+
+        vm.stopPrank();
+    }
 }
