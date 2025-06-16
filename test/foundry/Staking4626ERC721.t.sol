@@ -483,9 +483,9 @@ contract Staking4626ERC721Test is BaseTest {
 // }
 }
 
-// Mock NFT contract for testing invalid sender
-contract MockNFT {
-    function safeTransferFrom(address from, address to, uint256 tokenId) external {
-        IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, "");
-    }
-}
+// // Mock NFT contract for testing invalid sender
+// contract MockNFT {
+//     function safeTransferFrom(address from, address to, uint256 tokenId) external {
+//         IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, "");
+//     }
+// }

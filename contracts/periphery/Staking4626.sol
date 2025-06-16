@@ -8,11 +8,10 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "../core/AppAccessControlled.sol";
 import "../interfaces/IAppStaking.sol";
 import "../interfaces/IStaking4626.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 /// @title Staking4626
 /// @notice ERC-4626 compliant staking vault that automatically compounds rewards
-contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAccessControlled, IERC721Receiver {
+contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAccessControlled {
     using SafeERC20 for IERC20;
     using Math for uint256;
 
@@ -340,65 +339,5 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
             return shares;
         }
         return shares.mulDiv(totalAssets() + 1, totalSupply(), rounding);
-    }
-
-    // -----------------------------------------------------------------------
-    // ERC721 hook – accept staking position NFTs
-    // -----------------------------------------------------------------------
-
-    /// @notice Handles the receipt of an AppStaking position NFT. Users can transfer their position
-    ///         directly to this vault and receive shares in exchange. The vault makes sure the
-    ///         position is using at least the required buy-out (declared) value and, if not,
-    ///         pulls the required RZR from the sender to pay the additional Harberger tax.
-    /// @dev Only NFTs from the configured `staking` contract are accepted.
-    /// @param operator The address which called `safeTransferFrom` (should be the user)
-    /// @param from     The previous owner of the NFT (the user)
-    /// @param _tokenId The ID of the staking position NFT being transferred
-    /// @return The selector to confirm the NFT transfer
-    function onERC721Received(address operator, address from, uint256 _tokenId, bytes calldata)
-        external
-        override
-        returns (bytes4)
-    {
-        // Only accept NFTs coming from the official staking contract
-        require(msg.sender == address(staking), "Unsupported NFT sender");
-
-        require(false, "this feature is currently disabled");
-
-        // Ensure the vault is already the owner of a position
-        require(tokenId != 0 && staking.ownerOf(tokenId) == address(this), "Already owner");
-
-        // Fetch position details
-        IAppStaking.Position memory pos = staking.positions(_tokenId);
-        IAppStaking.Position memory currentPos = staking.positions(tokenId);
-
-        require(pos.amount > 0, "Position does not exist");
-        require(pos.declaredValue > 0, "Position does not have a declared value");
-        require(pos.cooldownEnd == 0, "Position is in cooldown");
-        require(pos.rewardsUnlockAt <= block.timestamp, "Position is locked");
-
-        // Ensure the declared value meets the vault's buy-out premium requirement.
-        uint256 requiredDeclaredValue = _declaredValue(pos.amount);
-        if (pos.declaredValue < requiredDeclaredValue) {
-            staking.increaseDeclaredValue(_tokenId, requiredDeclaredValue - pos.declaredValue);
-        }
-
-        // Existing vault position present – merge the new NFT into it.
-        uint256 prevAmount = staking.positions(tokenId).amount;
-
-        // This call burns `_tokenId` and adds its amount to `tokenId`.
-        staking.mergePositions(tokenId, _tokenId);
-        uint256 addedAssets = staking.positions(tokenId).amount - prevAmount;
-
-        // Mint shares proportionally to the added assets
-        uint256 sharesToMint = _convertToShares(addedAssets, Math.Rounding.Floor);
-
-        // Emit event with only the added assets portion
-        emit Deposit(operator, from, addedAssets, sharesToMint);
-
-        require(sharesToMint > 0, "ZERO_SHARES");
-        _mint(from, sharesToMint);
-
-        return this.onERC721Received.selector;
     }
 }
