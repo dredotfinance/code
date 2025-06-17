@@ -35,25 +35,24 @@ contract BlackholeLP is AppAccessControlled {
     }
 
     function purge() external onlyExecutor {
-        uint256 usdcAquired = quoteToken.balanceOf(address(this));
-        require(usdcAquired > 0, "Amount must be greater than 0");
+        uint256 acquired = quoteToken.balanceOf(address(this));
+        require(acquired > 0, "Amount must be greater than 0");
         uint256 totalReservesBefore = treasury.calculateReserves();
 
         // Calculate RZR amount to mint (1:1 ratio)
-        uint256 amountToMint = treasury.tokenValueE18(address(quoteToken), usdcAquired);
+        uint256 amountToMint = treasury.tokenValueE18(address(quoteToken), acquired);
 
         // Mint RZR tokens with the half the USDC
         appToken.mint(address(this), amountToMint);
-        quoteToken.transfer(address(treasury), usdcAquired / 2);
 
         // Deposit into LP
         (,, uint256 lpReceived) = router.addLiquidity(
             address(quoteToken),
             address(appToken),
             false,
-            usdcAquired / 2,
+            acquired,
             amountToMint,
-            0,
+            acquired,
             0,
             address(this),
             block.timestamp
@@ -74,7 +73,15 @@ contract BlackholeLP is AppAccessControlled {
         require(totalReservesAfter >= appToken.totalSupply(), "Reserves invariant violated");
     }
 
-    // Emergency functions
+    function swap(address tokenIn, bool stable, uint256 minAmountOut) external {
+        uint256 amountIn = IERC20(tokenIn).balanceOf(address(this));
+        IERC20(tokenIn).approve(address(router), type(uint256).max);
+
+        IShadowRouter.route[] memory routes = new IShadowRouter.route[](1);
+        routes[0] = IShadowRouter.route({from: tokenIn, to: address(quoteToken), stable: stable});
+        router.swapExactTokensForTokens(amountIn, minAmountOut, routes, address(this), block.timestamp);
+    }
+
     function rescueTokens(address token, uint256 amount) external onlyExecutor {
         IERC20(token).transfer(msg.sender, amount);
     }
