@@ -189,6 +189,27 @@ interface IAppTreasury {
      */
     function enabledTokensLength() external view returns (uint256 length_);
 
+    /**
+     * @notice Gets the reserve cap for a token
+     * @param _token The address of the token
+     * @return cap_ The reserve cap for the token
+     */
+    function reserveCaps(address _token) external view returns (uint256 cap_);
+
+    /**
+     * @notice Gets the filled reserves for a token
+     * @param _token The address of the token
+     * @return filled_ The filled reserves for the token
+     */
+    function filledReserves(address _token) external view returns (uint256 filled_);
+
+    /**
+     * @notice Sets the reserve cap for a token
+     * @param _token The address of the token
+     * @param _cap The reserve cap for the token
+     */
+    function setReserveCap(address _token, uint256 _cap) external;
+
     /* ========== EVENTS ========== */
 
     event Deposit(address indexed token, uint256 amount, uint256 value);
@@ -202,4 +223,5 @@ interface IAppTreasury {
     event CreditReservesSet(uint256 newCredit, uint256 oldCredit);
     event UnbackedSupplySet(uint256 newUnbacked, uint256 oldUnbacked);
     event ReserveFeeSet(uint256 newFee, uint256 oldFee);
+    event ReserveCapSet(address indexed token, uint256 cap);
 }

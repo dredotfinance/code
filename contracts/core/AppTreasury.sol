@@ -35,6 +35,12 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     /// @inheritdoc IAppTreasury
     uint256 public override unbackedSupply;
 
+    /// @inheritdoc IAppTreasury
+    mapping(address token => uint256 cap) public reserveCaps;
+
+    /// @inheritdoc IAppTreasury
+    mapping(address token => uint256 filled) public filledReserves;
+
     function initialize(address _app, address _appOracle, address _authority) public initializer {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
@@ -66,6 +72,12 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         emit UnbackedSupplySet(_unbacked, unbackedSupply);
         unbackedSupply = _unbacked;
         _updateReserves();
+    }
+
+    /// @inheritdoc IAppTreasury
+    function setReserveCap(address _token, uint256 _cap) external onlyPolicy {
+        reserveCaps[_token] = _cap;
+        emit ReserveCapSet(_token, _cap);
     }
 
     /// @inheritdoc IAppTreasury
@@ -252,7 +264,16 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     }
 
     function _updateReserves() internal {
-        _totalReserves = calculateActualReserves();
+        _totalReserves = 0;
+        for (uint256 i = 0; i < _tokens.length(); i++) {
+            address token = _tokens.at(i);
+            if (_tokens.contains(token)) {
+                uint256 balance = IERC20(token).balanceOf(address(this));
+                uint256 value = tokenValueE18(token, balance);
+                _totalReserves += value;
+                filledReserves[token] = value;
+            }
+        }
         emit ReservesAudited(_totalReserves, creditReserves, _totalReserves + creditReserves);
     }
 
