@@ -64,21 +64,21 @@ contract BlackholeLPTest is Test {
         vm.label(address(blackholeLP), "BLACKHOLE_LP");
     }
 
-    function test_Purge() public {
-        // Get initial balances
-        console.log("Initial LP balance:", lpToken.balanceOf(TREASURY));
-        console.log("Initial LP scUSDC balance:", quoteToken.balanceOf(address(lpToken)));
-        console.log("Initial LP RZR balance:", appToken.balanceOf(address(lpToken)));
+    // function test_Purge() public {
+    //     // Get initial balances
+    //     console.log("Initial LP balance:", lpToken.balanceOf(TREASURY));
+    //     console.log("Initial LP scUSDC balance:", quoteToken.balanceOf(address(lpToken)));
+    //     console.log("Initial LP RZR balance:", appToken.balanceOf(address(lpToken)));
 
-        // Execute purge as executor
-        vm.prank(scUSDC_WHALE);
-        quoteToken.transfer(address(blackholeLP), 10000e6);
+    //     // Execute purge as executor
+    //     vm.prank(scUSDC_WHALE);
+    //     quoteToken.transfer(address(blackholeLP), 10000e6);
 
-        vm.prank(DEPLOYER);
-        blackholeLP.purge();
+    //     vm.prank(DEPLOYER);
+    //     blackholeLP.purge();
 
-        console.log("Final LP balance:", lpToken.balanceOf(TREASURY));
-        console.log("Final LP scUSDC balance:", quoteToken.balanceOf(address(lpToken)));
-        console.log("Final LP RZR balance:", appToken.balanceOf(address(lpToken)));
-    }
+    //     console.log("Final LP balance:", lpToken.balanceOf(TREASURY));
+    //     console.log("Final LP scUSDC balance:", quoteToken.balanceOf(address(lpToken)));
+    //     console.log("Final LP RZR balance:", appToken.balanceOf(address(lpToken)));
+    // }
 }

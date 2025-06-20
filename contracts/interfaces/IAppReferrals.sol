@@ -79,46 +79,29 @@ interface IAppReferrals {
     /// @notice Stakes RZR tokens with a referral code
     /// @param amount The amount of RZR tokens to stake
     /// @param declaredValue The declared value of the stake
-    /// @param referralCode The referral code to use
-    function stakeWithReferral(uint256 amount, uint256 declaredValue, bytes8 referralCode) external;
-
-    /// @notice Stakes RZR tokens with a referral code using ODOs
-    /// @param amount The amount of RZR tokens to stake
-    /// @param declaredValue The declared value of the stake
-    /// @param _tokenIn The token to use for the stake
-    /// @param _odosData The data to pass to the ODOs
-    /// @param referralCode The referral code to use
-    function stakeWithReferralOdos(
-        uint256 amount,
-        uint256 declaredValue,
-        IERC20 _tokenIn,
-        bytes memory _odosData,
-        bytes8 referralCode
-    ) external payable returns (uint256 tokenId, uint256 totalStaked, uint256 taxPaid);
+    /// @param _referralCode The referral code to use
+    /// @param _to The address to stake for
+    /// @return tokenId_ The ID of the created stake position NFT
+    /// @return taxPaid_ The amount of tax paid
+    function stakeWithReferral(uint256 amount, uint256 declaredValue, bytes8 _referralCode, address _to)
+        external
+        returns (uint256 tokenId_, uint256 taxPaid_);
 
     /// @notice Buys a bond with a referral code
     /// @param _id The ID of the bond to buy
     /// @param _amount The amount of quote tokens to pay
     /// @param _maxPrice The maximum price to pay
     /// @param _minPayout The minimum payout to receive
-    /// @param referralCode The referral code to use
-    function bondWithReferral(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, bytes8 referralCode)
-        external;
-
-    /// @notice Buys a bond with a referral code using ODOs
-    /// @param _id The ID of the bond to buy
-    /// @param _amountIn The amount of quote tokens to pay
-    /// @param _tokenIn The token to use for the bond
-    /// @param _odosData The data to pass to the ODOs
-    /// @param _maxPrice The maximum price to pay
-    /// @param _minPayout The minimum payout to receive
-    function bondWithReferralOdos(
+    /// @param _referralCode The referral code to use
+    /// @param _to The address to buy the bond for
+    /// @return payout_ The amount of RZR tokens received
+    /// @return tokenId_ The ID of the created bond position NFT
+    function bondWithReferral(
         uint256 _id,
-        uint256 _amountIn,
-        IERC20 _tokenIn,
-        bytes memory _odosData,
+        uint256 _amount,
         uint256 _maxPrice,
         uint256 _minPayout,
-        bytes8 referralCode
-    ) external payable returns (uint256 payout_, uint256 tokenId_);
+        bytes8 _referralCode,
+        address _to
+    ) external returns (uint256 payout_, uint256 tokenId_);
 }

@@ -8,7 +8,6 @@ import "../interfaces/IRebaseController.sol";
 import "../interfaces/IAppTreasury.sol";
 import "../interfaces/IAppOracle.sol";
 import "../interfaces/IOracle.sol";
-import "../interfaces/IBootstrapLP.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title RZR UI Helper
@@ -92,7 +91,6 @@ abstract contract AppUIHelperBase {
     IAppOracle public appOracle;
     IRebaseController public rebaseController;
     IOracle public shadowLP;
-    IBootstrapLP public bootstrapLP;
     address public odos;
 
     // Events
@@ -107,7 +105,6 @@ abstract contract AppUIHelperBase {
         address _rebaseController,
         address _appOracle,
         address _shadowLP,
-        address _bootstrapLP,
         address _odos
     ) {
         staking = IAppStaking(_staking);
@@ -118,11 +115,8 @@ abstract contract AppUIHelperBase {
         appOracle = IAppOracle(_appOracle);
         shadowLP = IOracle(_shadowLP);
         rebaseController = IRebaseController(_rebaseController);
-        bootstrapLP = IBootstrapLP(_bootstrapLP);
         odos = _odos;
 
-        IERC20 usdcToken = bootstrapLP.usdcToken();
-        usdcToken.approve(address(bootstrapLP), type(uint256).max);
         appToken.approve(address(staking), type(uint256).max);
     }
 }

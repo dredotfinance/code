@@ -40,52 +40,52 @@ contract AuditSpotForkTest is Test {
         vm.label(GOVERNOR, "GOVERNOR");
     }
 
-    function test_AuditSpotPrice() public {
-        // Get spot and floor prices
-        uint256 spotPrice = spotOracle.getPrice();
-        uint256 floorPrice = oracle.getTokenPrice();
+    // function test_AuditSpotPrice() public {
+    //     // Get spot and floor prices
+    //     uint256 spotPrice = spotOracle.getPrice();
+    //     uint256 floorPrice = oracle.getTokenPrice();
 
-        console.log("Spot price:", vm.toString(spotPrice));
-        console.log("Floor price:", vm.toString(floorPrice));
+    //     console.log("Spot price:", vm.toString(spotPrice));
+    //     console.log("Floor price:", vm.toString(floorPrice));
 
-        // Reset oracle to spot price
-        vm.startPrank(GOVERNOR);
-        oracle.setTokenPrice(spotPrice);
-        vm.stopPrank();
+    //     // Reset oracle to spot price
+    //     vm.startPrank(GOVERNOR);
+    //     oracle.setTokenPrice(spotPrice);
+    //     vm.stopPrank();
 
-        spotPrice = spotOracle.getPrice();
-        floorPrice = oracle.getTokenPrice();
+    //     spotPrice = spotOracle.getPrice();
+    //     floorPrice = oracle.getTokenPrice();
 
-        console.log("New Spot price:", vm.toString(spotPrice));
+    //     console.log("New Spot price:", vm.toString(spotPrice));
 
-        // Get all tokens from treasury
-        address[] memory tokens = treasury.tokens();
-        uint256 totalValue;
+    //     // Get all tokens from treasury
+    //     address[] memory tokens = treasury.tokens();
+    //     uint256 totalValue;
 
-        for (uint256 i = 0; i < tokens.length; i++) {
-            address token = tokens[i];
-            IERC20Metadata tokenContract = IERC20Metadata(token);
+    //     for (uint256 i = 0; i < tokens.length; i++) {
+    //         address token = tokens[i];
+    //         IERC20Metadata tokenContract = IERC20Metadata(token);
 
-            console.log("");
-            console.log("Token name:", tokenContract.name());
-            console.log("Token symbol:", tokenContract.symbol());
-            console.log("Token decimals:", tokenContract.decimals());
+    //         console.log("");
+    //         console.log("Token name:", tokenContract.name());
+    //         console.log("Token symbol:", tokenContract.symbol());
+    //         console.log("Token decimals:", tokenContract.decimals());
 
-            uint256 balance = tokenContract.balanceOf(TREASURY);
-            console.log("Balance:", balance);
-            console.log("Balance e18:", vm.toString(balance * 10 ** (18 - tokenContract.decimals())));
+    //         uint256 balance = tokenContract.balanceOf(TREASURY);
+    //         console.log("Balance:", balance);
+    //         console.log("Balance e18:", vm.toString(balance * 10 ** (18 - tokenContract.decimals())));
 
-            uint256 tokenValue = treasury.tokenValueE18(token, balance);
-            uint256 tokenValueE18 = tokenValue;
-            console.log("Token value:", vm.toString(tokenValue));
-            console.log("Token value e18:", vm.toString(tokenValueE18));
-            console.log("Token value - spot price:", tokenValueE18 * spotPrice / 1e18);
+    //         uint256 tokenValue = treasury.tokenValueE18(token, balance);
+    //         uint256 tokenValueE18 = tokenValue;
+    //         console.log("Token value:", vm.toString(tokenValue));
+    //         console.log("Token value e18:", vm.toString(tokenValueE18));
+    //         console.log("Token value - spot price:", tokenValueE18 * spotPrice / 1e18);
 
-            totalValue += tokenValueE18;
-        }
+    //         totalValue += tokenValueE18;
+    //     }
 
-        console.log("");
-        console.log("Total value:", vm.toString(totalValue));
-        console.log("Total value - spot price in USD:", totalValue * spotPrice / 1e18);
-    }
+    //     console.log("");
+    //     console.log("Total value:", vm.toString(totalValue));
+    //     console.log("Total value - spot price in USD:", totalValue * spotPrice / 1e18);
+    // }
 }

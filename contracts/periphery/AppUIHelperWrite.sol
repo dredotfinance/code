@@ -3,12 +3,37 @@ pragma solidity 0.8.28;
 pragma abicoder v2;
 
 import "./AppUIHelperBase.sol";
+import "../interfaces/IAppReferrals.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title RZR UI Helper
 /// @author RZR Protocol
 contract AppUIHelperWrite is AppUIHelperBase {
     using SafeERC20 for IERC20;
+
+    IAppReferrals public referrals;
+
+    struct OdosParams {
+        address tokenIn;
+        uint256 tokenAmountIn;
+        address odosTokenIn;
+        uint256 odosTokenAmountIn;
+        bytes odosData;
+    }
+
+    struct BondParams {
+        uint256 id;
+        uint256 amount;
+        uint256 maxPrice;
+        uint256 minPayout;
+        bytes8 referralCode;
+    }
+
+    struct StakeParams {
+        uint256 amountDeclared;
+        uint256 amountDeclaredAsPercentage;
+        bytes8 referralCode;
+    }
 
     constructor(
         address _staking,
@@ -19,8 +44,8 @@ contract AppUIHelperWrite is AppUIHelperBase {
         address _rebaseController,
         address _appOracle,
         address _shadowLP,
-        address _bootstrapLP,
-        address _odos
+        address _odos,
+        address _referrals
     )
         AppUIHelperBase(
             _staking,
@@ -31,10 +56,11 @@ contract AppUIHelperWrite is AppUIHelperBase {
             _rebaseController,
             _appOracle,
             _shadowLP,
-            _bootstrapLP,
             _odos
         )
-    {}
+    {
+        referrals = IAppReferrals(_referrals);
+    }
 
     /// @notice Claim all rewards for a staking position
     /// @return amount The amount of rewards claimed
@@ -49,92 +75,85 @@ contract AppUIHelperWrite is AppUIHelperBase {
         }
     }
 
-    function zapAndMint(address to, uint256 tokenAmountIn, address tokenIn, bytes memory odosData)
+    /// @notice Zaps and buys a bond
+    /// @param odosParams The parameters for the zap
+    /// @param bondParams The parameters for the bond
+    /// @return payout_ The amount of RZR tokens received
+    /// @return tokenId_ The ID of the created bond position NFT
+    function zapAndBuyBond(OdosParams memory odosParams, BondParams memory bondParams)
         external
         payable
-        returns (uint256 dreAmountOfLp)
+        returns (uint256 payout_, uint256 tokenId_)
     {
-        if (tokenIn == address(0)) {
-            require(msg.value == tokenAmountIn, "Invalid ETH amount");
-        } else {
-            IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
-        }
+        _prepareZap(odosParams);
+        IERC20(odosParams.odosTokenIn).approve(address(referrals), type(uint256).max);
+        (payout_, tokenId_) = referrals.bondWithReferral(
+            bondParams.id,
+            bondParams.amount,
+            bondParams.maxPrice,
+            bondParams.minPayout,
+            bondParams.referralCode,
+            msg.sender
+        );
+        _purgeAll(odosParams);
+    }
 
-        if (tokenIn != address(0)) {
-            IERC20(tokenIn).approve(odos, type(uint256).max);
-        }
+    /// @notice Zaps and stakes the given token amount
+    /// @param odosParams The parameters for the zap
+    /// @param stakeParams The parameters for the stake
+    /// @return tokenId The ID of the created stake position NFT
+    /// @return taxPaid The amount of tax paid
+    /// @return amountStaked The amount of app tokens staked
+    /// @return amountDeclared The amount of app tokens declared
+    function zapAndStake(OdosParams memory odosParams, StakeParams memory stakeParams)
+        external
+        payable
+        returns (uint256 tokenId, uint256 taxPaid, uint256 amountStaked, uint256 amountDeclared)
+    {
+        _prepareZap(odosParams);
 
-        (bool success,) = odos.call{value: tokenAmountIn}(odosData);
-        require(success, "Odos call failed");
+        amountStaked = appToken.balanceOf(address(this));
+        appToken.approve(address(referrals), amountStaked);
+        amountDeclared = stakeParams.amountDeclared;
+        (tokenId, taxPaid) =
+            referrals.stakeWithReferral(amountStaked, amountDeclared, stakeParams.referralCode, msg.sender);
 
-        IERC20 usdcToken = bootstrapLP.usdcToken();
-        usdcToken.approve(address(bootstrapLP), type(uint256).max);
-        uint256 balance = usdcToken.balanceOf(address(this));
-        dreAmountOfLp = bootstrapLP.bootstrap(balance, to);
+        _purgeAll(odosParams);
+    }
 
-        _purge(address(usdcToken));
+    /// @notice Zaps and stakes the given token amount as a percentage of the app token balance
+    /// @param odosParams The parameters for the zap
+    /// @param stakeParams The parameters for the stake
+    /// @return tokenId The ID of the created stake position NFT
+    /// @return taxPaid The amount of tax paid
+    /// @return amountStaked The amount of app tokens staked
+    /// @return amountDeclared The amount of app tokens declared
+    function zapAndStakeAsPercentage(OdosParams memory odosParams, StakeParams memory stakeParams)
+        external
+        payable
+        returns (uint256 tokenId, uint256 taxPaid, uint256 amountStaked, uint256 amountDeclared)
+    {
+        _prepareZap(odosParams);
+
+        amountStaked = appToken.balanceOf(address(this));
+        amountDeclared = (amountStaked * stakeParams.amountDeclaredAsPercentage) / 1e18;
+        appToken.approve(address(referrals), amountStaked);
+        (tokenId, taxPaid) =
+            referrals.stakeWithReferral(amountStaked, amountDeclared, stakeParams.referralCode, msg.sender);
+
+        _purgeAll(odosParams);
+    }
+
+    /// @notice Purges all tokens from the contract
+    /// @param odosParams The parameters for the zap
+    function _purgeAll(OdosParams memory odosParams) internal {
+        _purge(odosParams.tokenIn);
+        _purge(odosParams.odosTokenIn);
         _purge(address(appToken));
-        _purge(address(tokenIn));
     }
 
-    function zapAndStake(
-        address to,
-        uint256 tokenAmountIn,
-        uint256 dreAmountDeclared,
-        address tokenIn,
-        bytes memory odosData
-    ) external payable returns (uint256 dreAmountSwapped) {
-        if (tokenIn == address(0)) {
-            require(msg.value == tokenAmountIn, "Invalid ETH amount");
-        } else {
-            IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
-        }
-
-        if (tokenIn != address(0)) {
-            IERC20(tokenIn).approve(odos, type(uint256).max);
-        }
-
-        if (odosData.length > 0) {
-            (bool success,) = odos.call{value: msg.value}(odosData);
-            require(success, "Odos call failed");
-        }
-
-        dreAmountSwapped = appToken.balanceOf(address(this));
-        staking.createPosition(to, dreAmountSwapped, dreAmountDeclared, 0);
-
-        _purge(tokenIn);
-        _purge(address(appToken));
-    }
-
-    function zapAndStakeAsPercentage(
-        address to,
-        uint256 tokenAmountIn,
-        uint256 dreAmountDeclaredAsPercentage,
-        address tokenIn,
-        bytes memory odosData
-    ) external payable returns (uint256 dreAmountSwapped) {
-        if (tokenIn == address(0)) {
-            require(msg.value == tokenAmountIn, "Invalid ETH amount");
-        } else {
-            IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
-        }
-
-        if (tokenIn != address(0)) {
-            IERC20(tokenIn).approve(odos, type(uint256).max);
-        }
-
-        if (odosData.length > 0) {
-            (bool success,) = odos.call{value: msg.value}(odosData);
-            require(success, "Odos call failed");
-        }
-
-        dreAmountSwapped = appToken.balanceOf(address(this));
-        uint256 dreAmountDeclared = (dreAmountSwapped * dreAmountDeclaredAsPercentage) / 1e18;
-        staking.createPosition(to, dreAmountSwapped, dreAmountDeclared, 0);
-
-        _purge(tokenIn);
-    }
-
+    /// @notice Purges the given token
+    /// @param token The token to purge
     function _purge(address token) internal {
         if (token == address(0)) {
             (bool success,) = address(this).call{value: address(this).balance}("");
@@ -144,6 +163,25 @@ contract AppUIHelperWrite is AppUIHelperBase {
             if (balance > 0) {
                 IERC20(token).safeTransfer(address(this), balance);
             }
+        }
+    }
+
+    /// @notice Prepares the zap for the given token and odos data
+    /// @param odosParams The parameters for the zap
+    function _prepareZap(OdosParams memory odosParams) internal {
+        if (odosParams.tokenIn == address(0)) {
+            require(msg.value == odosParams.tokenAmountIn, "Invalid ETH amount");
+        } else {
+            IERC20(odosParams.tokenIn).safeTransferFrom(msg.sender, address(this), odosParams.tokenAmountIn);
+        }
+
+        if (odosParams.tokenIn != address(0)) {
+            IERC20(odosParams.tokenIn).approve(odos, type(uint256).max);
+        }
+
+        if (odosParams.odosData.length > 0) {
+            (bool success,) = odos.call{value: msg.value}(odosParams.odosData);
+            require(success, "Odos call failed");
         }
     }
 

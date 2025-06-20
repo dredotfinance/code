@@ -98,20 +98,20 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     }
 
     /// @inheritdoc IAppReferrals
-    function registerReferralCode(bytes8 code) external {
-        require(referralCodes[code] == address(0), "Code already exists");
+    function registerReferralCode(bytes8 _code) external {
+        require(referralCodes[_code] == address(0), "Code already exists");
         require(referrerCodes[msg.sender] == bytes8(0), "Referral code already registered");
-        require(code != bytes8(0), "Invalid code");
+        require(_code != bytes8(0), "Invalid code");
 
-        referralCodes[code] = msg.sender;
-        referrerCodes[msg.sender] = code;
+        referralCodes[_code] = msg.sender;
+        referrerCodes[msg.sender] = _code;
 
-        emit ReferralCodeRegistered(msg.sender, code);
+        emit ReferralCodeRegistered(msg.sender, _code);
     }
 
     /// @inheritdoc IAppReferrals
-    function getReferrals(address referrer) external view returns (address[] memory referrals) {
-        EnumerableSet.AddressSet storage refs = _referrals[referrer];
+    function getReferrals(address _referrer) external view returns (address[] memory referrals) {
+        EnumerableSet.AddressSet storage refs = _referrals[_referrer];
         referrals = new address[](refs.length());
         for (uint256 i = 0; i < refs.length(); i++) {
             referrals[i] = refs.at(i);
@@ -119,119 +119,66 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     }
 
     /// @inheritdoc IAppReferrals
-    function stakeWithReferral(uint256 amount, uint256 declaredValue, bytes8 referralCode) external nonReentrant {
-        app.transferFrom(msg.sender, address(this), amount);
-
-        // pay out any referral rewards if a referral code was set
-        _registerReferral(referralCode, msg.sender);
-
-        // stake on behalf of the referrer
-        staking.createPosition(msg.sender, amount, declaredValue, 0);
-
-        emit ReferralStaked(msg.sender, amount, declaredValue, referralCode);
-    }
-
-    /// @inheritdoc IAppReferrals
-    function stakeWithReferralOdos(
-        uint256 amount,
-        uint256 declaredValue,
-        IERC20 _tokenIn,
-        bytes memory _odosData,
-        bytes8 referralCode
-    ) external payable nonReentrant returns (uint256 tokenId, uint256 totalStaked, uint256 taxPaid) {
-        // convert to app token if using odos
-        if (_odosData.length > 0) {
-            _tokenIn.transferFrom(msg.sender, address(this), amount);
-            _tokenIn.approve(odos, amount);
-            (bool success,) = odos.call{value: msg.value}(_odosData);
-            require(success, "Odos call failed");
-            amount = app.balanceOf(address(this));
-        } else {
-            require(_tokenIn == app, "Invalid token");
-            app.transferFrom(msg.sender, address(this), amount);
-        }
-        app.transferFrom(msg.sender, address(this), amount);
-
-        // pay out any referral rewards if a referral code was set
-        _registerReferral(referralCode, msg.sender);
-
-        // stake on behalf of the referrer
-        (tokenId, taxPaid) = staking.createPosition(msg.sender, amount, declaredValue, 0);
-        totalStaked = amount - taxPaid;
-
-        emit ReferralStaked(msg.sender, amount, declaredValue, referralCode);
-    }
-
-    /// @inheritdoc IAppReferrals
-    function bondWithReferral(uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, bytes8 referralCode)
+    function stakeWithReferral(uint256 amount, uint256 declaredValue, bytes8 _referralCode, address _to)
         external
         nonReentrant
+        returns (uint256 tokenId, uint256 taxPaid)
     {
+        app.transferFrom(msg.sender, address(this), amount);
+
+        // pay out any referral rewards if a referral code was set
+        _registerReferral(_referralCode, _to);
+
+        // stake on behalf of the referrer
+        (tokenId, taxPaid) = staking.createPosition(_to, amount, declaredValue, 0);
+
+        emit ReferralStaked(_to, amount, declaredValue, _referralCode);
+    }
+
+    /// @inheritdoc IAppReferrals
+    function bondWithReferral(
+        uint256 _id,
+        uint256 _amount,
+        uint256 _maxPrice,
+        uint256 _minPayout,
+        bytes8 _referralCode,
+        address _to
+    ) external nonReentrant returns (uint256 payout_, uint256 tokenId_) {
         IAppBondDepository.Bond memory bond = bondDepository.getBond(_id);
         IERC20 token = bond.quoteToken;
 
         // register referral if not already registered for tracking purposes only
-        _registerReferral(referralCode, msg.sender);
+        _registerReferral(_referralCode, _to);
 
         // buy bond on behalf of the referrer
         token.transferFrom(msg.sender, address(this), _amount);
         token.approve(address(bondDepository), _amount);
-        bondDepository.deposit(_id, _amount, _maxPrice, _minPayout, msg.sender);
+        (payout_, tokenId_) = bondDepository.deposit(_id, _amount, _maxPrice, _minPayout, _to);
 
-        emit ReferralBondBought(msg.sender, _id, _amount, _maxPrice, _minPayout, referralCode);
+        emit ReferralBondBought(_to, _id, _amount, _maxPrice, _minPayout, _referralCode);
     }
 
-    /// @inheritdoc IAppReferrals
-    function bondWithReferralOdos(
-        uint256 _id,
-        uint256 _amountIn,
-        IERC20 _tokenIn,
-        bytes memory _odosData,
-        uint256 _maxPrice,
-        uint256 _minPayout,
-        bytes8 referralCode
-    ) external payable nonReentrant returns (uint256 payout_, uint256 tokenId_) {
-        IAppBondDepository.Bond memory bond = bondDepository.getBond(_id);
-        IERC20 quoteToken = bond.quoteToken;
-
-        // convert to quote token if using odos
-        if (_odosData.length > 0) {
-            _tokenIn.transferFrom(msg.sender, address(this), _amountIn);
-            _tokenIn.approve(odos, _amountIn);
-            (bool success,) = odos.call{value: msg.value}(_odosData);
-            require(success, "Odos call failed");
-            _amountIn = quoteToken.balanceOf(address(this));
-        } else {
-            require(_tokenIn == quoteToken, "Invalid token");
-            quoteToken.transferFrom(msg.sender, address(this), _amountIn);
-        }
-
-        // register referral if not already registered for tracking purposes only
-        _registerReferral(referralCode, msg.sender);
-
-        // buy bond on behalf of the referrer
-        quoteToken.approve(address(bondDepository), _amountIn);
-        (payout_, tokenId_) = bondDepository.deposit(_id, _amountIn, _maxPrice, _minPayout, msg.sender);
-
-        emit ReferralBondBought(msg.sender, _id, _amountIn, _maxPrice, _minPayout, referralCode);
-    }
-
-    function _registerReferral(bytes8 referralCode, address user) internal {
-        // user is already tracked by someone; so we skip
-        if (trackedReferrals[user] != address(0)) return;
+    /// @dev Registers a referral for the given user
+    /// @param _referralCode The referral code to use
+    /// @param _user The user to register the referral for
+    function _registerReferral(bytes8 _referralCode, address _user) internal {
+        // if the user is already tracked by someone, we skip
+        if (trackedReferrals[_user] != address(0)) return;
 
         // track the referral
-        address referrer = referralCodes[referralCode];
-        if (referrer == address(0)) return;
-        trackedReferrals[user] = referrer;
+        address _referrer = referralCodes[_referralCode];
+        if (_referrer == address(0)) return;
+        trackedReferrals[_user] = _referrer;
 
-        if (!_referrals[referrer].contains(user)) {
-            _referrals[referrer].add(user);
+        if (!_referrals[_referrer].contains(_user)) {
+            _referrals[_referrer].add(_user);
         }
 
-        emit ReferralRegistered(user, referrer, referralCode);
+        emit ReferralRegistered(_user, _referrer, _referralCode);
     }
 
+    /// @dev Claims rewards for the given input
+    /// @param input The input to claim rewards for
     function _claimRewards(ClaimRewardsInput calldata input) internal nonReentrant {
         MerkleRootInfo storage rootInfo = merkleRootInfo[input.root];
         require(rootInfo.root != bytes32(0), "Merkle root not set");

@@ -17,7 +17,6 @@ contract AppUIHelperRead is AppUIHelperBase {
         address _rebaseController,
         address _appOracle,
         address _shadowLP,
-        address _bootstrapLP,
         address _odos
     )
         AppUIHelperBase(
@@ -29,7 +28,6 @@ contract AppUIHelperRead is AppUIHelperBase {
             _rebaseController,
             _appOracle,
             _shadowLP,
-            _bootstrapLP,
             _odos
         )
     {}
