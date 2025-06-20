@@ -46,6 +46,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             uint256 totalRewards,
             uint256 currentAPR,
             uint256 currentSpotPrice,
+            uint256 unbackedSupply,
             TokenInfo[] memory tokenInfos,
             StakingPositionInfo[] memory stakingPositions,
             BondPositionInfo[] memory bondPositions,
@@ -63,6 +64,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         tokenInfos = getTokenInfos(user, bondTokens);
         stakingPositions = getStakingPositions(user);
         bondPositions = getBondPositions(user);
+        unbackedSupply = treasury.unbackedSupply();
     }
 
     function getTokenInfos(address user, address[] memory bondTokens)
