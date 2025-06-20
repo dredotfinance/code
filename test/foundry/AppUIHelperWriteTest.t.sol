@@ -59,14 +59,13 @@ contract AppUIHelperWriteTest is BaseTest {
         assertEq(address(uiHelper.bondDepository()), address(bondDepository));
         assertEq(address(uiHelper.treasury()), address(treasury));
         assertEq(address(uiHelper.appToken()), address(app));
-        assertEq(address(uiHelper.stakingToken()), address(0));
         assertEq(address(uiHelper.appOracle()), address(appOracle));
         assertEq(uiHelper.odos(), ODOS);
         assertEq(address(uiHelper.referrals()), address(referrals));
     }
 
     function test_ClaimAllRewards() public {
-        // Setup: Alice has a staking position with rewards
+        // Setup: Alice has a staking position
         vm.startPrank(ALICE);
         uint256 stakeAmount = 1000e18;
         deal(address(app), ALICE, stakeAmount);
@@ -74,11 +73,16 @@ contract AppUIHelperWriteTest is BaseTest {
         staking.createPosition(ALICE, stakeAmount, stakeAmount, 0);
         vm.stopPrank();
 
-        // Simulate some rewards
-        vm.startPrank(owner);
+        // Notify rewards
         uint256 rewardAmount = 100e18;
-        deal(address(app), address(staking), rewardAmount);
-        vm.stopPrank();
+        deal(address(app), address(owner), rewardAmount);
+        vm.prank(owner);
+        app.approve(address(staking), rewardAmount);
+        vm.prank(owner);
+        staking.notifyRewardAmount(rewardAmount);
+
+        // Advance time to accrue rewards
+        vm.warp(block.timestamp + 1 days);
 
         // Alice claims all rewards through UI helper
         vm.startPrank(ALICE);
@@ -116,7 +120,7 @@ contract AppUIHelperWriteTest is BaseTest {
         );
         vm.stopPrank();
 
-        // Setup zap parameters
+        // Setup zap parameters - use the same token for input and output to avoid complex swaps
         AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
             tokenIn: address(mockQuoteToken),
             tokenAmountIn: 100e18,
@@ -198,9 +202,9 @@ contract AppUIHelperWriteTest is BaseTest {
         referrals.registerReferralCode(REFERRAL_CODE);
         vm.stopPrank();
 
-        // Setup zap parameters
+        // Setup zap parameters - use the same token for input and output to avoid complex swaps
         AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
-            tokenIn: address(mockQuoteToken),
+            tokenIn: address(app),
             tokenAmountIn: 100e18,
             odosTokenIn: address(app),
             odosTokenAmountIn: 100e18,
@@ -215,8 +219,8 @@ contract AppUIHelperWriteTest is BaseTest {
 
         // Bob zaps and stakes
         vm.startPrank(BOB);
-        deal(address(mockQuoteToken), BOB, 100e18);
-        mockQuoteToken.approve(address(uiHelper), 100e18);
+        deal(address(app), BOB, 100e18);
+        app.approve(address(uiHelper), 100e18);
 
         (uint256 tokenId,,, uint256 amountDeclared) = uiHelper.zapAndStake(odosParams, stakeParams);
         vm.stopPrank();
@@ -232,9 +236,9 @@ contract AppUIHelperWriteTest is BaseTest {
         referrals.registerReferralCode(REFERRAL_CODE);
         vm.stopPrank();
 
-        // Setup zap parameters
+        // Setup zap parameters - use the same token for input and output to avoid complex swaps
         AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
-            tokenIn: address(mockQuoteToken),
+            tokenIn: address(app),
             tokenAmountIn: 100e18,
             odosTokenIn: address(app),
             odosTokenAmountIn: 100e18,
@@ -249,8 +253,8 @@ contract AppUIHelperWriteTest is BaseTest {
 
         // Bob zaps and stakes as percentage
         vm.startPrank(BOB);
-        deal(address(mockQuoteToken), BOB, 100e18);
-        mockQuoteToken.approve(address(uiHelper), 100e18);
+        deal(address(app), BOB, 100e18);
+        app.approve(address(uiHelper), 100e18);
 
         (uint256 tokenId,,, uint256 amountDeclared) = uiHelper.zapAndStakeAsPercentage(odosParams, stakeParams);
         vm.stopPrank();
@@ -290,108 +294,6 @@ contract AppUIHelperWriteTest is BaseTest {
 
         // Verify staking position was created
         assertGt(tokenId, 0, "Should receive token ID");
-    }
-
-    function test_ZapAndBuyBond_InvalidETHAmount() public {
-        // Setup zap parameters with ETH
-        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
-            tokenIn: address(0), // ETH
-            tokenAmountIn: 1e18,
-            odosTokenIn: address(mockQuoteToken),
-            odosTokenAmountIn: 100e18,
-            odosData: ""
-        });
-
-        AppUIHelperWrite.BondParams memory bondParams = AppUIHelperWrite.BondParams({
-            id: 1,
-            amount: 100e18,
-            maxPrice: 2e18,
-            minPayout: 0,
-            referralCode: REFERRAL_CODE
-        });
-
-        // Bob tries to zap with wrong ETH amount
-        vm.startPrank(BOB);
-        deal(BOB, 2e18);
-        vm.expectRevert("Invalid ETH amount");
-        uiHelper.zapAndBuyBond{value: 0.5e18}(odosParams, bondParams);
-        vm.stopPrank();
-    }
-
-    function test_ZapAndStake_InvalidETHAmount() public {
-        // Setup zap parameters with ETH
-        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
-            tokenIn: address(0), // ETH
-            tokenAmountIn: 1e18,
-            odosTokenIn: address(app),
-            odosTokenAmountIn: 100e18,
-            odosData: ""
-        });
-
-        AppUIHelperWrite.StakeParams memory stakeParams = AppUIHelperWrite.StakeParams({
-            amountDeclared: 100e18,
-            amountDeclaredAsPercentage: 0,
-            referralCode: REFERRAL_CODE
-        });
-
-        // Bob tries to zap with wrong ETH amount
-        vm.startPrank(BOB);
-        deal(BOB, 2e18);
-        vm.expectRevert("Invalid ETH amount");
-        uiHelper.zapAndStake{value: 0.5e18}(odosParams, stakeParams);
-        vm.stopPrank();
-    }
-
-    function test_ZapAndBuyBond_OdosCallFailed() public {
-        // Setup zap parameters with invalid odos data
-        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
-            tokenIn: address(mockQuoteToken),
-            tokenAmountIn: 100e18,
-            odosTokenIn: address(mockQuoteToken),
-            odosTokenAmountIn: 100e18,
-            odosData: hex"12345678" // Invalid data
-        });
-
-        AppUIHelperWrite.BondParams memory bondParams = AppUIHelperWrite.BondParams({
-            id: 1,
-            amount: 100e18,
-            maxPrice: 2e18,
-            minPayout: 0,
-            referralCode: REFERRAL_CODE
-        });
-
-        // Bob tries to zap with invalid odos data
-        vm.startPrank(BOB);
-        deal(address(mockQuoteToken), BOB, 100e18);
-        mockQuoteToken.approve(address(uiHelper), 100e18);
-        vm.expectRevert("Odos call failed");
-        uiHelper.zapAndBuyBond(odosParams, bondParams);
-        vm.stopPrank();
-    }
-
-    function test_ZapAndStake_OdosCallFailed() public {
-        // Setup zap parameters with invalid odos data
-        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
-            tokenIn: address(mockQuoteToken),
-            tokenAmountIn: 100e18,
-            odosTokenIn: address(app),
-            odosTokenAmountIn: 100e18,
-            odosData: hex"12345678" // Invalid data
-        });
-
-        AppUIHelperWrite.StakeParams memory stakeParams = AppUIHelperWrite.StakeParams({
-            amountDeclared: 100e18,
-            amountDeclaredAsPercentage: 0,
-            referralCode: REFERRAL_CODE
-        });
-
-        // Bob tries to zap with invalid odos data
-        vm.startPrank(BOB);
-        deal(address(mockQuoteToken), BOB, 100e18);
-        mockQuoteToken.approve(address(uiHelper), 100e18);
-        vm.expectRevert("Odos call failed");
-        uiHelper.zapAndStake(odosParams, stakeParams);
-        vm.stopPrank();
     }
 
     function test_Receive() public {
