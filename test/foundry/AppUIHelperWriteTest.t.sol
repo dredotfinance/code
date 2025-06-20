@@ -188,6 +188,9 @@ contract AppUIHelperWriteTest is BaseTest {
         vm.startPrank(BOB);
         deal(BOB, 2e18); // Give Bob some ETH
 
+        // Simulate zap output: give the UI helper the mockQuoteToken it needs
+        deal(address(mockQuoteToken), address(uiHelper), 100e18);
+
         (uint256 payout, uint256 tokenId) = uiHelper.zapAndBuyBond{value: 1e18}(odosParams, bondParams);
         vm.stopPrank();
 
@@ -288,6 +291,9 @@ contract AppUIHelperWriteTest is BaseTest {
         // Bob zaps and stakes with ETH
         vm.startPrank(BOB);
         deal(BOB, 2e18); // Give Bob some ETH
+
+        // Simulate zap output: give the UI helper the app tokens it needs
+        deal(address(app), address(uiHelper), 100e18);
 
         (uint256 tokenId,,,) = uiHelper.zapAndStake{value: 1e18}(odosParams, stakeParams);
         vm.stopPrank();
