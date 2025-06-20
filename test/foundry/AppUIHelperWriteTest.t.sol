@@ -24,7 +24,7 @@ contract AppUIHelperWriteTest is BaseTest {
         // Setup referrals contract
         referrals = new AppReferrals();
         referrals.initialize(
-            address(bondDepository), address(staking), address(app), address(treasury), address(authority), address(0)
+            address(bondDepository), address(staking), address(app), address(treasury), address(authority)
         );
 
         // Setup UI Helper

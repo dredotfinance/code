@@ -34,7 +34,7 @@ contract AppReferralsTest is BaseTest {
         // Setup referrals contract
         referrals = new AppReferrals();
         referrals.initialize(
-            address(bondDepository), address(staking), address(app), address(treasury), address(authority), address(0)
+            address(bondDepository), address(staking), address(app), address(treasury), address(authority)
         );
 
         // Set merkle server
@@ -218,26 +218,21 @@ contract AppReferralsTest is BaseTest {
 
         // Merkle server adds rewards
         vm.startPrank(MERKLE_SERVER);
-        deal(address(app), MERKLE_SERVER, aliceReward);
+        deal(address(app), address(referrals), aliceReward);
         app.approve(address(referrals), aliceReward);
-        referrals.addMerkleRoot(merkleRoot, aliceReward);
+        referrals.setMerkleRoot(merkleRoot);
         vm.stopPrank();
 
         // Alice claims her rewards
         vm.startPrank(ALICE);
         IAppReferrals.ClaimRewardsInput[] memory inputs = new IAppReferrals.ClaimRewardsInput[](1);
-        inputs[0] =
-            IAppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: aliceReward, proofs: aliceProof});
+        inputs[0] = IAppReferrals.ClaimRewardsInput({user: ALICE, amount: aliceReward, proofs: aliceProof});
 
-        vm.expectEmit(true, false, false, true);
-        emit RewardsClaimed(ALICE, aliceReward, merkleRoot);
         referrals.claimRewards(inputs);
         vm.stopPrank();
 
         // Verify rewards were claimed
-        (uint256 totalAmount, uint256 claimedAmount) = referrals.getMerkleRootInfo(merkleRoot);
-        assertEq(totalAmount, aliceReward);
-        assertEq(claimedAmount, aliceReward);
+        assertEq(referrals.claimedRewards(ALICE), aliceReward);
         assertEq(app.balanceOf(ALICE), aliceReward);
     }
 
@@ -254,7 +249,7 @@ contract AppReferralsTest is BaseTest {
         vm.startPrank(MERKLE_SERVER);
         deal(address(app), MERKLE_SERVER, aliceReward);
         app.approve(address(referrals), aliceReward);
-        referrals.addMerkleRoot(merkleRoot, aliceReward);
+        referrals.setMerkleRoot(merkleRoot);
         vm.stopPrank();
 
         // Alice tries to claim with invalid proof (different proof for same leaf)
@@ -263,8 +258,7 @@ contract AppReferralsTest is BaseTest {
         invalidProof[0] = keccak256(abi.encodePacked("invalid proof"));
 
         IAppReferrals.ClaimRewardsInput[] memory inputs = new IAppReferrals.ClaimRewardsInput[](1);
-        inputs[0] =
-            IAppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: aliceReward, proofs: invalidProof});
+        inputs[0] = IAppReferrals.ClaimRewardsInput({user: ALICE, amount: aliceReward, proofs: invalidProof});
 
         vm.expectRevert("Invalid proof");
         referrals.claimRewards(inputs);
@@ -285,44 +279,19 @@ contract AppReferralsTest is BaseTest {
         bytes32 merkleRoot = keccak256(abi.encodePacked(aliceLeaf, aliceProof[0]));
 
         vm.startPrank(MERKLE_SERVER);
-        deal(address(app), MERKLE_SERVER, aliceReward);
+        deal(address(app), address(referrals), aliceReward);
         app.approve(address(referrals), aliceReward);
-        referrals.addMerkleRoot(merkleRoot, aliceReward);
+        referrals.setMerkleRoot(merkleRoot);
         vm.stopPrank();
 
         // First claim succeeds
         vm.startPrank(ALICE);
         IAppReferrals.ClaimRewardsInput[] memory inputs = new IAppReferrals.ClaimRewardsInput[](1);
-        inputs[0] =
-            IAppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: aliceReward, proofs: aliceProof});
+        inputs[0] = IAppReferrals.ClaimRewardsInput({user: ALICE, amount: aliceReward, proofs: aliceProof});
         referrals.claimRewards(inputs);
 
         // Second claim should fail
-        vm.expectRevert("Rewards already claimed");
-        referrals.claimRewards(inputs);
-        vm.stopPrank();
-    }
-
-    function test_CannotExceedMerkleRootAmount() public {
-        uint256 totalRewards = 100e18;
-        bytes32[] memory proof = new bytes32[](1);
-        proof[0] = keccak256(abi.encodePacked("dummy proof"));
-
-        bytes32 leaf = keccak256(abi.encodePacked(ALICE, totalRewards + 1));
-        bytes32 merkleRoot = keccak256(abi.encodePacked(leaf, proof[0]));
-
-        vm.startPrank(MERKLE_SERVER);
-        deal(address(app), MERKLE_SERVER, totalRewards);
-        app.approve(address(referrals), totalRewards);
-        referrals.addMerkleRoot(merkleRoot, totalRewards);
-        vm.stopPrank();
-
-        vm.startPrank(ALICE);
-        IAppReferrals.ClaimRewardsInput[] memory inputs = new IAppReferrals.ClaimRewardsInput[](1);
-        inputs[0] =
-            IAppReferrals.ClaimRewardsInput({root: merkleRoot, user: ALICE, amount: totalRewards + 1, proofs: proof});
-
-        vm.expectRevert("Not enough rewards to claim");
+        vm.expectRevert("No rewards to claim");
         referrals.claimRewards(inputs);
         vm.stopPrank();
     }
@@ -335,28 +304,8 @@ contract AppReferralsTest is BaseTest {
         vm.startPrank(ALICE);
         deal(address(app), ALICE, totalRewards);
         app.approve(address(referrals), totalRewards);
-        vm.expectRevert("Only merkle server can add merkle roots");
-        referrals.addMerkleRoot(merkleRoot, totalRewards);
-        vm.stopPrank();
-    }
-
-    function test_AddMerkleRoot_AlreadySet() public {
-        uint256 totalRewards = 100e18;
-        bytes32 merkleRoot = keccak256(abi.encodePacked("test root"));
-
-        // Merkle server adds root
-        vm.startPrank(MERKLE_SERVER);
-        deal(address(app), MERKLE_SERVER, totalRewards);
-        app.approve(address(referrals), totalRewards);
-        referrals.addMerkleRoot(merkleRoot, totalRewards);
-        vm.stopPrank();
-
-        // Try to add the same root again
-        vm.startPrank(MERKLE_SERVER);
-        deal(address(app), MERKLE_SERVER, totalRewards);
-        app.approve(address(referrals), totalRewards);
-        vm.expectRevert("Merkle root already set");
-        referrals.addMerkleRoot(merkleRoot, totalRewards);
+        vm.expectRevert("Only merkle server can set merkle root");
+        referrals.setMerkleRoot(merkleRoot);
         vm.stopPrank();
     }
 
@@ -427,36 +376,5 @@ contract AppReferralsTest is BaseTest {
         for (uint256 i = 0; i < users.length; i++) {
             assertEq(referrals.trackedReferrals(users[i]), ALICE);
         }
-    }
-
-    function test_GetMerkleRootCount() public {
-        assertEq(referrals.getMerkleRootCount(), 0);
-
-        // Add a merkle root
-        uint256 totalRewards = 100e18;
-        bytes32 merkleRoot = keccak256(abi.encodePacked("test root"));
-
-        vm.startPrank(MERKLE_SERVER);
-        deal(address(app), MERKLE_SERVER, totalRewards);
-        app.approve(address(referrals), totalRewards);
-        referrals.addMerkleRoot(merkleRoot, totalRewards);
-        vm.stopPrank();
-
-        assertEq(referrals.getMerkleRootCount(), 1);
-    }
-
-    function test_GetMerkleRootInfo() public {
-        uint256 totalRewards = 100e18;
-        bytes32 merkleRoot = keccak256(abi.encodePacked("test root"));
-
-        vm.startPrank(MERKLE_SERVER);
-        deal(address(app), MERKLE_SERVER, totalRewards);
-        app.approve(address(referrals), totalRewards);
-        referrals.addMerkleRoot(merkleRoot, totalRewards);
-        vm.stopPrank();
-
-        (uint256 amount, uint256 claimed) = referrals.getMerkleRootInfo(merkleRoot);
-        assertEq(amount, totalRewards);
-        assertEq(claimed, 0);
     }
 }

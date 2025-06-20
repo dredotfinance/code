@@ -43,11 +43,6 @@
       },
       {
         "internalType": "address",
-        "name": "_bootstrapLP",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_odos",
         "type": "address"
       }
@@ -106,19 +101,6 @@
     "outputs": [
       {
         "internalType": "contract IAppBondDepository",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "bootstrapLP",
-    "outputs": [
-      {
-        "internalType": "contract IBootstrapLP",
         "name": "",
         "type": "address"
       }

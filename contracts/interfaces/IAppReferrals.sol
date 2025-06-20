@@ -4,15 +4,7 @@ pragma solidity 0.8.28;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IAppReferrals {
-    // Merkle roots for rewards
-    struct MerkleRootInfo {
-        bytes32 root;
-        uint256 amount;
-        uint256 claimed;
-    }
-
     struct ClaimRewardsInput {
-        bytes32 root;
         address user;
         uint256 amount;
         bytes32[] proofs;
@@ -34,39 +26,21 @@ interface IAppReferrals {
     /// @param _app The address of the app
     /// @param _treasury The address of the treasury
     /// @param _authority The address of the authority
-    /// @param _odos The address of the ODOs
-    function initialize(
-        address _bondDepository,
-        address _staking,
-        address _app,
-        address _treasury,
-        address _authority,
-        address _odos
-    ) external;
+    function initialize(address _bondDepository, address _staking, address _app, address _treasury, address _authority)
+        external;
 
     /// @notice Sets the merkle server
     /// @param _merkleServer The merkle server address
     function setMerkleServer(address _merkleServer) external;
 
-    /// @notice Adds a new merkle root for the current week
+    /// @notice Sets the merkle root for the current week
     /// @param _merkleRoot The merkle root for the week
-    /// @param amount The amount of rewards to claim
-    function addMerkleRoot(bytes32 _merkleRoot, uint256 amount) external;
+    function setMerkleRoot(bytes32 _merkleRoot) external;
 
     /// @notice Claims rewards using a merkle proof
     /// @param inputs The inputs for the rewards to claim
     /// @dev The proofs are the two parts of the merkle proof
     function claimRewards(ClaimRewardsInput[] calldata inputs) external;
-
-    /// @notice Gets the number of merkle roots
-    /// @return The number of merkle roots
-    function getMerkleRootCount() external view returns (uint256);
-
-    /// @notice Gets the merkle root info
-    /// @param root The merkle root
-    /// @return amount The amount of rewards
-    /// @return claimed The amount of rewards claimed
-    function getMerkleRootInfo(bytes32 root) external view returns (uint256 amount, uint256 claimed);
 
     /// @notice Registers a referral code for the caller
     function registerReferralCode(bytes8 code) external;

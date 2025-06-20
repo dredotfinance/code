@@ -264,54 +264,16 @@
       },
       {
         "internalType": "bytes8",
-        "name": "referralCode",
+        "name": "_referralCode",
         "type": "bytes8"
+      },
+      {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
       }
     ],
     "name": "bondWithReferral",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amountIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "_tokenIn",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_odosData",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_minPayout",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes8",
-        "name": "referralCode",
-        "type": "bytes8"
-      }
-    ],
-    "name": "bondWithReferralOdos",
     "outputs": [
       {
         "internalType": "uint256",
@@ -324,7 +286,7 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -427,7 +389,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "referrer",
+        "name": "_referrer",
         "type": "address"
       }
     ],
@@ -467,11 +429,6 @@
       {
         "internalType": "address",
         "name": "_authority",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_odos",
         "type": "address"
       }
     ],
@@ -542,19 +499,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "odos",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "bytes8",
@@ -596,7 +540,7 @@
     "inputs": [
       {
         "internalType": "bytes8",
-        "name": "code",
+        "name": "_code",
         "type": "bytes8"
       }
     ],
@@ -663,44 +607,16 @@
       },
       {
         "internalType": "bytes8",
-        "name": "referralCode",
+        "name": "_referralCode",
         "type": "bytes8"
+      },
+      {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
       }
     ],
     "name": "stakeWithReferral",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "declaredValue",
-        "type": "uint256"
-      },
-      {
-        "internalType": "contract IERC20",
-        "name": "_tokenIn",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_odosData",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bytes8",
-        "name": "referralCode",
-        "type": "bytes8"
-      }
-    ],
-    "name": "stakeWithReferralOdos",
     "outputs": [
       {
         "internalType": "uint256",
@@ -709,16 +625,11 @@
       },
       {
         "internalType": "uint256",
-        "name": "totalStaked",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "taxPaid",
         "type": "uint256"
       }
     ],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

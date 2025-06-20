@@ -43,12 +43,12 @@
       },
       {
         "internalType": "address",
-        "name": "_bootstrapLP",
+        "name": "_odos",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_odos",
+        "name": "_referrals",
         "type": "address"
       }
     ],
@@ -125,19 +125,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "bootstrapLP",
-    "outputs": [
-      {
-        "internalType": "contract IBootstrapLP",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -175,6 +162,19 @@
     "outputs": [
       {
         "internalType": "contract IRebaseController",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "referrals",
+    "outputs": [
+      {
+        "internalType": "contract IAppReferrals",
         "name": "",
         "type": "address"
       }
@@ -237,31 +237,80 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "tokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "odosTokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "odosTokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "odosData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.OdosParams",
+        "name": "odosParams",
+        "type": "tuple"
       },
       {
-        "internalType": "uint256",
-        "name": "tokenAmountIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "tokenIn",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "odosData",
-        "type": "bytes"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minPayout",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes8",
+            "name": "referralCode",
+            "type": "bytes8"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.BondParams",
+        "name": "bondParams",
+        "type": "tuple"
       }
     ],
-    "name": "zapAndMint",
+    "name": "zapAndBuyBond",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "dreAmountOfLp",
+        "name": "payout_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId_",
         "type": "uint256"
       }
     ],
@@ -271,36 +320,80 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "tokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "odosTokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "odosTokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "odosData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.OdosParams",
+        "name": "odosParams",
+        "type": "tuple"
       },
       {
-        "internalType": "uint256",
-        "name": "tokenAmountIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "dreAmountDeclared",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "tokenIn",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "odosData",
-        "type": "bytes"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "amountDeclared",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountDeclaredAsPercentage",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes8",
+            "name": "referralCode",
+            "type": "bytes8"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.StakeParams",
+        "name": "stakeParams",
+        "type": "tuple"
       }
     ],
     "name": "zapAndStake",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "dreAmountSwapped",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "taxPaid",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountStaked",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountDeclared",
         "type": "uint256"
       }
     ],
@@ -310,36 +403,80 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "address",
+            "name": "tokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "odosTokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "odosTokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "odosData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.OdosParams",
+        "name": "odosParams",
+        "type": "tuple"
       },
       {
-        "internalType": "uint256",
-        "name": "tokenAmountIn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "dreAmountDeclaredAsPercentage",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "tokenIn",
-        "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "odosData",
-        "type": "bytes"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "amountDeclared",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amountDeclaredAsPercentage",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes8",
+            "name": "referralCode",
+            "type": "bytes8"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.StakeParams",
+        "name": "stakeParams",
+        "type": "tuple"
       }
     ],
     "name": "zapAndStakeAsPercentage",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "dreAmountSwapped",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "taxPaid",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountStaked",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountDeclared",
         "type": "uint256"
       }
     ],

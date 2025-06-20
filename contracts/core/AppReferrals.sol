@@ -28,30 +28,25 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     IApp public app;
     IAppTreasury public treasury;
 
-    bytes32[] public merkleRoots;
+    bytes32 public merkleRoot;
 
     // Track claimed rewards
-    mapping(bytes32 => mapping(bytes32 => bool)) public claimedRewards; // root => leaf => claimed
-    mapping(bytes32 => MerkleRootInfo) public merkleRootInfo; // root => root info
+    mapping(address user => uint256 claimed) public claimedRewards; // user => claimed
 
     // Referral tracking
-    mapping(address referred => address referrer) public trackedReferrals;
-    mapping(address => EnumerableSet.AddressSet) private _referrals;
-    mapping(address => bytes8) public referrerCodes;
-    mapping(bytes8 => address) public referralCodes;
+    mapping(address user => address referrer) public trackedReferrals;
+    mapping(address referrer => EnumerableSet.AddressSet referrals) private _referrals;
+    mapping(address user => bytes8 code) public referrerCodes;
+    mapping(bytes8 code => address user) public referralCodes;
 
-    address public odos;
     address public merkleServer;
+    uint256 public totalClaimed;
 
     /// @inheritdoc IAppReferrals
-    function initialize(
-        address _bondDepository,
-        address _staking,
-        address _app,
-        address _treasury,
-        address _authority,
-        address _odos
-    ) external initializer {
+    function initialize(address _bondDepository, address _staking, address _app, address _treasury, address _authority)
+        external
+        initializer
+    {
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
 
@@ -59,7 +54,6 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         staking = IAppStaking(_staking);
         app = IApp(_app);
         treasury = IAppTreasury(_treasury);
-        odos = _odos;
         app.approve(address(staking), type(uint256).max);
     }
 
@@ -69,14 +63,9 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     }
 
     /// @inheritdoc IAppReferrals
-    function addMerkleRoot(bytes32 _merkleRoot, uint256 amount) external {
-        require(msg.sender == merkleServer, "Only merkle server can add merkle roots");
-
-        require(merkleRootInfo[_merkleRoot].root == bytes32(0), "Merkle root already set");
-
-        app.transferFrom(msg.sender, address(this), amount);
-        merkleRootInfo[_merkleRoot] = MerkleRootInfo({root: _merkleRoot, amount: amount, claimed: 0});
-        merkleRoots.push(_merkleRoot);
+    function setMerkleRoot(bytes32 _merkleRoot) external {
+        require(msg.sender == merkleServer, "Only merkle server can set merkle root");
+        merkleRoot = _merkleRoot;
     }
 
     /// @inheritdoc IAppReferrals
@@ -84,17 +73,6 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         for (uint256 i = 0; i < inputs.length; i++) {
             _claimRewards(inputs[i]);
         }
-    }
-
-    /// @inheritdoc IAppReferrals
-    function getMerkleRootCount() external view returns (uint256) {
-        return merkleRoots.length;
-    }
-
-    /// @inheritdoc IAppReferrals
-    function getMerkleRootInfo(bytes32 root) external view returns (uint256 amount, uint256 claimed) {
-        MerkleRootInfo storage info = merkleRootInfo[root];
-        return (info.amount, info.claimed);
     }
 
     /// @inheritdoc IAppReferrals
@@ -180,26 +158,21 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     /// @dev Claims rewards for the given input
     /// @param input The input to claim rewards for
     function _claimRewards(ClaimRewardsInput calldata input) internal nonReentrant {
-        MerkleRootInfo storage rootInfo = merkleRootInfo[input.root];
-        require(rootInfo.root != bytes32(0), "Merkle root not set");
-
         // Create the leaf node
         bytes32 leaf = keccak256(abi.encodePacked(input.user, input.amount));
 
         // Verify the proof
-        require(input.proofs.verify(rootInfo.root, leaf), "Invalid proof");
+        require(input.proofs.verify(merkleRoot, leaf), "Invalid proof");
 
         // Check if already claimed
-        require(!claimedRewards[input.root][leaf], "Rewards already claimed");
-        claimedRewards[input.root][leaf] = true;
-
-        // invariant check
-        require(rootInfo.claimed + input.amount <= rootInfo.amount, "Not enough rewards to claim");
-        rootInfo.claimed += input.amount;
+        uint256 claimable = input.amount - claimedRewards[input.user];
+        require(claimable > 0, "No rewards to claim");
+        claimedRewards[input.user] += claimable;
+        totalClaimed += claimable;
 
         // Transfer rewards
-        app.transfer(input.user, input.amount);
+        app.transfer(input.user, claimable);
 
-        emit RewardsClaimed(input.user, input.amount, input.root);
+        emit RewardsClaimed(input.user, input.amount, merkleRoot);
     }
 }
