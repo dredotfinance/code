@@ -49,7 +49,9 @@
     "coverage": "forge coverage --report lcov",
     "test:foundry": "forge test",
     "test:halmos": "halmos",
-    "coverage:html": "node scripts/renderCoverage.js"
+    "coverage:html": "node scripts/renderCoverage.js",
+    "deploy-w3f-bond-events": "w3f deploy web3-functions/bond-events/index.ts",
+    "test-w3f-bond-events": "hardhat w3f-run bond-events --network sonic --logs"
   },
   "repository": {
     "type": "git",
@@ -62,6 +64,8 @@
   "homepage": "https://github.com/dredotfinance/code#readme",
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "dependencies": {
+    "@gelatonetwork/automate-sdk": "^3.1.0",
+    "@gelatonetwork/web3-functions-sdk": "^2.4.4",
     "inquirer": "^12.6.3",
     "prettier": "^3.5.3"
   }
