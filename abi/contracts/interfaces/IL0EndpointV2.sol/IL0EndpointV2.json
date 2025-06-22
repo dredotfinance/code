@@ -1,0 +1,308 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "delegates",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "name": "getConfig",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_receiver",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "getReceiveLibrary",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "lib",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isDefault",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_sender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "getSendLibrary",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "lib",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_sender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "isDefaultSendLibrary",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_receiver",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "receiveLibraryTimeout",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "lib",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "expiry",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "eid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "configType",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "config",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct SetConfigParam[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "setConfig",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_oapp",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "_newLib",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_gracePeriod",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReceiveLibrary",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_oapp",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "_lib",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_gracePeriod",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReceiveLibraryTimeout",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_oapp",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "_newLib",
+        "type": "address"
+      }
+    ],
+    "name": "setSendLibrary",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_oapp",
+        "type": "address"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_srcEid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_sender",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint64",
+        "name": "_nonce",
+        "type": "uint64"
+      }
+    ],
+    "name": "skip",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

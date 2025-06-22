@@ -196,8 +196,8 @@ contract UnbackedAccountingTest is BaseTest {
         // Mint RZR to the test contract (less than unbacked supply)
         app.mint(testContract, 600e18);
 
-        // Get initial treasury unbacked supply
-        uint256 initialTreasuryUnbacked = treasury.unbackedSupply();
+        // // Get initial treasury unbacked supply
+        // uint256 initialTreasuryUnbacked = treasury.unbackedSupply();
 
         // Update to calculate outflows and update treasury
         unbackedAccounting.update();
