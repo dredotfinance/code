@@ -59,10 +59,15 @@ contract AppStaking is
     /// @inheritdoc IAppStaking
     address public burner;
 
+    // Mapping from token ID to buy cooldown end timestamp
+    mapping(uint256 => uint256) private _buyCooldownEnd;
+
+    uint256 public buyCooldownPeriod;
+
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(3)
+        reinitializer(4)
     {
         if (lastId == 0) lastId = 1;
 
@@ -75,6 +80,7 @@ contract AppStaking is
         uint256 _resellFeeRate = 100;
         uint256 _withdrawCooldownPeriod = 3 days;
         uint256 _rewardCooldownPeriod = 1 days;
+        uint256 _buyCooldownPeriod = 1 days;
 
         require(_appToken != address(0), "Invalid RZR token address");
         require(_trackingToken != address(0), "Invalid tracking token address");
@@ -82,6 +88,7 @@ contract AppStaking is
         require(_resellFeeRate <= BASIS_POINTS, "Invalid resell fee rate");
         require(_withdrawCooldownPeriod > 0, "Invalid withdraw cooldown period");
         require(_rewardCooldownPeriod > 0, "Invalid reward cooldown period");
+        require(_buyCooldownPeriod > 0, "Invalid buy cooldown period");
 
         appToken = IERC20(_appToken);
         trackingToken = IPermissionedERC20(_trackingToken);
@@ -91,6 +98,7 @@ contract AppStaking is
         resellFeeRate = _resellFeeRate;
         withdrawCooldownPeriod = _withdrawCooldownPeriod;
         rewardCooldownPeriod = _rewardCooldownPeriod;
+        buyCooldownPeriod = _buyCooldownPeriod;
     }
 
     /// @notice Sets the harberger tax rate
@@ -123,6 +131,29 @@ contract AppStaking is
     /// @inheritdoc IAppStaking
     function positions(uint256 tokenId) external view override returns (Position memory) {
         return _positions[tokenId];
+    }
+
+    /// @notice Sets the buy cooldown period
+    /// @param _buyCooldownPeriod The new buy cooldown period
+    function setBuyCooldownPeriod(uint256 _buyCooldownPeriod) external onlyGovernor {
+        require(_buyCooldownPeriod > 0, "Invalid buy cooldown period");
+        uint256 oldValue = buyCooldownPeriod;
+        buyCooldownPeriod = _buyCooldownPeriod;
+        emit BuyCooldownPeriodUpdated(oldValue, _buyCooldownPeriod);
+    }
+
+    /// @notice Checks if a position is in buy cooldown
+    /// @param tokenId The position ID
+    /// @return True if the position is in buy cooldown, false otherwise
+    function isInBuyCooldown(uint256 tokenId) external view returns (bool) {
+        return _buyCooldownEnd[tokenId] > 0 && block.timestamp < _buyCooldownEnd[tokenId];
+    }
+
+    /// @notice Gets the buy cooldown end timestamp for a position
+    /// @param tokenId The position ID
+    /// @return The timestamp when buy cooldown ends, or 0 if not in cooldown
+    function getBuyCooldownEnd(uint256 tokenId) external view returns (uint256) {
+        return _buyCooldownEnd[tokenId];
     }
 
     /// @inheritdoc IAppStaking
@@ -245,6 +276,7 @@ contract AppStaking is
         // Burn the NFT
         _burn(tokenId);
         delete _positions[tokenId];
+        delete _buyCooldownEnd[tokenId];
 
         emit PositionUnstaked(tokenId, msg.sender, amount);
     }
@@ -254,6 +286,11 @@ contract AppStaking is
         address seller = ownerOf(tokenId);
         require(seller != address(0), "Position does not exist");
         require(seller != msg.sender, "Cannot buy your own position");
+
+        // Check if position is in buy cooldown
+        require(
+            _buyCooldownEnd[tokenId] == 0 || block.timestamp >= _buyCooldownEnd[tokenId], "Position in buy cooldown"
+        );
 
         Position storage position = _positions[tokenId];
         uint256 price = position.declaredValue;
@@ -275,6 +312,9 @@ contract AppStaking is
         // Cancel unstaking and claim any pending rewards to avoid getting sniped
         _cancelUnstaking(tokenId);
         _claimRewards(tokenId);
+
+        // Set buy cooldown end timestamp
+        _buyCooldownEnd[tokenId] = block.timestamp + buyCooldownPeriod;
 
         emit PositionSold(tokenId, seller, msg.sender, price);
     }
@@ -422,6 +462,7 @@ contract AppStaking is
         // Burn the second token and delete its storage
         _burn(tokenId2);
         delete _positions[tokenId2];
+        delete _buyCooldownEnd[tokenId2];
 
         // No change in totalStaked or tracking tokens is required since the overall amount stays the same
 

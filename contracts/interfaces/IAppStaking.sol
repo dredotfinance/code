@@ -108,6 +108,11 @@ interface IAppStaking is IERC721Enumerable {
     /// @param newValue The new reward cooldown period
     event RewardCooldownPeriodUpdated(uint256 oldValue, uint256 newValue);
 
+    /// @notice Emitted when buy cooldown period is updated
+    /// @param oldValue The old buy cooldown period
+    /// @param newValue The new buy cooldown period
+    event BuyCooldownPeriodUpdated(uint256 oldValue, uint256 newValue);
+
     /// @notice Emitted when epoch duration is updated
     /// @param oldValue The old epoch duration
     /// @param newValue The new epoch duration
