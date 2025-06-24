@@ -196,6 +196,11 @@
             "internalType": "bool",
             "name": "isActive",
             "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "inCooldown",
+            "type": "bool"
           }
         ],
         "internalType": "struct AppUIHelperBase.StakingPositionInfo[]",
@@ -434,6 +439,11 @@
           {
             "internalType": "bool",
             "name": "isActive",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "inCooldown",
             "type": "bool"
           }
         ],

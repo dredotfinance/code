@@ -89,7 +89,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         IERC20(odosParams.odosTokenIn).approve(address(referrals), type(uint256).max);
         (payout_, tokenId_) = referrals.bondWithReferral(
             bondParams.id,
-            bondParams.amount,
+            IERC20(odosParams.odosTokenIn).balanceOf(address(this)),
             bondParams.maxPrice,
             bondParams.minPayout,
             bondParams.referralCode,
