@@ -15,9 +15,7 @@ interface IAppReferrals {
     event ReferralRegistered(address indexed referred, address indexed referrer, bytes8 code);
     event RewardsClaimed(address indexed user, uint256 amount, bytes32 root);
     event ReferralStaked(address indexed user, uint256 amount, uint256 declaredValue, bytes8 referralCode);
-    event ReferralBondBought(
-        address indexed user, uint256 id, uint256 amount, uint256 maxPrice, uint256 minPayout, bytes8 referralCode
-    );
+    event ReferralBondBought(address indexed user, uint256 payout, bytes8 referralCode);
 
     // Functions
     /// @notice Initializes the contract

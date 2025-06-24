@@ -133,7 +133,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         token.approve(address(bondDepository), _amount);
         (payout_, tokenId_) = bondDepository.deposit(_id, _amount, _maxPrice, _minPayout, _to);
 
-        emit ReferralBondBought(_to, _id, _amount, _maxPrice, _minPayout, _referralCode);
+        emit ReferralBondBought(_to, payout_, _referralCode);
     }
 
     /// @dev Registers a referral for the given user
