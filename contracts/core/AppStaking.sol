@@ -142,13 +142,6 @@ contract AppStaking is
         emit BuyCooldownPeriodUpdated(oldValue, _buyCooldownPeriod);
     }
 
-    /// @notice Checks if a position is in buy cooldown
-    /// @param tokenId The position ID
-    /// @return True if the position is in buy cooldown, false otherwise
-    function isInBuyCooldown(uint256 tokenId) external view returns (bool) {
-        return _buyCooldownEnd[tokenId] > 0 && block.timestamp < _buyCooldownEnd[tokenId];
-    }
-
     /// @notice Gets the buy cooldown end timestamp for a position
     /// @param tokenId The position ID
     /// @return The timestamp when buy cooldown ends, or 0 if not in cooldown
@@ -419,6 +412,9 @@ contract AppStaking is
             rewardsUnlockAt: position.rewardsUnlockAt
         });
 
+        // Inherit buy cooldown from original position
+        _buyCooldownEnd[newTokenId] = _buyCooldownEnd[tokenId];
+
         // Update original position
         position.amount -= splitAmount;
         position.declaredValue -= splitDeclaredValue;
@@ -499,6 +495,11 @@ contract AppStaking is
         _updateReward(tokenId);
 
         emit PositionUpdated(tokenId, ownerOf(tokenId), position.amount, position.declaredValue);
+    }
+
+    /// @inheritdoc IAppStaking
+    function isInBuyCooldown(uint256 tokenId) external view override returns (bool) {
+        return _buyCooldownEnd[tokenId] > 0 && block.timestamp < _buyCooldownEnd[tokenId];
     }
 
     /// @notice Cancels the unstaking process and resets cooldown variables

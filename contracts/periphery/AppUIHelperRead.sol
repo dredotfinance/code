@@ -135,7 +135,8 @@ contract AppUIHelperRead is AppUIHelperBase {
                 rewards: staking.earned(tokenId),
                 cooldownEnd: position.cooldownEnd,
                 rewardsUnlockAt: position.rewardsUnlockAt,
-                isActive: position.cooldownEnd == 0
+                isActive: position.cooldownEnd == 0,
+                inCooldown: staking.isInBuyCooldown(tokenId)
             });
         }
     }
@@ -200,7 +201,8 @@ contract AppUIHelperRead is AppUIHelperBase {
                 rewards: staking.earned(i),
                 cooldownEnd: position.cooldownEnd,
                 rewardsUnlockAt: position.rewardsUnlockAt,
-                isActive: position.cooldownEnd == 0
+                isActive: position.cooldownEnd == 0,
+                inCooldown: staking.isInBuyCooldown(i)
             });
         }
 

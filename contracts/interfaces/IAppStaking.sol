@@ -256,6 +256,11 @@ interface IAppStaking is IERC721Enumerable {
     /// @return The reward cooldown period
     function rewardCooldownPeriod() external view returns (uint256);
 
+    /// @notice Checks if a bond position is in cooldown (vesting period)
+    /// @param _tokenId The ID of the bond position NFT
+    /// @return bool True if the position is in cooldown, false otherwise
+    function isInBuyCooldown(uint256 _tokenId) external view returns (bool);
+
     /// @notice Gets the epoch duration
     /// @return The epoch duration
     function EPOCH_DURATION() external view returns (uint256);

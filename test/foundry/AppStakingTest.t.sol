@@ -947,4 +947,417 @@ contract AppStakingTest is BaseTest {
 
         vm.stopPrank();
     }
+
+    // ============ BUY COOLDOWN TESTS ============
+
+    function test_BuyCooldownInitialization() public {
+        // Test that buy cooldown period is initialized correctly
+        assertEq(staking.buyCooldownPeriod(), 1 days, "Buy cooldown period not initialized to 1 day");
+    }
+
+    function test_BuyPositionSetsCooldown() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Prepare buyer
+        app.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify buy cooldown is set
+        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
+        assertEq(
+            staking.getBuyCooldownEnd(tokenId),
+            block.timestamp + staking.buyCooldownPeriod(),
+            "Buy cooldown end time incorrect"
+        );
+
+        vm.stopPrank();
+    }
+
+    function testFail_BuyPositionInCooldown() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Prepare first buyer
+        app.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // First buyer purchases the position
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Prepare second buyer
+        app.mint(user2, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Second buyer tries to buy the position while it's in cooldown
+        vm.startPrank(user2);
+        app.approve(address(staking), DECLARED_VALUE);
+        vm.expectRevert("Position in buy cooldown");
+        staking.buyPosition(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function test_BuyPositionAfterCooldown() public {
+        vm.startPrank(owner);
+        authority.addPolicy(user1);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Prepare first buyer
+        app.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // First buyer purchases the position
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Fast forward past cooldown period
+        vm.warp(block.timestamp + staking.buyCooldownPeriod() + 1);
+
+        // Prepare second buyer
+        app.mint(user2, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Second buyer should be able to buy the position now
+        vm.startPrank(user2);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify ownership transfer
+        assertEq(staking.ownerOf(tokenId), user2, "Position ownership not transferred to second buyer");
+
+        vm.stopPrank();
+    }
+
+    function test_SplitPositionInheritsBuyCooldown() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Prepare buyer
+        app.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Split the position while in cooldown
+        uint256 splitRatio = 0.5e18; // 50%
+        uint256 newTokenId = staking.splitPosition(tokenId, splitRatio, user2);
+
+        // Verify both positions inherit the buy cooldown
+        assertTrue(staking.isInBuyCooldown(tokenId), "Original position should still be in buy cooldown");
+        assertTrue(staking.isInBuyCooldown(newTokenId), "Split position should inherit buy cooldown");
+        assertEq(
+            staking.getBuyCooldownEnd(tokenId),
+            staking.getBuyCooldownEnd(newTokenId),
+            "Split positions should have same cooldown end time"
+        );
+
+        vm.stopPrank();
+    }
+
+    function test_MergePositionsCleansUpBuyCooldown() public {
+        vm.startPrank(owner);
+
+        // Create two positions
+        app.mint(owner, STAKE_AMOUNT * 2);
+        app.approve(address(staking), STAKE_AMOUNT * 2);
+        (uint256 tokenId1,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+        (uint256 tokenId2,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Buy both positions to set cooldowns
+        app.mint(user1, DECLARED_VALUE * 2);
+        vm.stopPrank();
+
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE * 2);
+        staking.buyPosition(tokenId1);
+        staking.buyPosition(tokenId2);
+
+        // Verify both positions are in cooldown
+        assertTrue(staking.isInBuyCooldown(tokenId1), "Position 1 should be in buy cooldown");
+        assertTrue(staking.isInBuyCooldown(tokenId2), "Position 2 should be in buy cooldown");
+
+        // Merge the positions
+        uint256 mergedTokenId = staking.mergePositions(tokenId1, tokenId2);
+
+        // Verify merged position is in cooldown (inherits from tokenId1)
+        assertTrue(staking.isInBuyCooldown(mergedTokenId), "Merged position should inherit buy cooldown");
+        assertEq(
+            staking.getBuyCooldownEnd(mergedTokenId),
+            staking.getBuyCooldownEnd(tokenId1),
+            "Merged position should inherit cooldown from first position"
+        );
+
+        // Verify the burned position's cooldown is cleaned up
+        assertEq(staking.getBuyCooldownEnd(tokenId2), 0, "Burned position's buy cooldown should be cleaned up");
+
+        vm.stopPrank();
+    }
+
+    function test_CompleteUnstakingCleansUpBuyCooldown() public {
+        vm.startPrank(owner);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Prepare buyer
+        app.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify buy cooldown is set
+        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
+
+        // Start unstaking
+        staking.startUnstaking(tokenId);
+
+        // Fast forward past withdraw cooldown
+        vm.warp(block.timestamp + staking.withdrawCooldownPeriod() + 1);
+
+        // Complete unstaking
+        staking.completeUnstaking(tokenId);
+
+        // Verify buy cooldown is cleaned up (position is burned)
+        assertEq(staking.getBuyCooldownEnd(tokenId), 0, "Buy cooldown should be cleaned up when position is burned");
+
+        vm.stopPrank();
+    }
+
+    function test_SetBuyCooldownPeriod() public {
+        vm.startPrank(owner);
+
+        uint256 newCooldownPeriod = 2 days;
+        uint256 oldCooldownPeriod = staking.buyCooldownPeriod();
+
+        // Set new cooldown period
+        staking.setBuyCooldownPeriod(newCooldownPeriod);
+
+        // Verify the change
+        assertEq(staking.buyCooldownPeriod(), newCooldownPeriod, "Buy cooldown period not updated");
+        assertEq(oldCooldownPeriod, 1 days, "Old cooldown period should be 1 day");
+
+        vm.stopPrank();
+    }
+
+    function test_SetBuyCooldownPeriodZero() public {
+        vm.startPrank(owner);
+
+        // Try to set zero cooldown period
+        vm.expectRevert("Invalid buy cooldown period");
+        staking.setBuyCooldownPeriod(0);
+
+        vm.stopPrank();
+    }
+
+    function test_SetBuyCooldownPeriodNotGovernor() public {
+        vm.startPrank(user1);
+
+        // Non-governor tries to set cooldown period
+        vm.expectRevert("UNAUTHORIZED");
+        staking.setBuyCooldownPeriod(2 days);
+
+        vm.stopPrank();
+    }
+
+    function test_BuyCooldownWithDifferentPeriods() public {
+        vm.startPrank(owner);
+        authority.addPolicy(user1);
+
+        // Set a shorter cooldown period for testing
+        staking.setBuyCooldownPeriod(1 hours);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Prepare buyer
+        app.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify cooldown is set with new period
+        assertEq(
+            staking.getBuyCooldownEnd(tokenId), block.timestamp + 1 hours, "Buy cooldown end time should use new period"
+        );
+
+        // Fast forward past new cooldown period
+        vm.warp(block.timestamp + 1 hours + 1);
+
+        // Prepare second buyer
+        app.mint(user2, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Second buyer should be able to buy now
+        vm.startPrank(user2);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify ownership transfer
+        assertEq(staking.ownerOf(tokenId), user2, "Position ownership not transferred after shorter cooldown");
+
+        vm.stopPrank();
+    }
+
+    function testFuzz_BuyCooldown(uint256 stakeAmount, uint256 declaredValue, uint256 cooldownPeriod) public {
+        // Bound the inputs to reasonable ranges
+        stakeAmount = bound(stakeAmount, 1e18, 1000000e18);
+        declaredValue = bound(declaredValue, stakeAmount, stakeAmount * 2);
+        cooldownPeriod = bound(cooldownPeriod, 1 hours, 7 days);
+
+        vm.startPrank(owner);
+        authority.addPolicy(user1);
+
+        // Set custom cooldown period
+        staking.setBuyCooldownPeriod(cooldownPeriod);
+
+        // Create position
+        app.mint(owner, stakeAmount);
+        app.approve(address(staking), stakeAmount);
+        (uint256 tokenId,) = staking.createPosition(owner, stakeAmount, declaredValue, 0);
+
+        // Prepare buyer
+        app.mint(user1, declaredValue);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        app.approve(address(staking), declaredValue);
+        staking.buyPosition(tokenId);
+
+        // Verify cooldown is set correctly
+        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
+        assertEq(
+            staking.getBuyCooldownEnd(tokenId), block.timestamp + cooldownPeriod, "Buy cooldown end time incorrect"
+        );
+
+        // Try to buy again immediately (should fail)
+        app.mint(user2, declaredValue);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        app.approve(address(staking), declaredValue);
+        vm.expectRevert("Position in buy cooldown");
+        staking.buyPosition(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function test_BuyCooldownWithRewards() public {
+        vm.startPrank(owner);
+        authority.addPolicy(user1);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Add rewards
+        app.mint(owner, REWARD_AMOUNT);
+        app.approve(address(staking), REWARD_AMOUNT);
+        staking.notifyRewardAmount(REWARD_AMOUNT);
+
+        // Fast forward to accumulate rewards
+        vm.warp(block.timestamp + staking.EPOCH_DURATION());
+
+        // Prepare buyer
+        app.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Buyer purchases the position
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify buy cooldown is set and rewards were claimed
+        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
+        assertGt(app.balanceOf(user1), 0, "Buyer should have received rewards");
+
+        // Try to buy again immediately (should fail)
+        app.mint(user2, DECLARED_VALUE);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        app.approve(address(staking), DECLARED_VALUE);
+        vm.expectRevert("Position in buy cooldown");
+        staking.buyPosition(tokenId);
+
+        vm.stopPrank();
+    }
+
+    function test_BuyCooldownWithUnstaking() public {
+        vm.startPrank(owner);
+        authority.addPolicy(user1);
+
+        // Create position
+        app.mint(owner, STAKE_AMOUNT);
+        app.approve(address(staking), STAKE_AMOUNT);
+        (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
+
+        // Start unstaking
+        staking.startUnstaking(tokenId);
+
+        // Prepare buyer
+        app.mint(user1, DECLARED_VALUE);
+        vm.stopPrank();
+
+        // Buyer purchases the position (should cancel unstaking)
+        vm.startPrank(user1);
+        app.approve(address(staking), DECLARED_VALUE);
+        staking.buyPosition(tokenId);
+
+        // Verify buy cooldown is set and unstaking was cancelled
+        assertTrue(staking.isInBuyCooldown(tokenId), "Position should be in buy cooldown");
+
+        IAppStaking.Position memory position = staking.positions(tokenId);
+        assertEq(position.cooldownEnd, 0, "Unstaking should be cancelled");
+
+        // Try to buy again immediately (should fail)
+        app.mint(user2, DECLARED_VALUE);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        app.approve(address(staking), DECLARED_VALUE);
+        vm.expectRevert("Position in buy cooldown");
+        staking.buyPosition(tokenId);
+
+        vm.stopPrank();
+    }
 }
