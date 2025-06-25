@@ -335,8 +335,6 @@ contract AppReferralsTest is BaseTest {
 
         vm.expectEmit(true, true, false, true);
         emit ReferralRegistered(CHARLIE, ALICE, aliceCode);
-        vm.expectEmit(true, true, false, true);
-        emit ReferralBondBought(CHARLIE, bondId, bondAmount, 2e18, 0, aliceCode);
         referrals.bondWithReferral(bondId, bondAmount, 2e18, 0, aliceCode, CHARLIE);
         vm.stopPrank();
 

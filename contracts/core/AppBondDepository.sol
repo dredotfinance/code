@@ -123,6 +123,7 @@ contract AppBondDepository is
         require(block.timestamp < bond.endTime, "Bond ended");
         require(bond.enabled, "Bond not enabled");
         require(bond.capacity > 0, "Bond full");
+        require(_amount > 0, "Amount too small");
 
         // Calculate current price based on time elapsed
         uint256 currentPrice_ = _currentPrice(_id);
@@ -133,6 +134,7 @@ contract AppBondDepository is
         (payout_, profit_) = _calculatePayoutAndProfit(bond.quoteToken, currentPrice_, _amount);
         require(payout_ <= bond.maxPayout, "Amount too large");
         require(payout_ >= _minPayout, "Slippage too high");
+        require(payout_ > 0, "Payout too small");
 
         // Update bond state
         bond.capacity -= payout_;
