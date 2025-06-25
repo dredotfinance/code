@@ -51,7 +51,7 @@ contract AppBondDepository is
     mapping(uint256 => bool) public override blacklisted;
 
     /// @inheritdoc IAppBondDepository
-    function initialize(address _dre, address _staking, address _treasury, address _authority)
+    function initialize(address _app, address _staking, address _treasury, address _authority)
         public
         override
         initializer
@@ -61,7 +61,7 @@ contract AppBondDepository is
         __AppAccessControlled_init(_authority);
         staking = IAppStaking(_staking);
         treasury = IAppTreasury(_treasury);
-        app = IApp(_dre);
+        app = IApp(_app);
         if (lastId == 0) lastId = 1;
     }
 

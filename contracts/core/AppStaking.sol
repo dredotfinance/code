@@ -68,7 +68,7 @@ contract AppStaking is
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(4)
+        reinitializer(5)
     {
         if (lastId == 0) lastId = 1;
 
@@ -204,7 +204,6 @@ contract AppStaking is
         nonReentrant
         returns (uint256 tokenId, uint256 taxPaid)
     {
-        require(amount > 0, "Amount must be greater than 0");
         require(declaredValue > 0, "Declared value must be greater than 0");
 
         // Transfer RZR tokens from user
@@ -213,6 +212,8 @@ contract AppStaking is
         // Calculate and collect harberger tax
         taxPaid = _distributeTax(declaredValue);
         amount -= taxPaid;
+
+        require(amount > 0, "Amount must be greater than 0");
 
         // Create new position
         tokenId = lastId++;
@@ -359,6 +360,8 @@ contract AppStaking is
         position.declaredValue += addtionalDeclaredValue;
         totalStaked += additionalAmount;
 
+        require(position.amount > 0, "Position amount must be greater than 0");
+
         // Update rewards
         _updateReward(tokenId);
 
@@ -493,6 +496,8 @@ contract AppStaking is
         Position storage position = _positions[tokenId];
         position.declaredValue += additionalDeclaredValue;
         position.amount -= taxPaid;
+
+        require(position.amount > 0, "Position amount must be greater than 0");
 
         _updateReward(tokenId);
 
