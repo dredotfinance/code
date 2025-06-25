@@ -32,6 +32,7 @@ contract AppBurner is AppAccessControlled {
     /// @notice Burns the balance of the App contract
     /// @dev This function is only callable by the executor
     function burn() external onlyExecutor {
+        IAppTreasury treasury = IAppTreasury(authority.treasury());
         uint256 balance = app.balanceOf(address(this));
         uint256 floorPrice = appOracle.getTokenPrice();
         uint256 totalSupply = treasury.totalSupply();
