@@ -338,6 +338,7 @@ contract AppStaking is
         require(ownerOf(tokenId) != address(0), "Position does not exist");
         require(additionalAmount > 0, "Amount must be greater than 0");
         require(_positions[tokenId].cooldownEnd == 0, "Position is in cooldown");
+        require(addtionalDeclaredValue > 0 || additionalAmount > 0, "Declared value or amount must be greater than 0");
 
         Position storage position = _positions[tokenId];
         address owner = ownerOf(tokenId);
