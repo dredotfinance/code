@@ -950,7 +950,7 @@ contract AppStakingTest is BaseTest {
 
     // ============ BUY COOLDOWN TESTS ============
 
-    function test_BuyCooldownInitialization() public {
+    function test_BuyCooldownInitialization() public view {
         // Test that buy cooldown period is initialized correctly
         assertEq(staking.buyCooldownPeriod(), 1 days, "Buy cooldown period not initialized to 1 day");
     }

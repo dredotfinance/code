@@ -261,6 +261,15 @@ interface IAppStaking is IERC721Enumerable {
     /// @return bool True if the position is in cooldown, false otherwise
     function isInBuyCooldown(uint256 _tokenId) external view returns (bool);
 
+    /// @notice Gets the buy cooldown period
+    /// @return buyCooldownPeriod The buy cooldown period
+    function buyCooldownPeriod() external view returns (uint256);
+
+    /// @notice Gets the buy cooldown end timestamp for a position
+    /// @param _tokenId The ID of the position NFT
+    /// @return buyCooldownEnd The buy cooldown end timestamp
+    function getBuyCooldownEnd(uint256 _tokenId) external view returns (uint256 buyCooldownEnd);
+
     /// @notice Gets the epoch duration
     /// @return The epoch duration
     function EPOCH_DURATION() external view returns (uint256);

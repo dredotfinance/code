@@ -62,6 +62,7 @@ contract AppStaking is
     // Mapping from token ID to buy cooldown end timestamp
     mapping(uint256 => uint256) private _buyCooldownEnd;
 
+    /// @inheritdoc IAppStaking
     uint256 public buyCooldownPeriod;
 
     /// @inheritdoc IAppStaking
