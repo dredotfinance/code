@@ -34,7 +34,7 @@ contract AppBurner is AppAccessControlled {
     function burn() external onlyExecutor {
         uint256 balance = app.balanceOf(address(this));
         uint256 floorPrice = appOracle.getTokenPrice();
-        uint256 totalSupply = app.totalSupply();
+        uint256 totalSupply = treasury.totalSupply();
         uint256 newFloorPrice = calculateFloorUpdate(balance, totalSupply, floorPrice);
 
         require(newFloorPrice >= floorPrice, "New floor price must be greater than current floor price");
@@ -43,6 +43,11 @@ contract AppBurner is AppAccessControlled {
         app.burn(balance);
         appOracle.setTokenPrice(newFloorPrice);
         emit Burned(balance, newFloorPrice);
+
+        // ensure that the treasury has enough RZR to cover the new floor price
+        uint256 newTotalSupply = totalSupply - balance;
+        uint256 currentRZR = treasury.calculateReserves();
+        require(currentRZR >= newTotalSupply, "treasury backing would fail");
     }
 
     /// @notice Calculates the new floor price based on the amount to burn and the total supply
