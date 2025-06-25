@@ -41,7 +41,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     /// @inheritdoc IAppTreasury
     mapping(address token => uint256 reserveDebt) public reserveDebts;
 
-    function initialize(address _app, address _appOracle, address _authority) public reinitializer(2) {
+    function initialize(address _app, address _appOracle, address _authority) public reinitializer(3) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);
