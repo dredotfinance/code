@@ -596,6 +596,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "buyCooldownPeriod",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -725,6 +738,25 @@
         "internalType": "address",
         "name": "operator",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getBuyCooldownEnd",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "buyCooldownEnd",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

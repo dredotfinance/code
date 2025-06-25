@@ -32,7 +32,7 @@ contract RebaseControllerTest is BaseTest {
         assertEq(address(rebaseController.app()), address(app));
         assertEq(address(rebaseController.treasury()), address(treasury));
         assertEq(address(rebaseController.staking()), address(staking));
-        assertEq(address(rebaseController.oracle()), address(appOracle));
+        assertEq(address(rebaseController.burner()), address(burner));
         assertEq(rebaseController.lastEpochTime(), 0);
     }
 

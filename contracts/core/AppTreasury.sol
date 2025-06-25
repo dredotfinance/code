@@ -39,7 +39,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     mapping(address token => uint256 cap) public reserveCaps;
 
     /// @inheritdoc IAppTreasury
-    mapping(address token => uint256 filled) public filledReserves;
+    mapping(address token => uint256 reserveDebt) public reserveDebts;
 
     function initialize(address _app, address _appOracle, address _authority) public reinitializer(2) {
         require(_app != address(0), "Zero address: app");
@@ -81,6 +81,12 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     }
 
     /// @inheritdoc IAppTreasury
+    function setReserveDebt(address _token, uint256 _debt) external onlyPolicy {
+        reserveDebts[_token] = _debt;
+        emit ReserveDebtSet(_token, _debt);
+    }
+
+    /// @inheritdoc IAppTreasury
     function deposit(uint256 _amount, address _token, uint256 _profit)
         external
         override
@@ -105,6 +111,19 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         app.mint(msg.sender, send_);
 
         _totalReserves += value;
+
+        uint256 balance = IERC20(_token).balanceOf(address(this));
+
+        // check if the token has exceeded the reserve cap
+        if (reserveCaps[_token] > 0) {
+            require(balance <= reserveCaps[_token], "Treasury: reserve cap exceeded");
+        }
+
+        // check if the token has a reserve debt
+        if (reserveDebts[_token] > 0) {
+            uint256 debt = tokenValueE18(_token, balance);
+            require(debt <= reserveDebts[_token], "Treasury: reserve debt exceeded");
+        }
 
         // invariant check
         require(_totalReserves >= totalSupply(), "Reserves too low");
@@ -264,16 +283,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     }
 
     function _updateReserves() internal {
-        _totalReserves = 0;
-        for (uint256 i = 0; i < _tokens.length(); i++) {
-            address token = _tokens.at(i);
-            if (_tokens.contains(token)) {
-                uint256 balance = IERC20(token).balanceOf(address(this));
-                uint256 value = tokenValueE18(token, balance);
-                _totalReserves += value;
-                filledReserves[token] = value;
-            }
-        }
+        _totalReserves = calculateActualReserves();
         emit ReservesAudited(_totalReserves, creditReserves, _totalReserves + creditReserves);
     }
 

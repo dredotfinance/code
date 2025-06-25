@@ -126,11 +126,6 @@
       },
       {
         "internalType": "address",
-        "name": "_oracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_authority",
         "type": "address"
       },

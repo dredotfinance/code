@@ -201,11 +201,6 @@
       },
       {
         "internalType": "address",
-        "name": "_oracle",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_authority",
         "type": "address"
       },
@@ -254,19 +249,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "oracle",
-    "outputs": [
-      {
-        "internalType": "contract IAppOracle",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",

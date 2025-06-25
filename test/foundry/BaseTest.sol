@@ -90,7 +90,7 @@ contract BaseTest is Test {
         // Deploy RebaseController
         rebaseController = new RebaseController();
         rebaseController.initialize(
-            address(app), address(treasury), address(staking), address(appOracle), address(authority), address(burner)
+            address(app), address(treasury), address(staking), address(authority), address(burner)
         );
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 

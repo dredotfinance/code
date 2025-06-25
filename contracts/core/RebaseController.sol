@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IApp.sol";
 import "../interfaces/IAppTreasury.sol";
 import "../interfaces/IAppStaking.sol";
-import "../interfaces/IAppOracle.sol";
 import "../interfaces/IRebaseController.sol";
 import "../libraries/StakingDistributionLogic.sol";
 import "../libraries/YieldLogic.sol";
@@ -23,7 +22,6 @@ contract RebaseController is AppAccessControlled, IRebaseController {
     IApp public app; // RZR token (decimals = 18)
     IAppTreasury public treasury;
     IAppStaking public staking; // staking contract or escrow
-    IAppOracle public oracle; // price oracle
     address public burner; // burner contract
 
     // --- Epoch params --------------------------------------------------------
@@ -35,18 +33,13 @@ contract RebaseController is AppAccessControlled, IRebaseController {
     uint256 public maxFloorPct; // maximum to the floor price ideally 50%
     uint256 public floorSlope; // ideally 50%
 
-    function initialize(
-        address _dre,
-        address _treasury,
-        address _staking,
-        address _oracle,
-        address _authority,
-        address _burner
-    ) public initializer {
+    function initialize(address _dre, address _treasury, address _staking, address _authority, address _burner)
+        public
+        reinitializer(2)
+    {
         app = IApp(_dre);
         treasury = IAppTreasury(_treasury);
         staking = IAppStaking(_staking);
-        oracle = IAppOracle(_oracle);
         burner = _burner;
         __AppAccessControlled_init(_authority);
 

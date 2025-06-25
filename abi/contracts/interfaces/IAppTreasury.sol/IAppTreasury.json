@@ -110,6 +110,25 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "debt",
+        "type": "uint256"
+      }
+    ],
+    "name": "ReserveDebtSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "uint256",
         "name": "newFee",
@@ -423,25 +442,6 @@
         "internalType": "address",
         "name": "_token",
         "type": "address"
-      }
-    ],
-    "name": "filledReserves",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "filled_",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
       },
       {
         "internalType": "uint256",
@@ -498,6 +498,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "reserveDebts",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "debt_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "reserveFee",
     "outputs": [
@@ -537,6 +556,24 @@
       }
     ],
     "name": "setReserveCap",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_debt",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReserveDebt",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
