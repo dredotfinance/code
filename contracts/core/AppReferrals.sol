@@ -87,6 +87,13 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         emit ReferralCodeRegistered(msg.sender, _code);
     }
 
+    /// @notice Gets the total number of referrals made by a referrer
+    /// @param _referrer The referrer to get the total number of referrals for
+    /// @return The total number of referrals made by the referrer
+    function totalReferralsMade(address _referrer) external view returns (uint256) {
+        return _referrals[_referrer].length();
+    }
+
     /// @inheritdoc IAppReferrals
     function getReferrals(address _referrer) external view returns (address[] memory referrals) {
         EnumerableSet.AddressSet storage refs = _referrals[_referrer];
