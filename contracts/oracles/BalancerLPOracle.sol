@@ -94,6 +94,7 @@ contract BalancerLPOracle is BalancerMath, IOracle {
 
         // use fairReserveA and fairReserveB to compute LP token price
         // LP price = (fairResA * pxA + fairResB * pxB) / totalLPSupply
-        return (fairResA * pxA + fairResB * pxB) / poolData.balancesRaw[0];
+        uint256 totalSupply = IERC20(pool).totalSupply();
+        return (fairResA * pxA + fairResB * pxB) / totalSupply;
     }
 }

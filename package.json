@@ -49,9 +49,9 @@
   },
   "scripts": {
     "compile": "SKIP_LOAD=true hardhat compile && forge build",
-    "test": "forge test",
+    "test": "npm run test:foundry",
     "coverage": "forge coverage --report lcov",
-    "test:foundry": "forge test",
+    "test:foundry": "forge test --no-match-test fork_test",
     "test:halmos": "halmos",
     "coverage:html": "node scripts/renderCoverage.js",
     "deploy-w3f-bond-events": "w3f deploy web3-functions/bond-events/index.ts",

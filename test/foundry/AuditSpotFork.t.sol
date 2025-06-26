@@ -19,12 +19,12 @@ contract AuditSpotForkTest is Test {
     address public constant ORACLE = 0x82884801428895c2550ED1CA96997BD60F74B5cC;
     address public constant SPOT_ORACLE = 0x953E6BCCCCcf01ae151A627b4C77718aC8cFaA34;
     address public constant APP_TOKEN = 0xb4444468e444f89e1c2CAc2F1D3ee7e336cBD1f5;
-    address public constant GOVERNOR = 0x635ad38F96aEd1242DbB0DbB5E9125F560d87270;
+    address public constant GOVERNOR = 0x0E43DF9F40Cc6eEd3eC70ea41D6F34329fE75986;
 
     function setUp() public {
         uint256 mainnetFork = vm.createFork("https://rpc.soniclabs.com");
         vm.selectFork(mainnetFork);
-        vm.roll(34407239);
+        vm.roll(36066642);
 
         // Initialize contract instances
         treasury = IAppTreasury(TREASURY);
@@ -40,52 +40,56 @@ contract AuditSpotForkTest is Test {
         vm.label(GOVERNOR, "GOVERNOR");
     }
 
-    // function test_AuditSpotPrice() public {
-    //     // Get spot and floor prices
-    //     uint256 spotPrice = spotOracle.getPrice();
-    //     uint256 floorPrice = oracle.getTokenPrice();
+    function test_AuditSpotPrice_fork_test() public {
+        // Get spot and floor prices
+        uint256 spotPrice = spotOracle.getPrice();
+        uint256 floorPrice = oracle.getTokenPrice();
 
-    //     console.log("Spot price:", vm.toString(spotPrice));
-    //     console.log("Floor price:", vm.toString(floorPrice));
+        console.log("Spot price:", vm.toString(spotPrice));
+        console.log("Floor price:", vm.toString(floorPrice));
 
-    //     // Reset oracle to spot price
-    //     vm.startPrank(GOVERNOR);
-    //     oracle.setTokenPrice(spotPrice);
-    //     vm.stopPrank();
+        // Reset oracle to spot price
+        vm.startPrank(GOVERNOR);
+        // oracle.setTokenPrice(spotPrice);
 
-    //     spotPrice = spotOracle.getPrice();
-    //     floorPrice = oracle.getTokenPrice();
+        // temporarily update oracle for beets-sts-rzr
+        oracle.updateOracle(0x36e6765907DD61b50Ad33F79574dD1B63339B59c, 0x12E67e27236E16A6e3454A91451Cb689C23D8C58);
 
-    //     console.log("New Spot price:", vm.toString(spotPrice));
+        vm.stopPrank();
 
-    //     // Get all tokens from treasury
-    //     address[] memory tokens = treasury.tokens();
-    //     uint256 totalValue;
+        spotPrice = spotOracle.getPrice();
+        floorPrice = oracle.getTokenPrice();
 
-    //     for (uint256 i = 0; i < tokens.length; i++) {
-    //         address token = tokens[i];
-    //         IERC20Metadata tokenContract = IERC20Metadata(token);
+        console.log("New Spot price:", vm.toString(spotPrice));
 
-    //         console.log("");
-    //         console.log("Token name:", tokenContract.name());
-    //         console.log("Token symbol:", tokenContract.symbol());
-    //         console.log("Token decimals:", tokenContract.decimals());
+        // Get all tokens from treasury
+        address[] memory tokens = treasury.tokens();
+        uint256 totalValue;
 
-    //         uint256 balance = tokenContract.balanceOf(TREASURY);
-    //         console.log("Balance:", balance);
-    //         console.log("Balance e18:", vm.toString(balance * 10 ** (18 - tokenContract.decimals())));
+        for (uint256 i = 0; i < tokens.length; i++) {
+            address token = tokens[i];
+            IERC20Metadata tokenContract = IERC20Metadata(token);
 
-    //         uint256 tokenValue = treasury.tokenValueE18(token, balance);
-    //         uint256 tokenValueE18 = tokenValue;
-    //         console.log("Token value:", vm.toString(tokenValue));
-    //         console.log("Token value e18:", vm.toString(tokenValueE18));
-    //         console.log("Token value - spot price:", tokenValueE18 * spotPrice / 1e18);
+            console.log("");
+            console.log("Token name:", tokenContract.name());
+            console.log("Token symbol:", tokenContract.symbol());
+            console.log("Token decimals:", tokenContract.decimals());
 
-    //         totalValue += tokenValueE18;
-    //     }
+            uint256 balance = tokenContract.balanceOf(TREASURY);
+            console.log("Balance:", balance);
+            console.log("Balance e18:", vm.toString(balance * 10 ** (18 - tokenContract.decimals())));
 
-    //     console.log("");
-    //     console.log("Total value:", vm.toString(totalValue));
-    //     console.log("Total value - spot price in USD:", totalValue * spotPrice / 1e18);
-    // }
+            uint256 tokenValue = treasury.tokenValueE18(token, balance);
+            uint256 tokenValueE18 = tokenValue;
+            console.log("Token value:", vm.toString(tokenValue));
+            console.log("Token value e18:", vm.toString(tokenValueE18));
+            console.log("Token value - spot price:", tokenValueE18 * spotPrice / 1e18);
+
+            totalValue += tokenValueE18;
+        }
+
+        console.log("");
+        console.log("Total value in RZR:", vm.toString(totalValue));
+        console.log("Total value - spot price in USD:", totalValue * spotPrice / 1e18);
+    }
 }
