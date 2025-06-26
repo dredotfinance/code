@@ -70,7 +70,7 @@ contract BlackholeLP is AppAccessControlled {
         // invariant check - dont' mint RZR if we don't have enough reserves
         uint256 totalReservesAfter = treasury.calculateReserves();
         require(totalReservesAfter > totalReservesBefore, "Reserves invariant violated");
-        require(totalReservesAfter >= appToken.totalSupply(), "Reserves invariant violated");
+        require(totalReservesAfter >= treasury.totalSupply(), "Reserves invariant violated");
     }
 
     function swap(address tokenIn, bool stable, uint256 minAmountOut) external {
