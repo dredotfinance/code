@@ -75,6 +75,21 @@ contract AppUIHelperWrite is AppUIHelperBase {
         }
     }
 
+    /// @notice Claim all rewards for a bond position
+    /// @return amount The amount of rewards claimed
+    function claimBondRewards(address user) external returns (uint256 amount) {
+        uint256 balance = bondDepository.balanceOf(user);
+        for (uint256 i = 0; i < balance; i++) {
+            uint256 tokenId = bondDepository.tokenOfOwnerByIndex(user, i);
+            if (tokenId == 0) continue;
+            uint256 claimable = IAppBondDepository(bondDepository).claimableAmount(tokenId);
+            if (claimable > 0) {
+                IAppBondDepository(bondDepository).claim(tokenId);
+                amount += claimable;
+            }
+        }
+    }
+
     /// @notice Zaps and buys a bond
     /// @param odosParams The parameters for the zap
     /// @param bondParams The parameters for the bond

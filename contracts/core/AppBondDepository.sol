@@ -167,7 +167,7 @@ contract AppBondDepository is
 
     /// @inheritdoc IAppBondDepository
     function claim(uint256 _tokenId) external override nonReentrant {
-        require(ownerOf(_tokenId) == msg.sender, "Not owner");
+        address owner = ownerOf(_tokenId);
         require(!blacklisted[_tokenId], "blacklisted");
         BondPosition storage position = _positions[_tokenId];
         require(!position.isStaked, "Position is staked");
@@ -178,7 +178,7 @@ contract AppBondDepository is
         position.claimedAmount += claimable;
         position.lastClaimTime = block.timestamp;
 
-        app.transfer(msg.sender, claimable);
+        app.transfer(owner, claimable);
 
         emit Claimed(_tokenId, claimable);
     }
