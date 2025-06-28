@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import "./AppUIHelperBase.sol";
 import "../interfaces/IAppReferrals.sol";
+import "../interfaces/ILiquidityAdapter.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title RZR UI Helper
@@ -19,6 +20,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         address odosTokenIn;
         uint256 odosTokenAmountIn;
         bytes odosData;
+        address liquidityAdapter;
     }
 
     struct BondParams {
@@ -100,7 +102,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         payable
         returns (uint256 payout_, uint256 tokenId_)
     {
-        _prepareZap(odosParams);
+        _performZap(odosParams);
         IERC20(odosParams.odosTokenIn).approve(address(referrals), type(uint256).max);
         (payout_, tokenId_) = referrals.bondWithReferral(
             bondParams.id,
@@ -125,7 +127,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         payable
         returns (uint256 tokenId, uint256 taxPaid, uint256 amountStaked, uint256 amountDeclared)
     {
-        _prepareZap(odosParams);
+        _performZap(odosParams);
 
         amountStaked = appToken.balanceOf(address(this));
         appToken.approve(address(referrals), amountStaked);
@@ -148,7 +150,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         payable
         returns (uint256 tokenId, uint256 taxPaid, uint256 amountStaked, uint256 amountDeclared)
     {
-        _prepareZap(odosParams);
+        _performZap(odosParams);
 
         amountStaked = appToken.balanceOf(address(this));
         amountDeclared = (amountStaked * stakeParams.amountDeclaredAsPercentage) / 1e18;
@@ -157,6 +159,20 @@ contract AppUIHelperWrite is AppUIHelperBase {
             referrals.stakeWithReferral(amountStaked, amountDeclared, stakeParams.referralCode, msg.sender);
 
         _purgeAll(odosParams);
+    }
+
+    /// @notice Estimates the output of a zap
+    /// @dev This function does not perform the zap, it only estimates the output. Use as a static call.
+    /// @param odosParams The parameters for the zap
+    /// @param tokenOut The token to estimate the output for
+    /// @return output_ The estimated output
+    function estimateZapOutput(OdosParams memory odosParams, address tokenOut)
+        external
+        payable
+        returns (uint256 output_)
+    {
+        _performZap(odosParams);
+        output_ = IERC20(tokenOut).balanceOf(address(this));
     }
 
     /// @notice Purges all tokens from the contract
@@ -183,7 +199,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
 
     /// @notice Prepares the zap for the given token and odos data
     /// @param odosParams The parameters for the zap
-    function _prepareZap(OdosParams memory odosParams) internal {
+    function _performZap(OdosParams memory odosParams) internal {
         if (odosParams.tokenIn == address(0)) {
             require(msg.value == odosParams.tokenAmountIn, "Invalid ETH amount");
         } else {
@@ -198,6 +214,25 @@ contract AppUIHelperWrite is AppUIHelperBase {
             (bool success,) = odos.call{value: msg.value}(odosParams.odosData);
             require(success, "Odos call failed");
         }
+
+        // sometimes odos cannot add liquidity to the pool, so we need to do it manually through
+        // the liquidity adapter
+        if (odosParams.liquidityAdapter != address(0)) {
+            _performLiquidityZap(ILiquidityAdapter(odosParams.liquidityAdapter));
+        }
+    }
+
+    /// @notice Performs the liquidity zap
+    /// @param adapter The liquidity adapter to use
+    function _performLiquidityZap(ILiquidityAdapter adapter) internal {
+        uint256 balanceA = IERC20(adapter.tokenA()).balanceOf(address(this));
+        uint256 balanceB = IERC20(adapter.tokenB()).balanceOf(address(this));
+
+        require(balanceA > 0 && balanceB > 0, "No balance for liquidity adapter");
+
+        IERC20(adapter.tokenA()).approve(address(adapter), balanceA);
+        IERC20(adapter.tokenB()).approve(address(adapter), balanceB);
+        adapter.addLiquidity(balanceA, balanceB, 0, 0);
     }
 
     receive() external payable {}

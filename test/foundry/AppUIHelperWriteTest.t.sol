@@ -126,7 +126,8 @@ contract AppUIHelperWriteTest is BaseTest {
             tokenAmountIn: 100e18,
             odosTokenIn: address(mockQuoteToken),
             odosTokenAmountIn: 100e18,
-            odosData: ""
+            odosData: "",
+            liquidityAdapter: address(0)
         });
 
         AppUIHelperWrite.BondParams memory bondParams = AppUIHelperWrite.BondParams({
@@ -173,7 +174,8 @@ contract AppUIHelperWriteTest is BaseTest {
             tokenAmountIn: 1e18,
             odosTokenIn: address(mockQuoteToken),
             odosTokenAmountIn: 100e18,
-            odosData: ""
+            odosData: "",
+            liquidityAdapter: address(0)
         });
 
         AppUIHelperWrite.BondParams memory bondParams = AppUIHelperWrite.BondParams({
@@ -211,7 +213,8 @@ contract AppUIHelperWriteTest is BaseTest {
             tokenAmountIn: 100e18,
             odosTokenIn: address(app),
             odosTokenAmountIn: 100e18,
-            odosData: ""
+            odosData: "",
+            liquidityAdapter: address(0)
         });
 
         AppUIHelperWrite.StakeParams memory stakeParams = AppUIHelperWrite.StakeParams({
@@ -245,7 +248,8 @@ contract AppUIHelperWriteTest is BaseTest {
             tokenAmountIn: 100e18,
             odosTokenIn: address(app),
             odosTokenAmountIn: 100e18,
-            odosData: ""
+            odosData: "",
+            liquidityAdapter: address(0)
         });
 
         AppUIHelperWrite.StakeParams memory stakeParams = AppUIHelperWrite.StakeParams({
@@ -279,7 +283,8 @@ contract AppUIHelperWriteTest is BaseTest {
             tokenAmountIn: 1e18,
             odosTokenIn: address(app),
             odosTokenAmountIn: 100e18,
-            odosData: ""
+            odosData: "",
+            liquidityAdapter: address(0)
         });
 
         AppUIHelperWrite.StakeParams memory stakeParams = AppUIHelperWrite.StakeParams({
