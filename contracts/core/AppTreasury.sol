@@ -41,7 +41,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     /// @inheritdoc IAppTreasury
     mapping(address token => uint256 reserveDebt) public reserveDebts;
 
-    function initialize(address _app, address _appOracle, address _authority) public reinitializer(3) {
+    function initialize(address _app, address _appOracle, address _authority) public reinitializer(4) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);
@@ -125,8 +125,8 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
             require(debt <= reserveDebts[_token], "Treasury: reserve debt exceeded");
         }
 
-        // invariant check
-        require(_totalReserves >= totalSupply(), "Reserves too low");
+        // invariant check - only do bond sales if the reserves are greater than the total supply
+        require(totalReserves() >= totalSupply(), "Reserves too low");
 
         emit Deposit(_token, _amount, value);
     }

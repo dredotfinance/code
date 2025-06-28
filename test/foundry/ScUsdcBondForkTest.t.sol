@@ -20,12 +20,13 @@ contract ScUsdcBondForkTest is Test {
     address public constant SC_USDC = 0xd3DCe716f3eF535C5Ff8d041c1A41C3bd89b97aE;
 
     // Bond parameters from the script
-    uint256 public constant BOND_CAPACITY = 100 ether; // 100 RZR
+    uint256 public constant BOND_CAPACITY = 10000 ether; // 100 RZR
     uint256 public constant INITIAL_PRICE = 3469018;
     uint256 public constant FINAL_PRICE = 3083572;
     uint256 public constant BOND_DURATION = 7 days; // 7 days in seconds
 
     IAppTreasury public treasury = IAppTreasury(0xe22e10f8246dF1f0845eE3E9f2F0318bd60EFC85);
+    IERC20 public rzr = IERC20(0xb4444468e444f89e1c2CAc2F1D3ee7e336cBD1f5);
     IAppBondDepository public bondDepository = IAppBondDepository(0x44b497aa4b742dc48Ce0bd26F66da9aecA19Bd75);
     IAppAuthority public authority = IAppAuthority(0x07249bd92625641f9E3DBa360967C3b18eE28AF2);
     address public owner = 0x5f5a6E0F769BBb9232d2F6EDA84790296b288974;
@@ -36,6 +37,14 @@ contract ScUsdcBondForkTest is Test {
     function test_CreateScUsdcBond_fork_test() public {
         vm.createSelectFork(SONIC_RPC, SONIC_BLOCK);
         vm.startPrank(owner);
+
+        vm.label(address(rzr), "RZR");
+        vm.label(address(scUSDC), "scUSDC");
+        vm.label(address(bondDepository), "bondDepository");
+        vm.label(address(authority), "authority");
+        vm.label(address(treasury), "treasury");
+        vm.label(address(owner), "owner");
+        vm.label(address(whale), "whale");
 
         // Create bond with the exact parameters from the script
         uint256 bondId = bondDepository.create(scUSDC, BOND_CAPACITY, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
@@ -66,10 +75,18 @@ contract ScUsdcBondForkTest is Test {
         vm.startPrank(whale);
         scUSDC.approve(address(bondDepository), type(uint256).max);
 
+        uint256 rzrBalanceBefore = rzr.balanceOf(address(bondDepository));
+
         // uint256 _id, uint256 _amount, uint256 _maxPrice, uint256 _minPayout, address _user
         bondDepository.deposit(bondId, 1000 * 1e6, type(uint256).max, 0, whale);
 
-        require(false, "test");
+        uint256 rzrBalanceAfter = rzr.balanceOf(address(bondDepository));
+
+        console.log("RZR balance of bondDepository", rzrBalanceAfter - rzrBalanceBefore);
+        console.log("RZR balance of whale", rzr.balanceOf(whale));
+        console.log("scUSDC balance of whale", scUSDC.balanceOf(whale));
+        console.log("bondDepository balance of whale", bondDepository.balanceOf(whale));
+        console.log("bondDepository balance of whale", bondDepository.balanceOf(whale));
         vm.stopPrank();
     }
 }
