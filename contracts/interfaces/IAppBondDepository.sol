@@ -49,6 +49,14 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @param blacklisted Whether the bond is blacklisted
     event Blacklisted(uint256 indexed id, bool blacklisted);
 
+    /// @notice Emitted when a bond is updated
+    /// @param id The unique identifier of the bond
+    /// @param capacity The new capacity of the bond
+    /// @param maxPayout The new maximum payout of the bond
+    /// @param initialPrice The new initial price of the bond
+    /// @param finalPrice The new final price of the bond
+    event UpdateBond(uint256 indexed id, uint256 capacity, uint256 maxPayout, uint256 initialPrice, uint256 finalPrice);
+
     /* ======== STRUCTS ======== */
     /// @notice Represents a bond offering
     /// @param enabled Whether the bond is currently enabled
@@ -204,4 +212,15 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @notice Toggles the blacklist status of a bond
     /// @param _id The ID of the bond
     function toggleBlacklist(uint256 _id) external;
+
+    /// @notice Calculates the payout and profit for a given token, price, and amount
+    /// @param _token The token to calculate the payout and profit for
+    /// @param _price The price of the token
+    /// @param _amount The amount of tokens to calculate the payout and profit for
+    /// @return payout The payout amount
+    /// @return profit The profit amount
+    function calculatePayoutAndProfit(IERC20 _token, uint256 _price, uint256 _amount)
+        external
+        view
+        returns (uint256 payout, uint256 profit);
 }

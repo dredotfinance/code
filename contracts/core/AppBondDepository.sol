@@ -203,6 +203,17 @@ contract AppBondDepository is
         emit Staked(_tokenId, claimable);
     }
 
+    function updateBond(uint256 _id, uint256 _capacity, uint256 _maxPayout, uint256 _initialPrice, uint256 _finalPrice)
+        external
+        onlyBondManager
+    {
+        _bonds[_id].capacity = _capacity;
+        _bonds[_id].maxPayout = _maxPayout;
+        _bonds[_id].initialPrice = _initialPrice;
+        _bonds[_id].finalPrice = _finalPrice;
+        emit UpdateBond(_id, _capacity, _maxPayout, _initialPrice, _finalPrice);
+    }
+
     /* ======== VIEW FUNCTIONS ======== */
 
     /// @notice Calculates the current price of a bond based on time elapsed
