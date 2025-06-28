@@ -4,7 +4,6 @@ pragma abicoder v2;
 
 import "./AppUIHelperBase.sol";
 import "../interfaces/IAppReferrals.sol";
-import "../interfaces/ILiquidityAdapter.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title RZR UI Helper
@@ -20,7 +19,6 @@ contract AppUIHelperWrite is AppUIHelperBase {
         address odosTokenIn;
         uint256 odosTokenAmountIn;
         bytes odosData;
-        address liquidityAdapter;
     }
 
     struct BondParams {
@@ -175,6 +173,22 @@ contract AppUIHelperWrite is AppUIHelperBase {
         output_ = IERC20(tokenOut).balanceOf(address(this));
     }
 
+    /// @notice Estimates the output of a bond
+    /// @dev This function does not perform the bond, it only estimates the output. Use as a static call.
+    /// @param tokenIn The token to estimate the output for
+    /// @param amountIn The amount of token to estimate the output for
+    /// @param bondId The ID of the bond to estimate the output for
+    /// @return output_ The estimated output
+    function estimateBondOutput(address tokenIn, uint256 amountIn, uint256 bondId)
+        external
+        view
+        returns (uint256 output_)
+    {
+        uint256 price = bondDepository.currentPrice(bondId);
+        (uint256 payout,) = bondDepository.calculatePayoutAndProfit(IERC20(tokenIn), price, amountIn);
+        output_ = payout;
+    }
+
     /// @notice Purges all tokens from the contract
     /// @param odosParams The parameters for the zap
     function _purgeAll(OdosParams memory odosParams) internal {
@@ -214,25 +228,6 @@ contract AppUIHelperWrite is AppUIHelperBase {
             (bool success,) = odos.call{value: msg.value}(odosParams.odosData);
             require(success, "Odos call failed");
         }
-
-        // sometimes odos cannot add liquidity to the pool, so we need to do it manually through
-        // the liquidity adapter
-        if (odosParams.liquidityAdapter != address(0)) {
-            _performLiquidityZap(ILiquidityAdapter(odosParams.liquidityAdapter));
-        }
-    }
-
-    /// @notice Performs the liquidity zap
-    /// @param adapter The liquidity adapter to use
-    function _performLiquidityZap(ILiquidityAdapter adapter) internal {
-        uint256 balanceA = IERC20(adapter.tokenA()).balanceOf(address(this));
-        uint256 balanceB = IERC20(adapter.tokenB()).balanceOf(address(this));
-
-        require(balanceA > 0 && balanceB > 0, "No balance for liquidity adapter");
-
-        IERC20(adapter.tokenA()).approve(address(adapter), balanceA);
-        IERC20(adapter.tokenB()).approve(address(adapter), balanceB);
-        adapter.addLiquidity(balanceA, balanceB, 0, 0);
     }
 
     receive() external payable {}

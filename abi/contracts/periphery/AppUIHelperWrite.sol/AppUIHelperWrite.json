@@ -165,6 +165,35 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "tokenIn",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountIn",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "bondId",
+        "type": "uint256"
+      }
+    ],
+    "name": "estimateBondOutput",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "output_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "components": [
           {
             "internalType": "address",
@@ -190,11 +219,6 @@
             "internalType": "bytes",
             "name": "odosData",
             "type": "bytes"
-          },
-          {
-            "internalType": "address",
-            "name": "liquidityAdapter",
-            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperWrite.OdosParams",
@@ -337,11 +361,6 @@
             "internalType": "bytes",
             "name": "odosData",
             "type": "bytes"
-          },
-          {
-            "internalType": "address",
-            "name": "liquidityAdapter",
-            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperWrite.OdosParams",
@@ -425,11 +444,6 @@
             "internalType": "bytes",
             "name": "odosData",
             "type": "bytes"
-          },
-          {
-            "internalType": "address",
-            "name": "liquidityAdapter",
-            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperWrite.OdosParams",
@@ -513,11 +527,6 @@
             "internalType": "bytes",
             "name": "odosData",
             "type": "bytes"
-          },
-          {
-            "internalType": "address",
-            "name": "liquidityAdapter",
-            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperWrite.OdosParams",
