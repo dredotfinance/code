@@ -20,4 +20,14 @@ interface ILiquidityAdapter {
     function addLiquidity(uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin)
         external
         returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+
+    /// @notice Quote the amount of token A and token B needed to add liquidity
+    /// @param amountADesired The desired amount of token A
+    /// @param amountBDesired The desired amount of token B
+    /// @return amountA The amount of token A needed
+    /// @return amountB The amount of token B needed
+    function quoteAddLiquidity(uint256 amountADesired, uint256 amountBDesired)
+        external
+        view
+        returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 }

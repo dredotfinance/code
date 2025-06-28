@@ -47,6 +47,22 @@ contract ShadowAdapter is ILiquidityAdapter {
         _purge(tokenB);
     }
 
+    function quoteAddLiquidity(uint256 amountADesired, uint256 amountBDesired)
+        external
+        view
+        returns (uint256 amountA, uint256 amountB, uint256 liquidity)
+    {
+        (amountA, amountB, liquidity) = router.quoteAddLiquidity(tokenA, tokenB, stable, amountADesired, amountBDesired);
+    }
+
+    function swap(IERC20 tokenIn, IERC20 tokenOut, uint256 amountIn, uint256 amountOutMin) external {
+        tokenIn.transferFrom(msg.sender, address(this), amountIn);
+        tokenIn.approve(address(router), amountIn);
+        IShadowRouter.route[] memory routes = new IShadowRouter.route[](1);
+        routes[0] = IShadowRouter.route({from: address(tokenIn), to: address(tokenOut), stable: stable});
+        router.swapExactTokensForTokens(amountIn, amountOutMin, routes, msg.sender, block.timestamp);
+    }
+
     function _purge(address token) internal {
         if (token == address(0)) {
             (bool success,) = msg.sender.call{value: address(this).balance}("");

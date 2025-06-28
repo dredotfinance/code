@@ -163,6 +163,62 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "tokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "odosTokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "odosTokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "odosData",
+            "type": "bytes"
+          },
+          {
+            "internalType": "address",
+            "name": "liquidityAdapter",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.OdosParams",
+        "name": "odosParams",
+        "type": "tuple"
+      },
+      {
+        "internalType": "address",
+        "name": "tokenOut",
+        "type": "address"
+      }
+    ],
+    "name": "estimateZapOutput",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "output_",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "odos",
     "outputs": [
@@ -281,6 +337,11 @@
             "internalType": "bytes",
             "name": "odosData",
             "type": "bytes"
+          },
+          {
+            "internalType": "address",
+            "name": "liquidityAdapter",
+            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperWrite.OdosParams",
@@ -364,6 +425,11 @@
             "internalType": "bytes",
             "name": "odosData",
             "type": "bytes"
+          },
+          {
+            "internalType": "address",
+            "name": "liquidityAdapter",
+            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperWrite.OdosParams",
@@ -447,6 +513,11 @@
             "internalType": "bytes",
             "name": "odosData",
             "type": "bytes"
+          },
+          {
+            "internalType": "address",
+            "name": "liquidityAdapter",
+            "type": "address"
           }
         ],
         "internalType": "struct AppUIHelperWrite.OdosParams",

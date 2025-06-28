@@ -54,7 +54,7 @@ contract AppBondDepository is
     function initialize(address _app, address _staking, address _treasury, address _authority)
         public
         override
-        initializer
+        reinitializer(2)
     {
         __ERC721_init("RZR Bond Position", "RZR-BOND");
         __ReentrancyGuard_init();
@@ -272,6 +272,20 @@ contract AppBondDepository is
         require(_id < _bonds.length, "Invalid bond ID");
         blacklisted[_id] = !blacklisted[_id];
         emit Blacklisted(_id, blacklisted[_id]);
+    }
+
+    /// @notice Calculates the payout and profit for a given token, price, and amount
+    /// @param _token The token to calculate the payout and profit for
+    /// @param _price The price of the token
+    /// @param _amount The amount of tokens to calculate the payout and profit for
+    /// @return payout The payout amount
+    /// @return profit The profit amount
+    function calculatePayoutAndProfit(IERC20 _token, uint256 _price, uint256 _amount)
+        external
+        view
+        returns (uint256 payout, uint256 profit)
+    {
+        return _calculatePayoutAndProfit(_token, _price, _amount);
     }
 
     /// @notice Returns the base URI for the NFT metadata
