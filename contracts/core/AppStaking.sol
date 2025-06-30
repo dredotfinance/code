@@ -68,7 +68,7 @@ contract AppStaking is
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(5)
+        reinitializer(6)
     {
         if (lastId == 0) lastId = 1;
 
@@ -205,6 +205,7 @@ contract AppStaking is
         returns (uint256 tokenId, uint256 taxPaid)
     {
         require(declaredValue > 0, "Declared value must be greater than 0");
+        _updateReward(0);
 
         // Transfer RZR tokens from user
         appToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -229,7 +230,6 @@ contract AppStaking is
         });
 
         totalStaked += amount;
-        _updateReward(tokenId);
 
         // Mint tracking tokens for the staked amount
         trackingToken.mint(to, amount);
