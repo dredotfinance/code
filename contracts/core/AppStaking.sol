@@ -68,7 +68,7 @@ contract AppStaking is
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(6)
+        reinitializer(7)
     {
         if (lastId == 0) lastId = 1;
 
