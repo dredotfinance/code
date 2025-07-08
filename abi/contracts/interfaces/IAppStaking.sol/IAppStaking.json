@@ -900,6 +900,30 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "isInWithdrawCooldown",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "withdrawCooldownEnd",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "lastTimeRewardApplicable",
     "outputs": [

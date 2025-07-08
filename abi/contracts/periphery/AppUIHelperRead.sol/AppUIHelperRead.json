@@ -193,6 +193,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint256",
+            "name": "withdrawCooldownStart",
+            "type": "uint256"
+          },
+          {
             "internalType": "bool",
             "name": "isActive",
             "type": "bool"
@@ -200,6 +205,11 @@
           {
             "internalType": "bool",
             "name": "inCooldown",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "inWithdrawCooldown",
             "type": "bool"
           }
         ],
@@ -437,6 +447,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint256",
+            "name": "withdrawCooldownStart",
+            "type": "uint256"
+          },
+          {
             "internalType": "bool",
             "name": "isActive",
             "type": "bool"
@@ -444,6 +459,11 @@
           {
             "internalType": "bool",
             "name": "inCooldown",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "inWithdrawCooldown",
             "type": "bool"
           }
         ],
