@@ -39,6 +39,7 @@ contract BaseTest is Test {
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
+    address public user3 = makeAddr("user3");
     address public operationsTreasury = makeAddr("operationsTreasury");
 
     function setUpBaseTest() public {
