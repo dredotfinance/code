@@ -127,6 +127,8 @@ contract AppUIHelperRead is AppUIHelperBase {
             if (tokenId == 0) continue;
             IAppStaking.Position memory position = staking.positions(tokenId);
 
+            (bool inWithdrawCooldown, uint256 withdrawCooldownStart) = staking.isInWithdrawCooldown(tokenId);
+
             stakingPositions[i] = StakingPositionInfo({
                 owner: user,
                 id: tokenId,
@@ -136,7 +138,9 @@ contract AppUIHelperRead is AppUIHelperBase {
                 cooldownEnd: position.cooldownEnd,
                 rewardsUnlockAt: position.rewardsUnlockAt,
                 isActive: position.cooldownEnd == 0,
-                inCooldown: staking.isInBuyCooldown(tokenId)
+                inCooldown: staking.isInBuyCooldown(tokenId),
+                inWithdrawCooldown: inWithdrawCooldown,
+                withdrawCooldownStart: withdrawCooldownStart
             });
         }
     }
@@ -193,6 +197,8 @@ contract AppUIHelperRead is AppUIHelperBase {
 
             if (position.amount == 0) continue;
 
+            (bool inWithdrawCooldown, uint256 withdrawCooldownStart) = staking.isInWithdrawCooldown(i);
+
             positions[i - startingIndex] = StakingPositionInfo({
                 id: i,
                 owner: staking.ownerOf(i),
@@ -202,7 +208,9 @@ contract AppUIHelperRead is AppUIHelperBase {
                 cooldownEnd: position.cooldownEnd,
                 rewardsUnlockAt: position.rewardsUnlockAt,
                 isActive: position.cooldownEnd == 0,
-                inCooldown: staking.isInBuyCooldown(i)
+                inCooldown: staking.isInBuyCooldown(i),
+                inWithdrawCooldown: inWithdrawCooldown,
+                withdrawCooldownStart: withdrawCooldownStart
             });
         }
 

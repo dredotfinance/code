@@ -34,8 +34,10 @@ abstract contract AppUIHelperBase {
         uint256 rewards;
         uint256 cooldownEnd;
         uint256 rewardsUnlockAt;
+        uint256 withdrawCooldownStart;
         bool isActive;
         bool inCooldown; // whether the position is in cooldown
+        bool inWithdrawCooldown; // whether the position is in withdraw cooldown
     }
 
     struct BondPositionInfo {
