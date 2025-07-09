@@ -246,7 +246,7 @@ contract AppStaking is
     function startUnstaking(uint256 tokenId) external override nonReentrant {
         require(ownerOf(tokenId) == msg.sender, "Not owner");
         require(_positions[tokenId].cooldownEnd == 0, "Already in cooldown");
-        require(_withdrawCooldownStart[tokenId] < block.timestamp, "Currently in withdraw cooldown");
+        require(_withdrawCooldownStart[tokenId] <= block.timestamp, "Currently in withdraw cooldown");
 
         Position storage position = _positions[tokenId];
         _updateReward(tokenId);
@@ -281,6 +281,10 @@ contract AppStaking is
         delete _withdrawCooldownStart[tokenId];
 
         emit PositionUnstaked(tokenId, msg.sender, amount);
+    }
+
+    function updateWithdrawCooldown(uint256 tokenId, uint256 newCooldownEnd) external onlyGovernor {
+        _withdrawCooldownStart[tokenId] = newCooldownEnd;
     }
 
     /// @inheritdoc IAppStaking
