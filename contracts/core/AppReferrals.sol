@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.8.28;
 
-import "./AppAccessControlled.sol";
-import "../interfaces/IAppOracle.sol";
 import "../interfaces/IApp.sol";
-import "../interfaces/IAppTreasury.sol";
 import "../interfaces/IAppBondDepository.sol";
-import "../interfaces/IAppStaking.sol";
+import "../interfaces/IAppOracle.sol";
 import "../interfaces/IAppReferrals.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../interfaces/IAppStaking.sol";
+import "../interfaces/IAppTreasury.sol";
+import "./AppAccessControlled.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /// @title AppReferrals
 /// @notice This contract is used to track referrals and rewards

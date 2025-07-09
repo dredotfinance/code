@@ -29,16 +29,12 @@ contract StakingMinLockDurationTest is BaseTest {
         // Create position with min lock duration
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, SHORT_LOCK_DURATION);
 
-        // Check withdraw cooldown status - should use the max of min lock duration and default withdraw cooldown
+        // Check withdraw cooldown status - should be in cooldown until min lock duration expires
         (bool inCooldown, uint256 cooldownEnd) = staking.isInWithdrawCooldown(tokenId);
         assertTrue(inCooldown, "Position should be in withdraw cooldown");
 
-        uint256 expectedCooldownEnd = block.timestamp + Math.max(SHORT_LOCK_DURATION, staking.withdrawCooldownPeriod());
-        assertEq(
-            cooldownEnd,
-            expectedCooldownEnd,
-            "Cooldown end time should match max of min lock duration and default withdraw cooldown"
-        );
+        uint256 expectedCooldownEnd = block.timestamp + SHORT_LOCK_DURATION;
+        assertEq(cooldownEnd, expectedCooldownEnd, "Cooldown end time should match min lock duration");
 
         vm.stopPrank();
     }
@@ -53,14 +49,10 @@ contract StakingMinLockDurationTest is BaseTest {
         // Create position with zero min lock duration
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, 0);
 
-        // Check withdraw cooldown status - should use default withdraw cooldown period
+        // Check withdraw cooldown status - should not be in cooldown with zero duration
         (bool inCooldown, uint256 cooldownEnd) = staking.isInWithdrawCooldown(tokenId);
-        assertTrue(inCooldown, "Position should be in withdraw cooldown");
-        assertEq(
-            cooldownEnd,
-            block.timestamp + staking.withdrawCooldownPeriod(),
-            "Cooldown end time should match default withdraw cooldown period"
-        );
+        assertFalse(inCooldown, "Position should not be in withdraw cooldown with zero duration");
+        assertEq(cooldownEnd, block.timestamp, "Cooldown end time should be current timestamp");
 
         vm.stopPrank();
     }
@@ -327,9 +319,8 @@ contract StakingMinLockDurationTest is BaseTest {
         uint256 splitTokenId = staking.splitPosition(tokenId1, splitRatio, user1);
 
         // Get original cooldown end times
-        (bool inCooldown1, uint256 cooldownEnd1) = staking.isInWithdrawCooldown(tokenId1);
-        (bool inCooldown2, uint256 cooldownEnd2) = staking.isInWithdrawCooldown(tokenId2);
-        (bool inCooldownSplit, uint256 cooldownEndSplit) = staking.isInWithdrawCooldown(splitTokenId);
+        (, uint256 cooldownEnd1) = staking.isInWithdrawCooldown(tokenId1);
+        // cooldownEnd2 and cooldownEndSplit are not used in this test
 
         // Transfer the second position to user1 so they can merge
         staking.transferFrom(owner, user1, tokenId2);
@@ -362,7 +353,7 @@ contract StakingMinLockDurationTest is BaseTest {
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, LONG_LOCK_DURATION);
 
         // Get original cooldown end time
-        (bool inCooldown, uint256 originalCooldownEnd) = staking.isInWithdrawCooldown(tokenId);
+        (, uint256 originalCooldownEnd) = staking.isInWithdrawCooldown(tokenId);
 
         // Split position multiple times
         uint256 split1TokenId = staking.splitPosition(tokenId, 0.25e18, user1); // 25%
@@ -518,7 +509,7 @@ contract StakingMinLockDurationTest is BaseTest {
         (uint256 tokenId,) = staking.createPosition(owner, STAKE_AMOUNT, DECLARED_VALUE, LONG_LOCK_DURATION);
 
         // Get original cooldown end time
-        (bool inCooldown, uint256 originalCooldownEnd) = staking.isInWithdrawCooldown(tokenId);
+        (, uint256 originalCooldownEnd) = staking.isInWithdrawCooldown(tokenId);
 
         // Prepare buyer
         app.mint(user1, DECLARED_VALUE);

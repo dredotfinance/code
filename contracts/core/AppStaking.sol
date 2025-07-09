@@ -71,7 +71,7 @@ contract AppStaking is
     /// @inheritdoc IAppStaking
     function initialize(address _appToken, address _trackingToken, address _authority, address _burner)
         public
-        reinitializer(8)
+        reinitializer(9)
     {
         if (lastId == 0) lastId = 1;
 
@@ -232,7 +232,7 @@ contract AppStaking is
             rewardsUnlockAt: block.timestamp + rewardCooldownPeriod
         });
 
-        _withdrawCooldownStart[tokenId] = block.timestamp + Math.max(minLockDuration, withdrawCooldownPeriod);
+        _withdrawCooldownStart[tokenId] = block.timestamp + minLockDuration;
 
         totalStaked += amount;
 
