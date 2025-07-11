@@ -54,7 +54,7 @@ contract AppBondDepository is
     function initialize(address _app, address _staking, address _treasury, address _authority)
         public
         override
-        reinitializer(2)
+        reinitializer(3)
     {
         __ERC721_init("RZR Bond Position", "RZR-BOND");
         __ReentrancyGuard_init();
@@ -198,7 +198,7 @@ contract AppBondDepository is
 
         // Approve and stake tokens with 30 day minimum lock
         app.approve(address(staking), claimable);
-        staking.createPosition(msg.sender, claimable, _declaredValue, block.timestamp + STAKING_LOCK_PERIOD);
+        staking.createPosition(msg.sender, claimable, _declaredValue, STAKING_LOCK_PERIOD);
 
         emit Staked(_tokenId, claimable);
     }
