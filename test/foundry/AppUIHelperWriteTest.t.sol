@@ -12,6 +12,7 @@ contract AppUIHelperWriteTest is BaseTest {
 
     address public ALICE = makeAddr("alice");
     address public BOB = makeAddr("bob");
+    address public CHARLIE = makeAddr("charlie");
     address public ODOS = makeAddr("odos");
 
     // Mock data
@@ -24,8 +25,20 @@ contract AppUIHelperWriteTest is BaseTest {
         // Setup referrals contract
         referrals = new AppReferrals();
         referrals.initialize(
-            address(bondDepository), address(staking), address(app), address(treasury), address(0), address(authority)
+            address(bondDepository),
+            address(staking),
+            address(app),
+            address(treasury),
+            address(staking4626),
+            address(authority)
         );
+
+        vm.startPrank(owner);
+        referrals.whitelist(ALICE);
+        referrals.whitelist(BOB);
+        referrals.whitelist(CHARLIE);
+        referrals.whitelist(ODOS);
+        vm.stopPrank();
 
         // Setup UI Helper
         uiHelper = new AppUIHelperWrite(
@@ -49,6 +62,7 @@ contract AppUIHelperWriteTest is BaseTest {
         // Label addresses for better trace output
         vm.label(ALICE, "ALICE");
         vm.label(BOB, "BOB");
+        vm.label(CHARLIE, "CHARLIE");
         vm.label(ODOS, "ODOS");
         vm.label(address(uiHelper), "UI_HELPER");
         vm.label(address(referrals), "REFERRALS");
@@ -312,5 +326,93 @@ contract AppUIHelperWriteTest is BaseTest {
         assertTrue(success, "Should be able to receive ETH");
 
         vm.stopPrank();
+    }
+
+    function test_ZapIntoLST() public {
+        // Setup: Alice registers a referral code
+        vm.startPrank(ALICE);
+        referrals.registerReferralCode(REFERRAL_CODE);
+        vm.stopPrank();
+
+        // Setup zap parameters - use the same token for input and output to avoid complex swaps
+        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
+            tokenIn: address(app),
+            tokenAmountIn: 100e18,
+            odosTokenIn: address(app),
+            odosTokenAmountIn: 100e18,
+            odosData: ""
+        });
+
+        bytes8 referralCode = REFERRAL_CODE;
+        address destination = BOB;
+
+        // Bob zaps into LST
+        vm.startPrank(BOB);
+        deal(address(app), BOB, 100e18);
+        app.approve(address(uiHelper), 100e18);
+
+        uint256 minted = uiHelper.zapIntoLST(odosParams, referralCode, destination);
+        vm.stopPrank();
+
+        // Verify LST deposit was successful
+        assertGt(minted, 0, "Should receive minted shares");
+    }
+
+    function test_ZapIntoLST_WithETH() public {
+        // Setup: Alice registers a referral code
+        vm.startPrank(ALICE);
+        referrals.registerReferralCode(REFERRAL_CODE);
+        vm.stopPrank();
+
+        // Setup zap parameters with ETH
+        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
+            tokenIn: address(0), // ETH
+            tokenAmountIn: 1e18,
+            odosTokenIn: address(app),
+            odosTokenAmountIn: 100e18,
+            odosData: ""
+        });
+
+        bytes8 referralCode = REFERRAL_CODE;
+        address destination = BOB;
+
+        // Bob zaps into LST with ETH
+        vm.startPrank(BOB);
+        deal(BOB, 2e18); // Give Bob some ETH
+
+        // Simulate zap output: give the UI helper the app tokens it needs
+        deal(address(app), address(uiHelper), 100e18);
+
+        uint256 minted = uiHelper.zapIntoLST{value: 1e18}(odosParams, referralCode, destination);
+        vm.stopPrank();
+
+        // Verify LST deposit was successful
+        assertGt(minted, 0, "Should receive minted shares");
+    }
+
+    function test_ZapIntoLST_InvalidReferralCode() public {
+        // Setup zap parameters
+        AppUIHelperWrite.OdosParams memory odosParams = AppUIHelperWrite.OdosParams({
+            tokenIn: address(app),
+            tokenAmountIn: 100e18,
+            odosTokenIn: address(app),
+            odosTokenAmountIn: 100e18,
+            odosData: ""
+        });
+
+        bytes8 invalidReferralCode = bytes8(bytes20(CHARLIE)); // Charlie hasn't registered this code
+        address destination = BOB;
+
+        // Bob zaps into LST with invalid referral code
+        vm.startPrank(BOB);
+        deal(address(app), BOB, 100e18);
+        app.approve(address(uiHelper), 100e18);
+
+        // Should not revert, but should not register referral
+        uint256 minted = uiHelper.zapIntoLST(odosParams, invalidReferralCode, destination);
+        vm.stopPrank();
+
+        // Verify LST deposit was still successful
+        assertGt(minted, 0, "Should receive minted shares even with invalid referral code");
     }
 }

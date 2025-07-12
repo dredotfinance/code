@@ -111,6 +111,12 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         emit ReferralCodeRegistered(msg.sender, _code);
     }
 
+    /// @inheritdoc IAppReferrals
+    function whitelist(address _user) external onlyExecutor {
+        whitelisted[_user] = true;
+        emit Whitelisted(_user);
+    }
+
     /// @notice Gets the total number of referrals made by a referrer
     /// @param _referrer The referrer to get the total number of referrals for
     /// @return The total number of referrals made by the referrer

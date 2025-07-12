@@ -15,6 +15,7 @@ import "../../contracts/core/AppAuthority.sol";
 import "../../contracts/core/AppBondDepository.sol";
 import "../../contracts/core/AppOracle.sol";
 import "../../contracts/core/AppBurner.sol";
+import "../../contracts/periphery/Staking4626.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -35,6 +36,8 @@ contract BaseTest is Test {
     AppAuthority public authority;
     AppBondDepository public bondDepository;
     AppBurner public burner;
+
+    Staking4626 public staking4626;
 
     address public owner = makeAddr("owner");
     address public user1 = makeAddr("user1");
@@ -95,6 +98,9 @@ contract BaseTest is Test {
         );
         rebaseController.setTargetPcts(0.1e18, 0.15e18, 0.5e18, 0.5e18);
 
+        staking4626 = new Staking4626();
+        staking4626.initialize("RZR Vault", "vRZR", address(staking), address(authority));
+
         authority.addPolicy(address(treasury));
         authority.addPolicy(address(rebaseController));
         authority.addPolicy(address(owner));
@@ -121,6 +127,7 @@ contract BaseTest is Test {
         vm.label(address(mockQuoteToken), "Mock Quote Token");
         vm.label(address(mockQuoteToken2), "Mock Quote Token 2");
         vm.label(address(mockQuoteToken3), "Mock Quote Token 3");
+        vm.label(address(staking4626), "Staking4626");
 
         vm.label(address(appOracle), "RZR Oracle");
         vm.label(address(mockOracle), "Mock Oracle");

@@ -20,6 +20,7 @@ interface IAppReferrals {
     event MerkleServerSet(address indexed merkleServer);
     event EnableWhitelistingSet(bool indexed enableWhitelisting);
     event MerkleRootSet(bytes32 indexed merkleRoot);
+    event Whitelisted(address indexed user);
 
     // Functions
     /// @notice Initializes the contract
@@ -45,6 +46,10 @@ interface IAppReferrals {
     /// @notice Sets the merkle root for the current week
     /// @param _merkleRoot The merkle root for the week
     function setMerkleRoot(bytes32 _merkleRoot) external;
+
+    /// @notice Whitelists an address
+    /// @param _user The address to whitelist
+    function whitelist(address _user) external;
 
     /// @notice Sets the enable whitelisting
     /// @param _enableWhitelisting The enable whitelisting
