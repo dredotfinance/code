@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import "./AppUIHelperBase.sol";
 import "../interfaces/IAppReferrals.sol";
+import "../interfaces/IStaking4626.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title RZR UI Helper
@@ -12,6 +13,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
     using SafeERC20 for IERC20;
 
     IAppReferrals public referrals;
+    IStaking4626 public staking4626;
 
     struct OdosParams {
         address tokenIn;
@@ -45,7 +47,8 @@ contract AppUIHelperWrite is AppUIHelperBase {
         address _appOracle,
         address _shadowLP,
         address _odos,
-        address _referrals
+        address _referrals,
+        address _staking4626
     )
         AppUIHelperBase(
             _staking,
@@ -60,6 +63,9 @@ contract AppUIHelperWrite is AppUIHelperBase {
         )
     {
         referrals = IAppReferrals(_referrals);
+        staking4626 = IStaking4626(_staking4626);
+
+        appToken.approve(address(staking4626), type(uint256).max);
     }
 
     /// @notice Claim all rewards for a staking position
@@ -110,6 +116,16 @@ contract AppUIHelperWrite is AppUIHelperBase {
             bondParams.referralCode,
             msg.sender
         );
+        _purgeAll(odosParams);
+    }
+
+    /// @notice Zaps and deposits into the LST
+    /// @param odosParams The parameters for the zap
+    /// @param destination The destination address
+    /// @return minted The amount of tokens minted
+    function zapIntoLST(OdosParams memory odosParams, address destination) external payable returns (uint256 minted) {
+        _performZap(odosParams);
+        minted = staking4626.deposit(appToken.balanceOf(address(this)), destination);
         _purgeAll(odosParams);
     }
 

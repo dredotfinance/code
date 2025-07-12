@@ -50,6 +50,11 @@
         "internalType": "address",
         "name": "_referrals",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_staking4626",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -300,6 +305,19 @@
     "outputs": [
       {
         "internalType": "contract IAppStaking",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staking4626",
+    "outputs": [
+      {
+        "internalType": "contract IStaking4626",
         "name": "",
         "type": "address"
       }
@@ -576,6 +594,57 @@
       {
         "internalType": "uint256",
         "name": "amountDeclared",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "tokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "odosTokenIn",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "odosTokenAmountIn",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "odosData",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct AppUIHelperWrite.OdosParams",
+        "name": "odosParams",
+        "type": "tuple"
+      },
+      {
+        "internalType": "address",
+        "name": "destination",
+        "type": "address"
+      }
+    ],
+    "name": "zapIntoLST",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "minted",
         "type": "uint256"
       }
     ],
