@@ -121,7 +121,7 @@ contract AppTreasuryTest is BaseTest {
 
         // Now manage some tokens
         uint256 manageAmount = 20e18;
-        treasury.manage(address(mockQuoteToken), manageAmount);
+        treasury.manage(address(mockQuoteToken), manageAmount, owner);
 
         // Verify reserves were updated
         assertEq(treasury.totalReserves(), depositAmount - manageAmount);

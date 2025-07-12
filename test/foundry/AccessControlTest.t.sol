@@ -28,15 +28,15 @@ contract AccessControlTest is BaseTest {
         authority.addReserveDepositor(reserveDepositor);
         authority.addExecutor(executor);
         authority.addBondManager(bondManager);
-        vm.stopPrank();
 
         // Enable mockQuoteToken in treasury for deposit/withdraw tests.
-        vm.prank(governor);
+
         treasury.enable(address(mockQuoteToken));
+        treasury.setReserveDebt(address(mockQuoteToken), 10000e18);
 
         // Provide some reserves for mint & withdraw tests.
-        vm.prank(governor);
         treasury.setCreditReserves(10_000e18);
+        vm.stopPrank();
 
         // Mint quote tokens for depositor to use later
         mockQuoteToken.mint(reserveDepositor, 5_000e18);
@@ -105,13 +105,13 @@ contract AccessControlTest is BaseTest {
         treasury.deposit(amount, address(mockQuoteToken), 0);
 
         vm.prank(reserveManager);
-        treasury.manage(address(mockQuoteToken), amount / 4);
+        treasury.manage(address(mockQuoteToken), amount / 4, reserveManager);
     }
 
     function test_NonReserveManagerCannotManage() external {
         vm.prank(user1);
         vm.expectRevert("UNAUTHORIZED");
-        treasury.manage(address(mockQuoteToken), 1e18);
+        treasury.manage(address(mockQuoteToken), 1e18, user1);
     }
 
     /*//////////////////////////////////////////////////////////////

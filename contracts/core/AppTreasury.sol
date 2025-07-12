@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
@@ -41,7 +42,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     /// @inheritdoc IAppTreasury
     mapping(address token => uint256 reserveDebt) public reserveDebts;
 
-    function initialize(address _app, address _appOracle, address _authority) public reinitializer(4) {
+    function initialize(address _app, address _appOracle, address _authority) public reinitializer(5) {
         require(_app != address(0), "Zero address: app");
         require(_appOracle != address(0), "Zero address: appOracle");
         app = IApp(_app);
@@ -152,7 +153,7 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
     }
 
     /// @inheritdoc IAppTreasury
-    function manage(address _token, uint256 _amount)
+    function manage(address _token, uint256 _amount, address _recipient)
         external
         override
         nonReentrant
@@ -164,9 +165,10 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
         if (_tokens.contains(_token)) {
             value_ = tokenValueE18(_token, _amount);
             require(value_ <= excessReserves(), "Treasury: insufficient reserves");
+            require(_totalReserves >= value_, "Treasury: insufficient reserves");
             _totalReserves = _totalReserves - value_;
         }
-        IERC20(_token).safeTransfer(msg.sender, _amount);
+        IERC20(_token).safeTransfer(_recipient, _amount);
         emit Managed(_token, _amount);
     }
 
@@ -257,7 +259,8 @@ contract AppTreasury is AppAccessControlled, IAppTreasury, PausableUpgradeable, 
             if (_tokens.contains(token)) {
                 uint256 balance = IERC20(token).balanceOf(address(this));
                 uint256 value = tokenValueE18(token, balance);
-                reserves += value;
+                uint256 cap = reserveDebts[token];
+                reserves += Math.min(value, cap);
             }
         }
     }

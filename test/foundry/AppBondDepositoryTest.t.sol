@@ -481,6 +481,10 @@ contract AppBondDepositoryTest is BaseTest {
         treasury.enable(address(mockQuoteToken2));
         treasury.enable(address(mockQuoteToken3));
 
+        treasury.setReserveDebt(address(mockQuoteToken), 100000000e18);
+        treasury.setReserveDebt(address(mockQuoteToken2), 100000000e18);
+        treasury.setReserveDebt(address(mockQuoteToken3), 100000000e18);
+
         // Set initial oracle prices
         mockOracle.setPrice(1e18); // 1:1 price
         mockOracle2.setPrice(2e18); // 2:1 price

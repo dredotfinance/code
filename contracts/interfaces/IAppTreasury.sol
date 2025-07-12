@@ -39,9 +39,10 @@ interface IAppTreasury {
      * @notice allow approved address to manage the reserves of the treasury
      * @param _token address of the token to manage
      * @param _amount amount of the token to manage
+     * @param _recipient address of the recipient
      * @return value amount of app that was managed
      */
-    function manage(address _token, uint256 _amount) external returns (uint256 value);
+    function manage(address _token, uint256 _amount, address _recipient) external returns (uint256 value);
 
     /**
      * @notice allow approved address to enable a token as a reserve

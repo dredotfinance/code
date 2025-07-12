@@ -262,7 +262,7 @@ contract AppTreasuryCreditDebitTest is BaseTest {
 
         // Manage some tokens
         uint256 manageAmount = excess / 2;
-        uint256 value = treasury.manage(address(mockQuoteToken), manageAmount);
+        uint256 value = treasury.manage(address(mockQuoteToken), manageAmount, owner);
         treasury.syncReserves();
         assertEq(value, manageAmount, "!value");
 

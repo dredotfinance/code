@@ -107,6 +107,9 @@ contract BaseTest is Test {
         authority.setTreasury(address(treasury));
         authority.addReserveDepositor(address(bondDepository));
 
+        treasury.setReserveDebt(address(mockQuoteToken), 100000000e18);
+        treasury.setReserveCap(address(mockQuoteToken), 100000000e18);
+
         vm.label(address(app), "RZR");
         vm.label(address(sapp), "sRZR");
         vm.label(address(treasury), "Treasury");
