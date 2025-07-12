@@ -31,6 +31,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "bool",
+        "name": "enableWhitelisting",
+        "type": "bool"
+      }
+    ],
+    "name": "EnableWhitelistingSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "uint64",
         "name": "version",
@@ -38,6 +51,32 @@
       }
     ],
     "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "merkleRoot",
+        "type": "bytes32"
+      }
+    ],
+    "name": "MerkleRootSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "merkleServer",
+        "type": "address"
+      }
+    ],
+    "name": "MerkleServerSet",
     "type": "event"
   },
   {
@@ -138,6 +177,31 @@
       }
     ],
     "name": "ReferralStaked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes8",
+        "name": "referralCode",
+        "type": "bytes8"
+      }
+    ],
+    "name": "ReferralStakedIntoLST",
     "type": "event"
   },
   {
@@ -303,6 +367,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "enableWhitelisting",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -341,6 +418,11 @@
       {
         "internalType": "address",
         "name": "_treasury",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_staking4626",
         "type": "address"
       },
       {
@@ -447,6 +529,19 @@
   {
     "inputs": [
       {
+        "internalType": "bool",
+        "name": "_enableWhitelisting",
+        "type": "bool"
+      }
+    ],
+    "name": "setEnableWhitelisting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "registry",
         "type": "address"
@@ -496,6 +591,35 @@
         "type": "uint256"
       },
       {
+        "internalType": "bytes8",
+        "name": "_referralCode",
+        "type": "bytes8"
+      },
+      {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
+      }
+    ],
+    "name": "stakeIntoLSTWithReferral",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "minted",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
         "internalType": "uint256",
         "name": "declaredValue",
         "type": "uint256"
@@ -533,6 +657,19 @@
     "outputs": [
       {
         "internalType": "contract IAppStaking",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staking4626",
+    "outputs": [
+      {
+        "internalType": "contract IStaking4626",
         "name": "",
         "type": "address"
       }
@@ -599,6 +736,25 @@
         "internalType": "contract IAppTreasury",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "whitelisted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "whitelisted",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

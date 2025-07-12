@@ -4,6 +4,45 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "bool",
+        "name": "enableWhitelisting",
+        "type": "bool"
+      }
+    ],
+    "name": "EnableWhitelistingSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "merkleRoot",
+        "type": "bytes32"
+      }
+    ],
+    "name": "MerkleRootSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "merkleServer",
+        "type": "address"
+      }
+    ],
+    "name": "MerkleServerSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "user",
         "type": "address"
@@ -97,6 +136,31 @@
       }
     ],
     "name": "ReferralStaked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes8",
+        "name": "referralCode",
+        "type": "bytes8"
+      }
+    ],
+    "name": "ReferralStakedIntoLST",
     "type": "event"
   },
   {
@@ -246,6 +310,11 @@
       },
       {
         "internalType": "address",
+        "name": "_staking4626",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_authority",
         "type": "address"
       }
@@ -264,6 +333,19 @@
       }
     ],
     "name": "registerReferralCode",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_enableWhitelisting",
+        "type": "bool"
+      }
+    ],
+    "name": "setEnableWhitelisting",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -291,6 +373,35 @@
     ],
     "name": "setMerkleServer",
     "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes8",
+        "name": "_referralCode",
+        "type": "bytes8"
+      },
+      {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
+      }
+    ],
+    "name": "stakeIntoLSTWithReferral",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "minted",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },

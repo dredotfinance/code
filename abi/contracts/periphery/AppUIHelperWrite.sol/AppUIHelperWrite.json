@@ -50,11 +50,6 @@
         "internalType": "address",
         "name": "_referrals",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_staking4626",
-        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -633,6 +628,11 @@
         "internalType": "struct AppUIHelperWrite.OdosParams",
         "name": "odosParams",
         "type": "tuple"
+      },
+      {
+        "internalType": "bytes8",
+        "name": "referralCode",
+        "type": "bytes8"
       },
       {
         "internalType": "address",

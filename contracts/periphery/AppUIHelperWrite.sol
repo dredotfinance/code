@@ -47,8 +47,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         address _appOracle,
         address _shadowLP,
         address _odos,
-        address _referrals,
-        address _staking4626
+        address _referrals
     )
         AppUIHelperBase(
             _staking,
@@ -63,9 +62,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         )
     {
         referrals = IAppReferrals(_referrals);
-        staking4626 = IStaking4626(_staking4626);
-
-        appToken.approve(address(staking4626), type(uint256).max);
+        appToken.approve(address(referrals), type(uint256).max);
     }
 
     /// @notice Claim all rewards for a staking position
@@ -121,11 +118,16 @@ contract AppUIHelperWrite is AppUIHelperBase {
 
     /// @notice Zaps and deposits into the LST
     /// @param odosParams The parameters for the zap
+    /// @param referralCode The referral code to use
     /// @param destination The destination address
     /// @return minted The amount of tokens minted
-    function zapIntoLST(OdosParams memory odosParams, address destination) external payable returns (uint256 minted) {
+    function zapIntoLST(OdosParams memory odosParams, bytes8 referralCode, address destination)
+        external
+        payable
+        returns (uint256 minted)
+    {
         _performZap(odosParams);
-        minted = staking4626.deposit(appToken.balanceOf(address(this)), destination);
+        minted = referrals.stakeIntoLSTWithReferral(appToken.balanceOf(address(this)), referralCode, destination);
         _purgeAll(odosParams);
     }
 

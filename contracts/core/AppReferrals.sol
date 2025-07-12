@@ -7,6 +7,7 @@ import "../interfaces/IAppOracle.sol";
 import "../interfaces/IAppReferrals.sol";
 import "../interfaces/IAppStaking.sol";
 import "../interfaces/IAppTreasury.sol";
+import "../interfaces/IStaking4626.sol";
 import "./AppAccessControlled.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
@@ -27,11 +28,14 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     IAppStaking public staking;
     IApp public app;
     IAppTreasury public treasury;
+    IStaking4626 public staking4626;
 
     bytes32 public merkleRoot;
+    bool public enableWhitelisting;
 
     // Track claimed rewards
     mapping(address user => uint256 claimed) public claimedRewards; // user => claimed
+    mapping(address user => bool whitelisted) public whitelisted; // user => whitelisted
 
     // Referral tracking
     mapping(address user => address referrer) public trackedReferrals;
@@ -43,10 +47,14 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
     uint256 public totalClaimed;
 
     /// @inheritdoc IAppReferrals
-    function initialize(address _bondDepository, address _staking, address _app, address _treasury, address _authority)
-        external
-        initializer
-    {
+    function initialize(
+        address _bondDepository,
+        address _staking,
+        address _app,
+        address _treasury,
+        address _staking4626,
+        address _authority
+    ) external initializer {
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
 
@@ -54,18 +62,30 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         staking = IAppStaking(_staking);
         app = IApp(_app);
         treasury = IAppTreasury(_treasury);
+        staking4626 = IStaking4626(_staking4626);
         app.approve(address(staking), type(uint256).max);
+        app.approve(address(staking4626), type(uint256).max);
+
+        enableWhitelisting = true;
     }
 
     /// @inheritdoc IAppReferrals
     function setMerkleServer(address _merkleServer) external onlyGovernor {
         merkleServer = _merkleServer;
+        emit MerkleServerSet(_merkleServer);
+    }
+
+    /// @inheritdoc IAppReferrals
+    function setEnableWhitelisting(bool _enableWhitelisting) external onlyGovernor {
+        enableWhitelisting = _enableWhitelisting;
+        emit EnableWhitelistingSet(_enableWhitelisting);
     }
 
     /// @inheritdoc IAppReferrals
     function setMerkleRoot(bytes32 _merkleRoot) external {
         require(msg.sender == merkleServer, "Only merkle server can set merkle root");
         merkleRoot = _merkleRoot;
+        emit MerkleRootSet(_merkleRoot);
     }
 
     /// @inheritdoc IAppReferrals
@@ -80,6 +100,10 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         require(referralCodes[_code] == address(0), "Code already exists");
         require(referrerCodes[msg.sender] == bytes8(0), "Referral code already registered");
         require(_code != bytes8(0), "Invalid code");
+
+        if (enableWhitelisting) {
+            require(whitelisted[msg.sender], "Not whitelisted");
+        }
 
         referralCodes[_code] = msg.sender;
         referrerCodes[msg.sender] = _code;
@@ -118,6 +142,18 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         (tokenId, taxPaid) = staking.createPosition(_to, amount, declaredValue, 0);
 
         emit ReferralStaked(_to, amount, declaredValue, _referralCode);
+    }
+
+    /// @inheritdoc IAppReferrals
+    function stakeIntoLSTWithReferral(uint256 amount, bytes8 _referralCode, address _to)
+        external
+        nonReentrant
+        returns (uint256 minted)
+    {
+        app.transferFrom(msg.sender, address(this), amount);
+        _registerReferral(_referralCode, _to);
+        minted = staking4626.deposit(amount, _to);
+        emit ReferralStakedIntoLST(_to, amount, _referralCode);
     }
 
     /// @inheritdoc IAppReferrals

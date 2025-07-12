@@ -16,6 +16,10 @@ interface IAppReferrals {
     event RewardsClaimed(address indexed user, uint256 amount, bytes32 root);
     event ReferralStaked(address indexed user, uint256 amount, uint256 declaredValue, bytes8 referralCode);
     event ReferralBondBought(address indexed user, uint256 payout, bytes8 referralCode);
+    event ReferralStakedIntoLST(address indexed user, uint256 amount, bytes8 referralCode);
+    event MerkleServerSet(address indexed merkleServer);
+    event EnableWhitelistingSet(bool indexed enableWhitelisting);
+    event MerkleRootSet(bytes32 indexed merkleRoot);
 
     // Functions
     /// @notice Initializes the contract
@@ -23,9 +27,16 @@ interface IAppReferrals {
     /// @param _staking The address of the staking contract
     /// @param _app The address of the app
     /// @param _treasury The address of the treasury
+    /// @param _staking4626 The address of the staking4626 contract
     /// @param _authority The address of the authority
-    function initialize(address _bondDepository, address _staking, address _app, address _treasury, address _authority)
-        external;
+    function initialize(
+        address _bondDepository,
+        address _staking,
+        address _app,
+        address _treasury,
+        address _staking4626,
+        address _authority
+    ) external;
 
     /// @notice Sets the merkle server
     /// @param _merkleServer The merkle server address
@@ -34,6 +45,10 @@ interface IAppReferrals {
     /// @notice Sets the merkle root for the current week
     /// @param _merkleRoot The merkle root for the week
     function setMerkleRoot(bytes32 _merkleRoot) external;
+
+    /// @notice Sets the enable whitelisting
+    /// @param _enableWhitelisting The enable whitelisting
+    function setEnableWhitelisting(bool _enableWhitelisting) external;
 
     /// @notice Claims rewards using a merkle proof
     /// @param inputs The inputs for the rewards to claim
@@ -58,6 +73,15 @@ interface IAppReferrals {
     function stakeWithReferral(uint256 amount, uint256 declaredValue, bytes8 _referralCode, address _to)
         external
         returns (uint256 tokenId_, uint256 taxPaid_);
+
+    /// @notice Stakes RZR tokens with a referral code into the LST
+    /// @param amount The amount of RZR tokens to stake
+    /// @param _referralCode The referral code to use
+    /// @param _to The address to stake for
+    /// @return minted The amount of tokens minted
+    function stakeIntoLSTWithReferral(uint256 amount, bytes8 _referralCode, address _to)
+        external
+        returns (uint256 minted);
 
     /// @notice Buys a bond with a referral code
     /// @param _id The ID of the bond to buy
