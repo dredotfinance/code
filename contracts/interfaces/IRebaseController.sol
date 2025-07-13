@@ -16,6 +16,7 @@ interface IRebaseController {
     // --- Events --------------------------------------------------------------
     event Rebased(uint256 backingRatio, uint256 epochRate, uint256 tokensMinted, uint256 newFloorPrice);
     event TargetPctsSet(uint256 targetOpsPct, uint256 minFloorPct, uint256 maxFloorPct, uint256 floorSlope);
+    event AprVariablesSet(uint16 floorApr, uint16 ceilApr, uint16 k1, uint16 k2);
 
     // --- Functions ----------------------------------------------------------
     function initialize(address _dre, address _treasury, address _staking, address _authority, address _burner)

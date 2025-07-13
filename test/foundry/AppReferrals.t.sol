@@ -34,12 +34,20 @@ contract AppReferralsTest is BaseTest {
         // Setup referrals contract
         referrals = new AppReferrals();
         referrals.initialize(
-            address(bondDepository), address(staking), address(app), address(treasury), address(0), address(authority)
+            address(bondDepository),
+            address(staking),
+            address(app),
+            address(treasury),
+            address(staking4626),
+            address(authority)
         );
 
         // Set merkle server
         vm.startPrank(owner);
         referrals.setMerkleServer(MERKLE_SERVER);
+        referrals.whitelist(ALICE);
+        referrals.whitelist(BOB);
+        referrals.whitelist(CHARLIE);
         authority.addPolicy(MERKLE_SERVER);
         vm.stopPrank();
 

@@ -33,15 +33,26 @@ contract RebaseController is AppAccessControlled, IRebaseController {
     uint256 public maxFloorPct; // maximum to the floor price ideally 50%
     uint256 public floorSlope; // ideally 50%
 
+    // --- Constants -----------------------------------------------------------
+    uint16 public floorApr;
+    uint16 public ceilApr; // 2000% APR
+    uint16 public k1; // rises 0->1000% over β 1-1.5
+    uint16 public k2; // rises 1000->2000% over β 1.5-2.5
+
     function initialize(address _dre, address _treasury, address _staking, address _authority, address _burner)
         public
-        reinitializer(2)
+        reinitializer(3)
     {
         app = IApp(_dre);
         treasury = IAppTreasury(_treasury);
         staking = IAppStaking(_staking);
         burner = _burner;
         __AppAccessControlled_init(_authority);
+
+        floorApr = 500; // 500% APR
+        ceilApr = 2000; // 2000% APR
+        k1 = 10; // rises 0->500% over β 1-1.5
+        k2 = 1500; // rises 500->2000% over β 1.5-2.5
 
         app.approve(address(staking), type(uint256).max);
     }
@@ -55,6 +66,14 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         maxFloorPct = _maxFloorPct;
         floorSlope = _floorSlope;
         emit TargetPctsSet(targetOpsPct, minFloorPct, maxFloorPct, floorSlope);
+    }
+
+    function setAprVariables(uint16 _floorApr, uint16 _ceilApr, uint16 _k1, uint16 _k2) external onlyGovernor {
+        floorApr = _floorApr;
+        ceilApr = _ceilApr;
+        k1 = _k1;
+        k2 = _k2;
+        emit AprVariablesSet(floorApr, ceilApr, k1, k2);
     }
 
     // --- Public keeper call --------------------------------------------------
@@ -112,7 +131,7 @@ contract RebaseController is AppAccessControlled, IRebaseController {
         require(targetOpsPct + minFloorPct + maxFloorPct > 0, "Invalid percentages");
 
         // Calculate APR and epoch rate
-        (apr, epochMint) = YieldLogic.calcEpoch(pcv, supply, 365 days / EPOCH);
+        (apr, epochMint) = YieldLogic.calcEpoch(floorApr, ceilApr, k1, k2, pcv, supply, 365 days / EPOCH);
 
         // Calculate token distribution
         (toStakers, toOps, toBurner) = StakingDistributionLogic.allocate(

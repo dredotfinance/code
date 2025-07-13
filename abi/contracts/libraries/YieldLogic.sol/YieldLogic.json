@@ -1,58 +1,26 @@
 [
   {
-    "inputs": [],
-    "name": "CEIL_APR",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "FLOOR_APR",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "K1",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "K2",
-    "outputs": [
-      {
-        "internalType": "uint16",
-        "name": "",
-        "type": "uint16"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "floorApr",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "ceilApr",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "k1",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "k2",
+        "type": "uint256"
+      },
       {
         "internalType": "uint256",
         "name": "pcvUsd",

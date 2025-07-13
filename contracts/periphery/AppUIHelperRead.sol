@@ -154,6 +154,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             IAppBondDepository.BondPosition memory position = bondDepository.positions(tokenId);
 
             bondPositions[i] = BondPositionInfo({
+                owner: user,
                 id: tokenId,
                 bondId: position.bondId,
                 amount: position.amount,
@@ -162,6 +163,32 @@ contract AppUIHelperRead is AppUIHelperBase {
                 lastClaimTime: position.lastClaimTime,
                 claimedAmount: position.claimedAmount,
                 claimableAmount: bondDepository.claimableAmount(tokenId),
+                isStaked: position.isStaked
+            });
+        }
+    }
+
+    function getBondPositionsByIndex(uint256 startIndex, uint256 endIndex)
+        external
+        view
+        returns (BondPositionInfo[] memory bondPositions)
+    {
+        endIndex = endIndex > bondDepository.totalSupply() ? bondDepository.totalSupply() : endIndex;
+        bondPositions = new BondPositionInfo[](endIndex - startIndex);
+
+        for (uint256 i = startIndex; i < endIndex; i++) {
+            // if (bondDepository.ownerOf(i) == address(0)) continue;
+            IAppBondDepository.BondPosition memory position = bondDepository.positions(i);
+            bondPositions[i - startIndex] = BondPositionInfo({
+                owner: bondDepository.ownerOf(i),
+                id: i,
+                bondId: position.bondId,
+                amount: position.amount,
+                quoteAmount: position.quoteAmount,
+                startTime: position.startTime,
+                lastClaimTime: position.lastClaimTime,
+                claimedAmount: position.claimedAmount,
+                claimableAmount: bondDepository.claimableAmount(i),
                 isStaked: position.isStaked
             });
         }

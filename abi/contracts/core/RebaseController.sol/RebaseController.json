@@ -13,6 +13,37 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "floorApr",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "ceilApr",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "k1",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "k2",
+        "type": "uint16"
+      }
+    ],
+    "name": "AprVariablesSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "contract IAppAuthority",
         "name": "authority",
@@ -151,6 +182,19 @@
   },
   {
     "inputs": [],
+    "name": "ceilApr",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "currentBackingRatio",
     "outputs": [
       {
@@ -167,6 +211,19 @@
     "name": "executeEpoch",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "floorApr",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -213,6 +270,32 @@
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "k1",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "k2",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -334,6 +417,34 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint16",
+        "name": "_floorApr",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_ceilApr",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_k1",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_k2",
+        "type": "uint16"
+      }
+    ],
+    "name": "setAprVariables",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

@@ -41,6 +41,7 @@ abstract contract AppUIHelperBase {
     }
 
     struct BondPositionInfo {
+        address owner;
         uint256 id;
         uint256 bondId;
         uint256 amount; // amount of RZR tokens

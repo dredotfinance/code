@@ -27,16 +27,20 @@ pragma solidity 0.8.28;
  */
 library YieldLogic {
     // --- Constants -----------------------------------------------------------
-    uint16 public constant FLOOR_APR = 500; // 500% APR
-    uint16 public constant CEIL_APR = 2000; // 2000% APR
-    uint16 public constant K1 = 10; // rises 0->500% over β 1-1.5
-    uint16 public constant K2 = 1500; // rises 500->2000% over β 1.5-2.5
+    // uint16 public constant FLOOR_APR = 500; // 500% APR
+    // uint16 public constant CEIL_APR = 2000; // 2000% APR
+    // uint16 public constant K1 = 10; // rises 0->500% over β 1-1.5
+    // uint16 public constant K2 = 1500; // rises 500->2000% over β 1.5-2.5
 
-    function calcEpoch(uint256 pcvUsd, uint256 supply, uint256 epochsPerYear)
-        public
-        pure
-        returns (uint256 apr, uint256 epochMint)
-    {
+    function calcEpoch(
+        uint256 floorApr,
+        uint256 ceilApr,
+        uint256 k1,
+        uint256 k2,
+        uint256 pcvUsd,
+        uint256 supply,
+        uint256 epochsPerYear
+    ) public pure returns (uint256 apr, uint256 epochMint) {
         if (supply == 0) return (0, 0);
 
         uint256 backingRatio = (pcvUsd * 1e18) / supply;
@@ -45,14 +49,14 @@ library YieldLogic {
         if (beta1e2 < 100) {
             apr = 0;
         } else if (beta1e2 < 150) {
-            apr = (beta1e2 - 100) * K1;
+            apr = (beta1e2 - 100) * k1;
         } else if (beta1e2 < 250) {
-            apr = FLOOR_APR + ((beta1e2 - 150) * K2) / 100;
+            apr = floorApr + ((beta1e2 - 150) * k2) / 100;
         } else {
-            apr = CEIL_APR;
+            apr = ceilApr;
         }
 
-        if (apr > CEIL_APR) apr = CEIL_APR;
+        if (apr > ceilApr) apr = ceilApr;
 
         epochMint = (supply * apr) / (100 * epochsPerYear);
     }
