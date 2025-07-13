@@ -41,4 +41,9 @@ contract RZR is OFT, ERC20Permit, Pausable, AppAccessControlled, IApp {
     function burn(uint256 amount) external override whenNotPaused {
         _burn(msg.sender, amount);
     }
+
+    function _update(address from, address to, uint256 value) internal override {
+        super._update(from, to, value);
+        require(!paused(), "RZR: paused");
+    }
 }
