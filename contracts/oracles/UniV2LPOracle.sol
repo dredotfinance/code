@@ -21,9 +21,9 @@ contract UniV2LPOracle is IOracle {
 
     IAppOracle public appOracle;
 
-    constructor(address _uniV2LP, address _dre, IAppOracle _appOracle) {
+    constructor(address _uniV2LP, address _rzr, IAppOracle _appOracle) {
         amm = IUniswapV2Pair(_uniV2LP);
-        app = _dre;
+        app = _rzr;
         appOracle = _appOracle;
 
         token0Decimals = IERC20Metadata(amm.token0()).decimals();
