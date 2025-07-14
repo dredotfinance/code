@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
  * @title BalancerLPOracle
  * @notice An oracle for a Balancer LP token.
  */
-contract BalancerLPOracle is BalancerMath, IOracle {
+contract BalancerStableLPOracle is BalancerMath, IOracle {
     IBalancerVault public vault;
     address public pool;
 
