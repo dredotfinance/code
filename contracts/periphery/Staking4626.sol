@@ -24,9 +24,11 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
     uint256 public buyoutPremiumBps;
     uint256 private initialAmount;
 
+    mapping(uint256 => bool) public unstakingTokenId;
+
     function initialize(string memory name, string memory symbol, address _staking, address _authority)
         external
-        reinitializer(4)
+        reinitializer(5)
     {
         staking = IAppStaking(_staking);
 
@@ -183,7 +185,10 @@ contract Staking4626 is IStaking4626, ERC20Upgradeable, ReentrancyGuard, AppAcce
         IAppStaking.Position memory position = staking.positions(tokenId);
         uint256 percentage = assets * 1e18 / position.amount;
 
-        staking.splitPosition(tokenId, percentage, receiver);
+        uint256 newTokenId = staking.splitPosition(tokenId, percentage, address(this));
+        unstakingTokenId[newTokenId] = true;
+        staking.startUnstaking(newTokenId);
+        staking.transferFrom(address(this), receiver, newTokenId);
 
         // invariant; keep at least one share in the vault forever
         require(totalSupply() > 1e18, "Cannot redeem when there are no shares");

@@ -397,7 +397,11 @@ contract Staking4626Test is BaseTest {
         uint256 newTokenId = staking.lastId() - 1;
         assertEq(staking.ownerOf(newTokenId), user1, "user did not receive NFT");
 
-        // Schedule unstaking
+        // The NFT should already be marked as unstaking and in cooldown
+        assertTrue(vault.unstakingTokenId(newTokenId), "NFT should be marked as unstaking");
+
+        // Verify the NFT is already in unstaking process (should not be able to start again)
+        vm.expectRevert("Already in cooldown");
         staking.startUnstaking(newTokenId);
 
         // Fast forward cooldown period and complete unstaking
@@ -410,6 +414,91 @@ contract Staking4626Test is BaseTest {
         // User should have received at least 'assetsReturned' tokens
         assertApproxEqAbs(userBalanceAfter - userBalanceBefore, assetsReturned, 1e9);
         vm.stopPrank();
+    }
+
+    /// @notice Test that withdraw automatically starts unstaking process
+    function test_WithdrawAutomaticallyStartsUnstaking() public {
+        uint256 depositAssets = 100 ether;
+
+        // Prepare user and deposit
+        _prepareUser(depositAssets);
+        uint256 userShares = vault.deposit(depositAssets, user1);
+        vm.stopPrank();
+
+        // User withdraws some assets
+        vm.startPrank(user1);
+        uint256 withdrawAmount = 50 ether;
+        uint256 sharesBurned = vault.withdraw(withdrawAmount, user1, user1);
+        vm.stopPrank();
+
+        // User should receive a new NFT
+        uint256 newTokenId = staking.lastId() - 1;
+        assertEq(staking.ownerOf(newTokenId), user1, "user did not receive NFT");
+
+        // The NFT should be marked as unstaking
+        assertTrue(vault.unstakingTokenId(newTokenId), "NFT should be marked as unstaking");
+
+        // The NFT should already be in unstaking process (vault started it before transfer)
+        // Check that the position is in cooldown
+        IAppStaking.Position memory position = staking.positions(newTokenId);
+        assertGt(position.cooldownEnd, 0, "NFT should be in cooldown");
+    }
+
+    /// @notice Test that multiple withdraws create separate unstaking NFTs
+    function test_MultipleWithdrawsCreateSeparateUnstakingNFTs() public {
+        uint256 depositAssets = 200 ether;
+
+        // Prepare user and deposit
+        _prepareUser(depositAssets);
+        uint256 userShares = vault.deposit(depositAssets, user1);
+        vm.stopPrank();
+
+        // First withdraw
+        vm.startPrank(user1);
+        uint256 firstWithdrawAmount = 50 ether;
+        vault.withdraw(firstWithdrawAmount, user1, user1);
+        uint256 firstNFTId = staking.lastId() - 1;
+        vm.stopPrank();
+
+        // Second withdraw
+        vm.startPrank(user1);
+        uint256 secondWithdrawAmount = 30 ether;
+        vault.withdraw(secondWithdrawAmount, user1, user1);
+        uint256 secondNFTId = staking.lastId() - 1;
+        vm.stopPrank();
+
+        // Both NFTs should be different and marked as unstaking
+        assertTrue(firstNFTId != secondNFTId, "NFTs should be different");
+        assertTrue(vault.unstakingTokenId(firstNFTId), "First NFT should be marked as unstaking");
+        assertTrue(vault.unstakingTokenId(secondNFTId), "Second NFT should be marked as unstaking");
+
+        // Both should be owned by user1
+        assertEq(staking.ownerOf(firstNFTId), user1, "First NFT should be owned by user1");
+        assertEq(staking.ownerOf(secondNFTId), user1, "Second NFT should be owned by user1");
+    }
+
+    /// @notice Test that the vault's unstakingTokenId mapping is correctly updated
+    function test_UnstakingTokenIdMapping() public {
+        uint256 depositAssets = 100 ether;
+
+        // Prepare user and deposit
+        _prepareUser(depositAssets);
+        uint256 userShares = vault.deposit(depositAssets, user1);
+        vm.stopPrank();
+
+        // User withdraws
+        vm.startPrank(user1);
+        uint256 withdrawAmount = 50 ether;
+        vault.withdraw(withdrawAmount, user1, user1);
+        uint256 newTokenId = staking.lastId() - 1;
+        vm.stopPrank();
+
+        // Check that the mapping is correctly set
+        assertTrue(vault.unstakingTokenId(newTokenId), "unstakingTokenId should be true for new NFT");
+
+        // Check that other token IDs are not marked
+        assertFalse(vault.unstakingTokenId(0), "unstakingTokenId should be false for token ID 0");
+        assertFalse(vault.unstakingTokenId(999), "unstakingTokenId should be false for non-existent token ID");
     }
 
     function test_RecreatePositionAfterBuyout() public {

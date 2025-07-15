@@ -62,7 +62,6 @@ contract AppUIHelperWrite is AppUIHelperBase {
         )
     {
         referrals = IAppReferrals(_referrals);
-        appToken.approve(address(referrals), type(uint256).max);
     }
 
     /// @notice Claim all rewards for a staking position
@@ -127,6 +126,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         returns (uint256 minted)
     {
         _performZap(odosParams);
+        appToken.approve(address(referrals), type(uint256).max);
         minted = referrals.stakeIntoLSTWithReferral(appToken.balanceOf(address(this)), referralCode, destination);
         _purgeAll(odosParams);
     }
@@ -146,7 +146,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         _performZap(odosParams);
 
         amountStaked = appToken.balanceOf(address(this));
-        appToken.approve(address(referrals), amountStaked);
+        appToken.approve(address(referrals), type(uint256).max);
         amountDeclared = stakeParams.amountDeclared;
         (tokenId, taxPaid) =
             referrals.stakeWithReferral(amountStaked, amountDeclared, stakeParams.referralCode, msg.sender);
