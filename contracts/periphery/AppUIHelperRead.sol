@@ -17,7 +17,8 @@ contract AppUIHelperRead is AppUIHelperBase {
         address _rebaseController,
         address _appOracle,
         address _shadowLP,
-        address _odos
+        address _odos,
+        address _staking4626
     )
         AppUIHelperBase(
             _staking,
@@ -28,7 +29,8 @@ contract AppUIHelperRead is AppUIHelperBase {
             _rebaseController,
             _appOracle,
             _shadowLP,
-            _odos
+            _odos,
+            _staking4626
         )
     {}
 
@@ -140,7 +142,8 @@ contract AppUIHelperRead is AppUIHelperBase {
                 isActive: position.cooldownEnd == 0,
                 inCooldown: staking.isInBuyCooldown(tokenId),
                 inWithdrawCooldown: inWithdrawCooldown,
-                withdrawCooldownStart: withdrawCooldownStart
+                withdrawCooldownStart: withdrawCooldownStart,
+                isFrom4626: staking4626.unstakingTokenId(tokenId)
             });
         }
     }
@@ -237,7 +240,8 @@ contract AppUIHelperRead is AppUIHelperBase {
                 isActive: position.cooldownEnd == 0,
                 inCooldown: staking.isInBuyCooldown(i),
                 inWithdrawCooldown: inWithdrawCooldown,
-                withdrawCooldownStart: withdrawCooldownStart
+                withdrawCooldownStart: withdrawCooldownStart,
+                isFrom4626: staking4626.unstakingTokenId(i)
             });
         }
 

@@ -51,6 +51,7 @@ contract AppUIHelperWriteTest is BaseTest {
             address(appOracle),
             address(0),
             ODOS,
+            address(staking4626),
             address(referrals)
         );
 

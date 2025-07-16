@@ -22,6 +22,11 @@ interface IStaking4626 is IERC4626 {
     /// @param _buyoutPremiumBps The new buyout premium
     function setBuyoutPremiumBps(uint256 _buyoutPremiumBps) external;
 
+    /// @notice Get the token id of the unstaking position
+    /// @param tokenId The token id of the position
+    /// @return Whether the position is unstaking
+    function unstakingTokenId(uint256 tokenId) external view returns (bool);
+
     /// @notice Recreate the position
     function recreatePosition() external;
 

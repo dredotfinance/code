@@ -8,6 +8,7 @@ import "../interfaces/IRebaseController.sol";
 import "../interfaces/IAppTreasury.sol";
 import "../interfaces/IAppOracle.sol";
 import "../interfaces/IOracle.sol";
+import "../interfaces/IStaking4626.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title RZR UI Helper
@@ -38,6 +39,7 @@ abstract contract AppUIHelperBase {
         bool isActive;
         bool inCooldown; // whether the position is in cooldown
         bool inWithdrawCooldown; // whether the position is in withdraw cooldown
+        bool isFrom4626; // whether the position is from the 4626 staking contract
     }
 
     struct BondPositionInfo {
@@ -87,15 +89,16 @@ abstract contract AppUIHelperBase {
     }
 
     // State variables
-    IAppStaking public staking;
+    address public odos;
     IAppBondDepository public bondDepository;
+    IAppOracle public appOracle;
+    IAppStaking public staking;
     IAppTreasury public treasury;
     IERC20 public appToken;
     IERC20 public stakingToken;
-    IAppOracle public appOracle;
-    IRebaseController public rebaseController;
     IOracle public shadowLP;
-    address public odos;
+    IRebaseController public rebaseController;
+    IStaking4626 public staking4626;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
@@ -109,7 +112,8 @@ abstract contract AppUIHelperBase {
         address _rebaseController,
         address _appOracle,
         address _shadowLP,
-        address _odos
+        address _odos,
+        address _staking4626
     ) {
         staking = IAppStaking(_staking);
         bondDepository = IAppBondDepository(_bondDepository);
@@ -120,6 +124,7 @@ abstract contract AppUIHelperBase {
         shadowLP = IOracle(_shadowLP);
         rebaseController = IRebaseController(_rebaseController);
         odos = _odos;
+        staking4626 = IStaking4626(_staking4626);
 
         appToken.approve(address(staking), type(uint256).max);
     }

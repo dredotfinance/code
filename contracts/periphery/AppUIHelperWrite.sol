@@ -13,7 +13,6 @@ contract AppUIHelperWrite is AppUIHelperBase {
     using SafeERC20 for IERC20;
 
     IAppReferrals public referrals;
-    IStaking4626 public staking4626;
 
     struct OdosParams {
         address tokenIn;
@@ -47,6 +46,7 @@ contract AppUIHelperWrite is AppUIHelperBase {
         address _appOracle,
         address _shadowLP,
         address _odos,
+        address _staking4626,
         address _referrals
     )
         AppUIHelperBase(
@@ -58,7 +58,8 @@ contract AppUIHelperWrite is AppUIHelperBase {
             _rebaseController,
             _appOracle,
             _shadowLP,
-            _odos
+            _odos,
+            _staking4626
         )
     {
         referrals = IAppReferrals(_referrals);

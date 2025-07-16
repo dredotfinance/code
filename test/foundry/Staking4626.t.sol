@@ -422,13 +422,13 @@ contract Staking4626Test is BaseTest {
 
         // Prepare user and deposit
         _prepareUser(depositAssets);
-        uint256 userShares = vault.deposit(depositAssets, user1);
+        vault.deposit(depositAssets, user1);
         vm.stopPrank();
 
         // User withdraws some assets
         vm.startPrank(user1);
         uint256 withdrawAmount = 50 ether;
-        uint256 sharesBurned = vault.withdraw(withdrawAmount, user1, user1);
+        vault.withdraw(withdrawAmount, user1, user1);
         vm.stopPrank();
 
         // User should receive a new NFT
@@ -450,7 +450,7 @@ contract Staking4626Test is BaseTest {
 
         // Prepare user and deposit
         _prepareUser(depositAssets);
-        uint256 userShares = vault.deposit(depositAssets, user1);
+        vault.deposit(depositAssets, user1);
         vm.stopPrank();
 
         // First withdraw
@@ -483,7 +483,7 @@ contract Staking4626Test is BaseTest {
 
         // Prepare user and deposit
         _prepareUser(depositAssets);
-        uint256 userShares = vault.deposit(depositAssets, user1);
+        vault.deposit(depositAssets, user1);
         vm.stopPrank();
 
         // User withdraws
