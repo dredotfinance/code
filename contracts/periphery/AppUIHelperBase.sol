@@ -9,6 +9,7 @@ import "../interfaces/IAppTreasury.sol";
 import "../interfaces/IAppOracle.sol";
 import "../interfaces/IOracle.sol";
 import "../interfaces/IStaking4626.sol";
+import "../interfaces/IAppReferrals.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title RZR UI Helper
@@ -99,6 +100,7 @@ abstract contract AppUIHelperBase {
     IOracle public shadowLP;
     IRebaseController public rebaseController;
     IStaking4626 public staking4626;
+    IAppReferrals public referrals;
 
     // Events
     event RewardsClaimed(uint256 indexed positionId, uint256 amount);
@@ -113,7 +115,8 @@ abstract contract AppUIHelperBase {
         address _appOracle,
         address _shadowLP,
         address _odos,
-        address _staking4626
+        address _staking4626,
+        address _referrals
     ) {
         staking = IAppStaking(_staking);
         bondDepository = IAppBondDepository(_bondDepository);
@@ -125,6 +128,7 @@ abstract contract AppUIHelperBase {
         rebaseController = IRebaseController(_rebaseController);
         odos = _odos;
         staking4626 = IStaking4626(_staking4626);
+        referrals = IAppReferrals(_referrals);
 
         appToken.approve(address(staking), type(uint256).max);
     }

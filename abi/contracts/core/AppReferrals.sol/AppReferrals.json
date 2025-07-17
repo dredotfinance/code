@@ -529,6 +529,24 @@
   {
     "inputs": [
       {
+        "internalType": "bytes8",
+        "name": "_code",
+        "type": "bytes8"
+      },
+      {
+        "internalType": "address",
+        "name": "_referrer",
+        "type": "address"
+      }
+    ],
+    "name": "registerReferralCodeFor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "contract IAppAuthority",
         "name": "_newAuthority",
         "type": "address"

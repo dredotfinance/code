@@ -39,6 +39,11 @@ interface IAppReferrals {
         address _authority
     ) external;
 
+    /// @notice Gets the referrer code for a user
+    /// @param _user The user to get the referrer code for
+    /// @return referrerCode The referrer code for the user
+    function referrerCodes(address _user) external view returns (bytes8 referrerCode);
+
     /// @notice Sets the merkle server
     /// @param _merkleServer The merkle server address
     function setMerkleServer(address _merkleServer) external;
@@ -62,6 +67,11 @@ interface IAppReferrals {
 
     /// @notice Registers a referral code for the caller
     function registerReferralCode(bytes8 code) external;
+
+    /// @notice Registers a referral code for the given referrer
+    /// @param _code The referral code to register
+    /// @param _referrer The referrer to register the referral code for
+    function registerReferralCodeFor(bytes8 _code, address _referrer) external;
 
     /// @notice Gets all referrals for a referrer
     /// @param referrer The referrer to get referrals for

@@ -48,6 +48,11 @@
       },
       {
         "internalType": "address",
+        "name": "_staking4626",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_referrals",
         "type": "address"
       }

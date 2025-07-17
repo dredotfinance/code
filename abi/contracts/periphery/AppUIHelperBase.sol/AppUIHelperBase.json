@@ -85,6 +85,19 @@
   },
   {
     "inputs": [],
+    "name": "referrals",
+    "outputs": [
+      {
+        "internalType": "contract IAppReferrals",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "shadowLP",
     "outputs": [
       {
@@ -102,6 +115,19 @@
     "outputs": [
       {
         "internalType": "contract IAppStaking",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staking4626",
+    "outputs": [
+      {
+        "internalType": "contract IStaking4626",
         "name": "",
         "type": "address"
       }

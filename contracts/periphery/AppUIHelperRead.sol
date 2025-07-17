@@ -18,7 +18,8 @@ contract AppUIHelperRead is AppUIHelperBase {
         address _appOracle,
         address _shadowLP,
         address _odos,
-        address _staking4626
+        address _staking4626,
+        address _referrals
     )
         AppUIHelperBase(
             _staking,
@@ -30,7 +31,8 @@ contract AppUIHelperRead is AppUIHelperBase {
             _appOracle,
             _shadowLP,
             _odos,
-            _staking4626
+            _staking4626,
+            _referrals
         )
     {}
 
@@ -47,6 +49,7 @@ contract AppUIHelperRead is AppUIHelperBase {
             uint256 currentAPR,
             uint256 currentSpotPrice,
             uint256 unbackedSupply,
+            bytes8 referralCode,
             TokenInfo[] memory tokenInfos,
             StakingPositionInfo[] memory stakingPositions,
             BondPositionInfo[] memory bondPositions,
@@ -65,6 +68,7 @@ contract AppUIHelperRead is AppUIHelperBase {
         stakingPositions = getStakingPositions(user);
         bondPositions = getBondPositions(user);
         unbackedSupply = treasury.unbackedSupply();
+        referralCode = referrals.referrerCodes(user);
     }
 
     function getTokenInfos(address user, address[] memory bondTokens)

@@ -12,8 +12,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract AppUIHelperWrite is AppUIHelperBase {
     using SafeERC20 for IERC20;
 
-    IAppReferrals public referrals;
-
     struct OdosParams {
         address tokenIn;
         uint256 tokenAmountIn;
@@ -59,11 +57,10 @@ contract AppUIHelperWrite is AppUIHelperBase {
             _appOracle,
             _shadowLP,
             _odos,
-            _staking4626
+            _staking4626,
+            _referrals
         )
-    {
-        referrals = IAppReferrals(_referrals);
-    }
+    {}
 
     /// @notice Claim all rewards for a staking position
     /// @return amount The amount of rewards claimed

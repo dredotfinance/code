@@ -54,7 +54,7 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         address _treasury,
         address _staking4626,
         address _authority
-    ) external initializer {
+    ) external reinitializer(2) {
         __AppAccessControlled_init(_authority);
         __ReentrancyGuard_init();
 
@@ -97,18 +97,12 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
 
     /// @inheritdoc IAppReferrals
     function registerReferralCode(bytes8 _code) external {
-        require(referralCodes[_code] == address(0), "Code already exists");
-        require(referrerCodes[msg.sender] == bytes8(0), "Referral code already registered");
-        require(_code != bytes8(0), "Invalid code");
+        _registerReferralCode(_code, msg.sender);
+    }
 
-        if (enableWhitelisting) {
-            require(whitelisted[msg.sender], "Not whitelisted");
-        }
-
-        referralCodes[_code] = msg.sender;
-        referrerCodes[msg.sender] = _code;
-
-        emit ReferralCodeRegistered(msg.sender, _code);
+    /// @inheritdoc IAppReferrals
+    function registerReferralCodeFor(bytes8 _code, address _referrer) external onlyExecutor {
+        _registerReferralCode(_code, _referrer);
     }
 
     /// @inheritdoc IAppReferrals
@@ -202,6 +196,24 @@ contract AppReferrals is AppAccessControlled, ReentrancyGuardUpgradeable, IAppRe
         }
 
         emit ReferralRegistered(_user, _referrer, _referralCode);
+    }
+
+    /// @dev Registers a referral code for the given referrer
+    /// @param _referralCode The referral code to register
+    /// @param _referrer The referrer to register the referral code for
+    function _registerReferralCode(bytes8 _referralCode, address _referrer) internal {
+        require(referralCodes[_referralCode] == address(0), "Code already exists");
+        require(referrerCodes[_referrer] == bytes8(0), "Referral code already registered");
+        require(_referralCode != bytes8(0), "Invalid code");
+
+        if (enableWhitelisting) {
+            require(whitelisted[_referrer], "Not whitelisted");
+        }
+
+        referralCodes[_referralCode] = _referrer;
+        referrerCodes[_referrer] = _referralCode;
+
+        emit ReferralCodeRegistered(_referrer, _referralCode);
     }
 
     /// @dev Claims rewards for the given input

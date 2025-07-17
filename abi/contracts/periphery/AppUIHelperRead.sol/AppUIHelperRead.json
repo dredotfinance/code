@@ -45,6 +45,16 @@
         "internalType": "address",
         "name": "_odos",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_staking4626",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_referrals",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -210,6 +220,11 @@
           {
             "internalType": "bool",
             "name": "inWithdrawCooldown",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isFrom4626",
             "type": "bool"
           }
         ],
@@ -429,6 +444,11 @@
         "type": "uint256"
       },
       {
+        "internalType": "bytes8",
+        "name": "referralCode",
+        "type": "bytes8"
+      },
+      {
         "components": [
           {
             "internalType": "address",
@@ -540,6 +560,11 @@
           {
             "internalType": "bool",
             "name": "inWithdrawCooldown",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isFrom4626",
             "type": "bool"
           }
         ],
@@ -668,6 +693,19 @@
   },
   {
     "inputs": [],
+    "name": "referrals",
+    "outputs": [
+      {
+        "internalType": "contract IAppReferrals",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "shadowLP",
     "outputs": [
       {
@@ -685,6 +723,19 @@
     "outputs": [
       {
         "internalType": "contract IAppStaking",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staking4626",
+    "outputs": [
+      {
+        "internalType": "contract IStaking4626",
         "name": "",
         "type": "address"
       }
