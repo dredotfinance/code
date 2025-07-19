@@ -10,6 +10,8 @@ import "../interfaces/IAppStaking.sol";
 import "../interfaces/IApp.sol";
 import "../interfaces/IAppBondDepository.sol";
 import "../interfaces/IAppTreasury.sol";
+import "../interfaces/IOracle.sol";
+import "../interfaces/ILoyaltyList.sol";
 
 /// @title RZR Bond Depository
 /// @author RZR Protocol
@@ -24,12 +26,6 @@ contract AppBondDepository is
     using SafeERC20 for IERC20;
 
     uint256 public immutable BASIS_POINTS = 10000; // 100%
-
-    /// @inheritdoc IAppBondDepository
-    uint256 public immutable override VESTING_PERIOD = 12 days;
-
-    /// @inheritdoc IAppBondDepository
-    uint256 public immutable override STAKING_LOCK_PERIOD = 30 days;
 
     // Storage
     Bond[] private _bonds;
@@ -51,7 +47,10 @@ contract AppBondDepository is
     mapping(uint256 => bool) public override blacklisted;
 
     /// @inheritdoc IAppBondDepository
-    function initialize(address _app, address _staking, address _treasury, address _authority)
+    ILoyaltyList public override loyaltyList;
+
+    /// @inheritdoc IAppBondDepository
+    function initialize(address _app, address _staking, address _treasury, address _authority, address _loyaltyList)
         public
         override
         reinitializer(3)
@@ -62,6 +61,7 @@ contract AppBondDepository is
         staking = IAppStaking(_staking);
         treasury = IAppTreasury(_treasury);
         app = IApp(_app);
+        loyaltyList = ILoyaltyList(_loyaltyList);
         if (lastId == 0) lastId = 1;
     }
 
@@ -83,10 +83,16 @@ contract AppBondDepository is
         uint256 _capacity,
         uint256 _initialPrice,
         uint256 _finalPrice,
-        uint256 _duration
+        uint256 _minPrice,
+        uint256 _duration,
+        uint256 _vestingPeriod,
+        uint256 _stakingLockPeriod,
+        bool _isLoyaltyBond
     ) external override onlyBondManager returns (uint256 id_) {
         require(_initialPrice > _finalPrice, "Invalid price range");
         require(_duration > 0, "Invalid duration");
+        require(_vestingPeriod > 0, "Invalid vesting period");
+        require(_stakingLockPeriod > 0, "Invalid staking lock period");
 
         id_ = _bonds.length;
         uint256 startTime = block.timestamp;
@@ -103,8 +109,12 @@ contract AppBondDepository is
                 purchased: 0,
                 startTime: startTime,
                 endTime: endTime,
+                minPrice: _minPrice,
                 initialPrice: _initialPrice,
-                finalPrice: _finalPrice
+                finalPrice: _finalPrice,
+                vestingPeriod: _vestingPeriod,
+                stakingLockPeriod: _stakingLockPeriod,
+                isLoyaltyBond: _isLoyaltyBond
             })
         );
 
@@ -124,6 +134,10 @@ contract AppBondDepository is
         require(bond.enabled, "Bond not enabled");
         require(bond.capacity > 0, "Bond full");
         require(_amount > 0, "Amount too small");
+
+        if (bond.isLoyaltyBond) {
+            require(loyaltyList.isLoyaltyWallet(msg.sender), "Not a loyalty wallet");
+        }
 
         // Calculate current price based on time elapsed
         uint256 currentPrice_ = _currentPrice(_id);
@@ -198,20 +212,19 @@ contract AppBondDepository is
 
         // Approve and stake tokens with 30 day minimum lock
         app.approve(address(staking), claimable);
-        staking.createPosition(msg.sender, claimable, _declaredValue, STAKING_LOCK_PERIOD);
+        staking.createPosition(msg.sender, claimable, _declaredValue, _bonds[position.bondId].stakingLockPeriod);
 
         emit Staked(_tokenId, claimable);
     }
 
-    function updateBond(uint256 _id, uint256 _capacity, uint256 _maxPayout, uint256 _initialPrice, uint256 _finalPrice)
-        external
-        onlyBondManager
-    {
-        _bonds[_id].capacity = _capacity;
-        _bonds[_id].maxPayout = _maxPayout;
+    /// @inheritdoc IAppBondDepository
+    function updateBondPrice(uint256 _id, uint256 _initialPrice, uint256 _finalPrice) external onlyExecutor {
+        uint256 minPrice = _bonds[_id].minPrice;
+        require(_initialPrice > minPrice, "Initial price too low");
+        require(_finalPrice > minPrice, "Final price too low");
         _bonds[_id].initialPrice = _initialPrice;
         _bonds[_id].finalPrice = _finalPrice;
-        emit UpdateBond(_id, _capacity, _maxPayout, _initialPrice, _finalPrice);
+        emit UpdateBondPrice(_id, _initialPrice, _finalPrice);
     }
 
     /* ======== VIEW FUNCTIONS ======== */
@@ -237,11 +250,11 @@ contract AppBondDepository is
         if (position.claimedAmount >= position.amount) return 0;
 
         uint256 timeElapsed = block.timestamp - position.startTime;
-        if (timeElapsed >= VESTING_PERIOD) {
+        if (timeElapsed >= _bonds[position.bondId].vestingPeriod) {
             return position.amount - position.claimedAmount;
         }
 
-        uint256 vestedAmount = (position.amount * timeElapsed) / VESTING_PERIOD;
+        uint256 vestedAmount = (position.amount * timeElapsed) / _bonds[position.bondId].vestingPeriod;
         return vestedAmount - position.claimedAmount;
     }
 

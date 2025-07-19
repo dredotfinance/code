@@ -163,13 +163,18 @@ contract AccessControlTest is BaseTest {
         uint256 initPrice = 1.1e18;
         uint256 finalPrice = 0.9e18;
         uint256 dur = 1 days;
+        uint256 vestingPeriod = 1 days;
+        uint256 stakingLockPeriod = 1 days;
+        bool isLoyaltyBond = false;
         vm.prank(bondManager);
-        bondDepository.create(mockQuoteToken, capacity, initPrice, finalPrice, dur);
+        bondDepository.create(
+            mockQuoteToken, capacity, initPrice, finalPrice, 0, dur, vestingPeriod, stakingLockPeriod, isLoyaltyBond
+        );
     }
 
     function test_NonBondManagerCannotCreateBond() external {
         vm.prank(user1);
         vm.expectRevert("UNAUTHORIZED");
-        bondDepository.create(mockQuoteToken, 1000e18, 1.1e18, 0.9e18, 1 days);
+        bondDepository.create(mockQuoteToken, 1000e18, 1.1e18, 0.9e18, 0, 1 days, 1 days, 1 days, false);
     }
 }

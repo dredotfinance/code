@@ -9,6 +9,9 @@ contract AppBondDepositoryTest is BaseTest {
     uint256 public constant FINAL_PRICE = 0.9e18; // 0.9 RZR per quote token
     uint256 public constant BOND_DURATION = 7 days;
 
+    uint256 public constant VESTING_PERIOD = 12 days;
+    uint256 public constant STAKING_LOCK_PERIOD = 30 days;
+
     function setUp() public {
         setUpBaseTest();
 
@@ -31,7 +34,9 @@ contract AppBondDepositoryTest is BaseTest {
     function test_CreateBond() public {
         vm.startPrank(owner);
 
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, 0, BOND_DURATION, 1 days, 1 days, false
+        );
 
         // Verify bond details
         IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
@@ -53,7 +58,9 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, 0, BOND_DURATION, 1 days, 1 days, false
+        );
 
         vm.stopPrank();
 
@@ -90,7 +97,9 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, 0, BOND_DURATION, 1 days, 1 days, false
+        );
 
         vm.stopPrank();
 
@@ -103,7 +112,7 @@ contract AppBondDepositoryTest is BaseTest {
         (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Fast forward past vesting period
-        vm.warp(block.timestamp + bondDepository.VESTING_PERIOD() + 1);
+        vm.warp(block.timestamp + bondDepository.bonds(bondId).vestingPeriod + 1);
 
         // Claim tokens
         uint256 balanceBefore = app.balanceOf(user1);
@@ -119,7 +128,17 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         vm.stopPrank();
 
@@ -132,7 +151,7 @@ contract AppBondDepositoryTest is BaseTest {
         (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Fast forward past vesting period
-        vm.warp(block.timestamp + bondDepository.VESTING_PERIOD() + 1);
+        vm.warp(block.timestamp + bondDepository.bonds(bondId).vestingPeriod + 1);
 
         // Stake tokens
         bondDepository.stake(tokenId, payout);
@@ -149,7 +168,17 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         // Check initial price
         assertEq(bondDepository.currentPrice(bondId), INITIAL_PRICE);
@@ -179,7 +208,11 @@ contract AppBondDepositoryTest is BaseTest {
             BOND_AMOUNT,
             FINAL_PRICE, // Initial price lower than final price
             INITIAL_PRICE,
-            BOND_DURATION
+            0, // min price
+            BOND_DURATION,
+            1 days,
+            1 days,
+            false
         );
 
         vm.stopPrank();
@@ -189,7 +222,9 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Try to create bond with zero duration
-        bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, 0);
+        bondDepository.create(
+            mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, 0, 0, VESTING_PERIOD, STAKING_LOCK_PERIOD, false
+        );
 
         vm.stopPrank();
     }
@@ -198,7 +233,17 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         // Fast forward past end time
         vm.warp(block.timestamp + BOND_DURATION + 1);
@@ -223,7 +268,11 @@ contract AppBondDepositoryTest is BaseTest {
             BOND_AMOUNT / 2, // Half capacity
             INITIAL_PRICE,
             FINAL_PRICE,
-            BOND_DURATION
+            0, // min price
+            BOND_DURATION,
+            1 days,
+            1 days,
+            false
         );
 
         vm.stopPrank();
@@ -241,7 +290,17 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         vm.stopPrank();
 
@@ -263,7 +322,17 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         vm.stopPrank();
 
@@ -285,7 +354,17 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            INITIAL_PRICE,
+            FINAL_PRICE,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         vm.stopPrank();
 
@@ -298,7 +377,7 @@ contract AppBondDepositoryTest is BaseTest {
         (uint256 payout, uint256 tokenId) = bondDepository.deposit(bondId, BOND_AMOUNT, INITIAL_PRICE, 0, user1);
 
         // Fast forward past vesting period
-        vm.warp(block.timestamp + bondDepository.VESTING_PERIOD() + 1);
+        vm.warp(block.timestamp + bondDepository.bonds(bondId).vestingPeriod + 1);
 
         // Stake tokens
         bondDepository.stake(tokenId, payout);
@@ -324,7 +403,17 @@ contract AppBondDepositoryTest is BaseTest {
 
         // Create bond
         uint256 capacity = bondAmount * initialPrice / 1e18;
-        uint256 bondId = bondDepository.create(mockQuoteToken, capacity, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            capacity,
+            initialPrice,
+            finalPrice,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         // Verify bond details
         IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
@@ -382,7 +471,17 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            bondAmount,
+            initialPrice,
+            finalPrice,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         // Fast forward by random time
         vm.warp(block.timestamp + timeElapsed);
@@ -426,7 +525,17 @@ contract AppBondDepositoryTest is BaseTest {
         vm.startPrank(owner);
 
         // Create bond
-        uint256 bondId = bondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            bondAmount,
+            initialPrice,
+            finalPrice,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         vm.stopPrank();
 
@@ -549,7 +658,17 @@ contract AppBondDepositoryTest is BaseTest {
         uint256 initialPrice = 1.1e18;
         uint256 finalPrice = 0.9e18;
 
-        uint256 bondId = bondDepository.create(mockQuoteToken, bondAmount, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            bondAmount,
+            initialPrice,
+            finalPrice,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         // Verify bond price calculations consider new oracle prices
         uint256 currentPrice = bondDepository.currentPrice(bondId);
@@ -593,7 +712,9 @@ contract AppBondDepositoryTest is BaseTest {
         uint256 dreCapacity = 15000e18; // 15000 RZR (6 decimals)
 
         // Create bond
-        uint256 bondId = bondDepository.create(usdc, dreCapacity, initialPrice, finalPrice, duration);
+        uint256 bondId = bondDepository.create(
+            usdc, dreCapacity, initialPrice, finalPrice, 0, duration, VESTING_PERIOD, STAKING_LOCK_PERIOD, false
+        );
 
         // Verify bond details
         IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);
@@ -651,7 +772,7 @@ contract AppBondDepositoryTest is BaseTest {
         assertEq(currentPrice, finalPrice);
 
         // Fast forward past vesting period
-        vm.warp(block.timestamp + bondDepository.VESTING_PERIOD() + 1);
+        vm.warp(block.timestamp + bondDepository.bonds(bondId).vestingPeriod + 1);
 
         // Claim tokens
         uint256 balanceBefore = app.balanceOf(user1);
@@ -670,7 +791,17 @@ contract AppBondDepositoryTest is BaseTest {
         // Price is higher than oracle price (premium)
         uint256 premiumPrice = 1.5e18; // 1.5 RZR per quote token
         uint256 finalPrice = 1e18; // Ensure initial > final
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, premiumPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            premiumPrice,
+            finalPrice,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
         vm.stopPrank();
 
         // Prepare depositor
@@ -711,7 +842,17 @@ contract AppBondDepositoryTest is BaseTest {
         // Price equal to oracle price (par) – expect zero profit
         uint256 parPrice = 1e18; // 1 RZR per quote token (matches oracle)
         uint256 finalPrice = 0.5e18; // Ensure initial > final
-        uint256 bondId = bondDepository.create(mockQuoteToken, BOND_AMOUNT, parPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            BOND_AMOUNT,
+            parPrice,
+            finalPrice,
+            0,
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
         vm.stopPrank();
 
         vm.startPrank(user1);
@@ -736,7 +877,17 @@ contract AppBondDepositoryTest is BaseTest {
         uint256 initialPrice = 1.1e18;
         uint256 finalPrice = 0.8e18;
         uint256 capacity = BOND_AMOUNT * 2; // Ensure sufficient capacity for larger payout
-        uint256 bondId = bondDepository.create(mockQuoteToken, capacity, initialPrice, finalPrice, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            mockQuoteToken,
+            capacity,
+            initialPrice,
+            finalPrice,
+            0, // min price
+            BOND_DURATION,
+            VESTING_PERIOD,
+            STAKING_LOCK_PERIOD,
+            false
+        );
 
         // Fast-forward to just before bond end so current price ≈ finalPrice (< oracle)
         vm.warp(block.timestamp + BOND_DURATION - 1);

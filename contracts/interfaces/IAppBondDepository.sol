@@ -5,6 +5,7 @@ pragma abicoder v2;
 import "./IApp.sol";
 import "./IAppStaking.sol";
 import "./IAppTreasury.sol";
+import "./ILoyaltyList.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
@@ -51,11 +52,9 @@ interface IAppBondDepository is IERC721Enumerable {
 
     /// @notice Emitted when a bond is updated
     /// @param id The unique identifier of the bond
-    /// @param capacity The new capacity of the bond
-    /// @param maxPayout The new maximum payout of the bond
     /// @param initialPrice The new initial price of the bond
     /// @param finalPrice The new final price of the bond
-    event UpdateBond(uint256 indexed id, uint256 capacity, uint256 maxPayout, uint256 initialPrice, uint256 finalPrice);
+    event UpdateBondPrice(uint256 indexed id, uint256 initialPrice, uint256 finalPrice);
 
     /* ======== STRUCTS ======== */
     /// @notice Represents a bond offering
@@ -80,8 +79,12 @@ interface IAppBondDepository is IERC721Enumerable {
         uint256 purchased; // quote tokens in
         uint256 startTime; // when the bond starts
         uint256 endTime; // when the bond ends
+        uint256 minPrice;
         uint256 initialPrice; // starting price in quote token
         uint256 finalPrice; // ending price in quote token
+        uint256 vestingPeriod;
+        uint256 stakingLockPeriod;
+        bool isLoyaltyBond;
     }
 
     /// @notice Represents a user's bond position
@@ -104,11 +107,12 @@ interface IAppBondDepository is IERC721Enumerable {
 
     /* ======== FUNCTIONS ======== */
     /// @notice Initializes the bond depository contract
-    /// @param _dre The address of the RZR token
+    /// @param _app The address of the RZR token
     /// @param _staking The address of the staking contract
     /// @param _treasury The address of the treasury contract
     /// @param _authority The address of the authority contract
-    function initialize(address _dre, address _staking, address _treasury, address _authority) external;
+    function initialize(address _app, address _staking, address _treasury, address _authority, address _loyaltyList)
+        external;
 
     /// @notice Creates a new bond offering
     /// @param _quoteToken The token to accept as payment
@@ -116,14 +120,27 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @param _initialPrice The starting price of the bond
     /// @param _finalPrice The ending price of the bond
     /// @param _duration The duration of the bond in seconds
+    /// @param _vestingPeriod The vesting period of the bond in seconds
+    /// @param _stakingLockPeriod The staking lock period of the bond in seconds
+    /// @param _isLoyaltyBond Whether the bond is a loyalty bond
     /// @return id_ The unique identifier of the created bond
     function create(
         IERC20 _quoteToken,
         uint256 _capacity,
         uint256 _initialPrice,
         uint256 _finalPrice,
-        uint256 _duration
+        uint256 _minPrice,
+        uint256 _duration,
+        uint256 _vestingPeriod,
+        uint256 _stakingLockPeriod,
+        bool _isLoyaltyBond
     ) external returns (uint256 id_);
+
+    /// @notice Updates the price of a bond
+    /// @param _id The ID of the bond to update
+    /// @param _initialPrice The new initial price of the bond
+    /// @param _finalPrice The new final price of the bond
+    function updateBondPrice(uint256 _id, uint256 _initialPrice, uint256 _finalPrice) external;
 
     /// @notice Deposits quote tokens to purchase a bond
     /// @param _id The ID of the bond to purchase
@@ -180,13 +197,9 @@ interface IAppBondDepository is IERC721Enumerable {
     /// @return position The bond position details
     function positions(uint256 tokenId) external view returns (BondPosition memory position);
 
-    /// @notice Gets the vesting period for bonds
-    /// @return uint256 The vesting period in seconds
-    function VESTING_PERIOD() external view returns (uint256);
-
-    /// @notice Gets the staking lock period
-    /// @return uint256 The staking lock period in seconds
-    function STAKING_LOCK_PERIOD() external view returns (uint256);
+    /// @notice Gets the loyalty list contract address
+    /// @return ILoyaltyList The loyalty list contract interface
+    function loyaltyList() external view returns (ILoyaltyList);
 
     /// @notice Gets the staking contract address
     /// @return IAppStaking The staking contract interface

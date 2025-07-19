@@ -371,6 +371,11 @@
           },
           {
             "internalType": "uint256",
+            "name": "minPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
             "name": "initialPrice",
             "type": "uint256"
           },
@@ -378,6 +383,21 @@
             "internalType": "uint256",
             "name": "finalPrice",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "vestingPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stakingLockPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isLoyaltyBond",
+            "type": "bool"
           }
         ],
         "internalType": "struct IAppBondDepository.Bond[]",

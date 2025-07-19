@@ -47,7 +47,9 @@ contract ScUsdcBondForkTest is Test {
         vm.label(address(whale), "whale");
 
         // Create bond with the exact parameters from the script
-        uint256 bondId = bondDepository.create(scUSDC, BOND_CAPACITY, INITIAL_PRICE, FINAL_PRICE, BOND_DURATION);
+        uint256 bondId = bondDepository.create(
+            scUSDC, BOND_CAPACITY, INITIAL_PRICE, FINAL_PRICE, 0, BOND_DURATION, 12 days, 30 days, false
+        );
 
         // Verify bond was created successfully
         IAppBondDepository.Bond memory bond = bondDepository.getBond(bondId);

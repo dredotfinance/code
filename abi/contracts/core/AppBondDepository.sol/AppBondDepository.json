@@ -401,18 +401,6 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "capacity",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "maxPayout",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
         "name": "initialPrice",
         "type": "uint256"
       },
@@ -423,38 +411,12 @@
         "type": "uint256"
       }
     ],
-    "name": "UpdateBond",
+    "name": "UpdateBondPrice",
     "type": "event"
   },
   {
     "inputs": [],
     "name": "BASIS_POINTS",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "STAKING_LOCK_PERIOD",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "VESTING_PERIOD",
     "outputs": [
       {
         "internalType": "uint256",
@@ -619,6 +581,11 @@
           },
           {
             "internalType": "uint256",
+            "name": "minPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
             "name": "initialPrice",
             "type": "uint256"
           },
@@ -626,6 +593,21 @@
             "internalType": "uint256",
             "name": "finalPrice",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "vestingPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stakingLockPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isLoyaltyBond",
+            "type": "bool"
           }
         ],
         "internalType": "struct IAppBondDepository.Bond",
@@ -726,8 +708,28 @@
       },
       {
         "internalType": "uint256",
+        "name": "_minPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "_duration",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_vestingPeriod",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_stakingLockPeriod",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isLoyaltyBond",
+        "type": "bool"
       }
     ],
     "name": "create",
@@ -895,6 +897,11 @@
           },
           {
             "internalType": "uint256",
+            "name": "minPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
             "name": "initialPrice",
             "type": "uint256"
           },
@@ -902,6 +909,21 @@
             "internalType": "uint256",
             "name": "finalPrice",
             "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "vestingPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stakingLockPeriod",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isLoyaltyBond",
+            "type": "bool"
           }
         ],
         "internalType": "struct IAppBondDepository.Bond",
@@ -932,6 +954,11 @@
       {
         "internalType": "address",
         "name": "_authority",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_loyaltyList",
         "type": "address"
       }
     ],
@@ -991,6 +1018,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "loyaltyList",
+    "outputs": [
+      {
+        "internalType": "contract ILoyaltyList",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -1380,16 +1420,6 @@
       },
       {
         "internalType": "uint256",
-        "name": "_capacity",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxPayout",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "_initialPrice",
         "type": "uint256"
       },
@@ -1399,7 +1429,7 @@
         "type": "uint256"
       }
     ],
-    "name": "updateBond",
+    "name": "updateBondPrice",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

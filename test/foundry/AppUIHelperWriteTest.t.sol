@@ -131,7 +131,11 @@ contract AppUIHelperWriteTest is BaseTest {
             1000e18, // capacity
             2e18, // initial price
             1e18, // final price
-            7 days // duration
+            0, // min price
+            7 days, // duration
+            12 days, // vesting period
+            30 days, // staking lock period
+            false
         );
         vm.stopPrank();
 
@@ -178,7 +182,11 @@ contract AppUIHelperWriteTest is BaseTest {
             1000e18, // capacity
             2e18, // initial price
             1e18, // final price
-            7 days // duration
+            0, // min price
+            7 days, // duration
+            12 days, // vesting period
+            30 days, // staking lock period
+            false
         );
         vm.stopPrank();
 

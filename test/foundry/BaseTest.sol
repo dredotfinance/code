@@ -16,6 +16,7 @@ import "../../contracts/core/AppBondDepository.sol";
 import "../../contracts/core/AppOracle.sol";
 import "../../contracts/core/AppBurner.sol";
 import "../../contracts/periphery/Staking4626.sol";
+import "../../contracts/periphery/LoyaltyList.sol";
 
 contract BaseTest is Test {
     RebaseController public rebaseController;
@@ -32,6 +33,8 @@ contract BaseTest is Test {
     MockOracle public mockOracle;
     MockOracle public mockOracle2;
     MockOracle public mockOracle3;
+
+    LoyaltyList public loyaltyList;
 
     AppAuthority public authority;
     AppBondDepository public bondDepository;
@@ -85,9 +88,14 @@ contract BaseTest is Test {
         staking = new AppStaking();
         staking.initialize(address(app), address(sapp), address(authority), address(burner));
 
+        // Deploy LoyaltyList
+        loyaltyList = new LoyaltyList(address(authority));
+
         // Deploy AppBondDepository
         bondDepository = new AppBondDepository();
-        bondDepository.initialize(address(app), address(staking), address(treasury), address(authority));
+        bondDepository.initialize(
+            address(app), address(staking), address(treasury), address(authority), address(loyaltyList)
+        );
 
         sapp.setStakingContract(address(staking));
 

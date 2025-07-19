@@ -46,7 +46,12 @@ contract BondSalesInvariant is BaseTest {
         uint256 initialPrice = 1.1e18; // 1.1 RZR per quote token
         uint256 finalPrice = 0.9e18; // 0.9 RZR per quote token
         uint256 duration = 30 days;
-        bondId = bondDepository.create(quoteToken, capacity, initialPrice, finalPrice, duration);
+        uint256 vestingPeriod = 12 days;
+        uint256 stakingLockPeriod = 30 days;
+        bool isLoyaltyBond = false;
+        bondId = bondDepository.create(
+            quoteToken, capacity, initialPrice, finalPrice, 0, duration, vestingPeriod, stakingLockPeriod, isLoyaltyBond
+        );
 
         vm.stopPrank();
 
